@@ -16,9 +16,24 @@ Dashboard -> your `buildora` project.
 Keys used by the app (all public): **Project URL** (`https://<ref>.supabase.co`, without `/rest/v1`) and the **publishable key**.
 Never use the `service_role` / secret key in this project.
 
+## Supabase (database): from Phase 2
+
+1. **Create the tables:** follow "How to run it" in [DATABASE.md](DATABASE.md) (SQL Editor, paste, Run). Do this once.
+2. **Get the connection string:** click **Connect** at the top of your Supabase project, choose **Session pooler**, and copy the connection string.
+   It contains `[YOUR-PASSWORD]`: replace that with your database password (the one you saved when creating the project;
+   you can reset it under Project Settings → Database if you lost it).
+   - If the password contains special characters (`@ : / ? # %`), write them percent-encoded (`@` → `%40`, `:` → `%3A`, `/` → `%2F`, `#` → `%23`).
+   - Use the **Session pooler**, not "Direct connection" (that one needs IPv6, which Render's free plan may not have).
+3. **Put it in `backend/.env`** as one line: `DATABASE_URL=postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`.
+   This is a **secret**: only in that git-ignored file, and later in Render's environment settings. Never in chat, never in git.
+4. **Restart the backend** (stop it with Ctrl+C and start it again; changing `.env` is not picked up automatically).
+5. **Check:** open http://localhost:8000/api/health/ready. You want `"database": "ok"`.
+   - `"not configured"`: the line is missing or the backend was not restarted.
+   - `"unreachable"`: wrong password, wrong host, or a typo; the backend log (the terminal) has the reason.
+
 ## Local environment files (git-ignored)
 
-- `backend/.env` from `backend/.env.example`: `SUPABASE_URL`, `CORS_ORIGINS`.
+- `backend/.env` from `backend/.env.example`: `SUPABASE_URL`, `CORS_ORIGINS`, `DATABASE_URL`.
 - `frontend/.env.local` from `frontend/.env.example`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
 
 ## Try it locally
@@ -36,7 +51,7 @@ Two services from the same GitHub repo. `render.yaml` describes both (untested);
 - Root directory `backend`; Runtime Python; build `pip install -r requirements.txt`;
   start `uvicorn app.main:app --host 0.0.0.0 --port $PORT`; health check path `/api/health`; plan Free.
 - Environment: `PYTHON_VERSION=3.11.9`, `ENVIRONMENT=production`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`,
-  `CORS_ORIGINS` (the website's URL, set after the website exists).
+  `DATABASE_URL` (secret: the Session pooler string), `CORS_ORIGINS` (the website's URL, set after the website exists).
 - Check `https://<api>.onrender.com/api/health`.
 
 **Website: New -> Static Site**

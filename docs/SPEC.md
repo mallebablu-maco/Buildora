@@ -40,7 +40,7 @@ for the 3D Studio; the **PDF** wins for pages the code does not have.
 |---|---|---|
 | 0 | This spec, decisions, golden fixtures plan | Done (fixtures arrive with Phase 3 tests) |
 | 1 | Skeleton, Supabase Auth end to end, Render blueprint | **Built; see section 4 for what is verified** |
-| 2 | Database (profiles, projects, rooms), RLS, projects CRUD, minimal wizard | Not started |
+| 2 | Database (profiles, projects, rooms), RLS, projects CRUD, 4-step New Project wizard, My Projects, project page | **Built and tested locally; the SQL has NOT been applied to your Supabase yet** (see section 4) |
 | 3 | Studio core: geometry port + 3D viewer (Exterior/Top-down, floors, toggles, cut-away, labels, dimensions, selection) | Not started |
 | 4 | Room panel, Rooms list, layout save/reset | Not started |
 | 5 | 2D plan editor (doors, windows, validation panel) | Not started |
@@ -53,22 +53,32 @@ for the 3D Studio; the **PDF** wins for pages the code does not have.
 
 A feature is only called working when it is built **and** tested. "Seen in the video" is not "implemented".
 
-## 4. Verified so far (Phase 1)
+## 4. Verified so far
 
-**Verified by running it**
-- Backend: 25 automated tests pass (Python 3.11): valid token accepted; missing, malformed, expired, wrong-audience, wrong-issuer,
-  forged-signature, unknown-key, no-key-id, `alg: none`, HS256-with-public-key, anon-role, no-subject and tampered tokens all rejected;
-  key rotation; 503 (not 401) when auth is unconfigured; CORS; security headers; URL normalisation.
-- Frontend: 31 automated tests pass (validation rules, error messages, "keep me logged in" storage, route protection, sign-up form);
-  `tsc` clean; production build succeeds.
-- Both servers run together: `/api/health` reaches the API through the Vite proxy; `/api/me` returns 401 without a valid token.
+**Phase 1 (accounts)**
+- Backend token tests: valid token accepted; missing, malformed, expired, wrong-audience, wrong-issuer, forged-signature, unknown-key,
+  no-key-id, `alg: none`, HS256-with-public-key, anon-role, no-subject and tampered tokens all rejected; key rotation; 503 (not 401) when
+  auth is unconfigured; CORS; security headers; URL normalisation.
 - The API loads **your project's real public signing key** and rejects forged tokens that claim its key id (checked live, read-only).
+- **Hemanth signed up and logged in through the website** (confirmed by Hemanth). The Dashboard connection check was not reported.
+
+**Phase 2 (projects), against a throw-away local PostgreSQL that has the REAL migration SQL applied**
+- Backend: 100 tests in total pass (Python 3.11). Beyond Phase 1: project and room CRUD, input validation (28 bad-input cases), atomic
+  room replacement, cascade delete; **two-user isolation** through the API (list, read, update, delete, rooms, foreign room ids, forged owner);
+  **database-level Row Level Security** (own rows only, no update/delete/insert across users, anonymous has no access, no truncate);
+  the API's queries really run as the signed-in user, and a pooled connection never carries one user's identity to the next;
+  CHECK constraints; user deletion cascades; storage folder rule; the migration is safe to run twice.
+- **The tests can fail:** deliberately weakening the migration (rooms policy without the project check; projects visible to everyone)
+  made 1 and 6 tests fail respectively; the file was restored byte for byte.
+- Frontend: 65 tests pass: form rules, the 4-step wizard (validation per step, draft save, server errors), My Projects (list, empty,
+  error + retry, delete with confirmation, Escape), formatting. `tsc` clean; production build succeeds.
 
 **NOT verified yet**
-- A real sign-up / login in a browser against your Supabase project. (Your project currently has **Confirm email ON**, so a new
-  account must click the emailed link before it can log in; see docs/SETUP.md.)
-- That a real Supabase-issued token is accepted by `/api/me` (the verifier is tested with local keys and loads the real keys; the two have not met yet).
-- The password-reset email flow.
+- The SQL has not been run on your Supabase project, so: the database connection through Supabase's Session pooler, `SET ROLE authenticated`
+  through that pooler, Supabase's own default table privileges, and the Storage rules on the real Storage service are all untested there.
+  The local test database uses stand-ins for Supabase's `auth` and `storage` parts.
+- Projects pages in a real browser (no browser is available to the assistant).
+- A real Supabase-issued token being accepted by `/api/me`, and the password-reset email flow.
 - The Render deployment (`render.yaml` is untested).
 
 ## 5. 3D Studio checklist (acceptance list)

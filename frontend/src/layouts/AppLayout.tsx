@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils'
 /** Navigation as designed. Entries without `to` are planned pages that are built in later phases. */
 const NAV = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
-  { label: 'My Projects', icon: FolderOpen },
-  { label: 'New Project', icon: PlusSquare },
+  { label: 'My Projects', icon: FolderOpen, to: '/projects', end: true },
+  { label: 'New Project', icon: PlusSquare, to: '/projects/new' },
   { label: '3D Building Studio', icon: Box },
   { label: 'Material Estimation', icon: Calculator },
   { label: 'Material Catalogue', icon: BookOpen },
@@ -19,7 +19,7 @@ const NAV = [
   { label: 'Waste Optimization', icon: TrendingDown },
   { label: 'Reports', icon: FileText },
   { label: 'Settings', icon: Settings },
-] as { label: string; icon: typeof Box; to?: string }[]
+] as { label: string; icon: typeof Box; to?: string; end?: boolean }[]
 
 export function AppLayout() {
   const { user, signOut } = useAuth()
@@ -34,9 +34,9 @@ export function AppLayout() {
           <button className="md:hidden" aria-label="Close menu" onClick={() => setOpen(false)}><X className="h-5 w-5" /></button>
         </div>
         <nav aria-label="Main" className="space-y-0.5 px-3 py-2">
-          {NAV.map(({ label, icon: Icon, to }) =>
+          {NAV.map(({ label, icon: Icon, to, end }) =>
             to ? (
-              <NavLink key={label} to={to} onClick={() => setOpen(false)}
+              <NavLink key={label} to={to} end={end} onClick={() => setOpen(false)}
                 className={({ isActive }) => cn('flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium', isActive ? 'bg-navy-700 text-white' : 'hover:bg-navy-800')}>
                 <Icon className="h-4 w-4" aria-hidden="true" /> {label}
               </NavLink>

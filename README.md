@@ -12,8 +12,9 @@ Construction planning and material estimation, built around a **3D Building Stud
 
 ## Status
 
-Phase 0 (spec) and Phase 1 (foundation + Supabase Auth) are built. See [docs/SPEC.md](docs/SPEC.md) for the decisions, the
-3D Studio checklist, the phases and exactly what has and has not been verified.
+Phases 0-2 are built: spec, Supabase Auth, and projects with rooms (database design in [docs/DATABASE.md](docs/DATABASE.md), tested locally;
+the SQL still has to be run on your Supabase project). See [docs/SPEC.md](docs/SPEC.md) for the decisions, the 3D Studio checklist,
+the phases and exactly what has and has not been verified.
 
 ## Run locally
 

@@ -14,6 +14,32 @@ export function Input({ className, invalid, ...props }: ComponentProps<'input'> 
   )
 }
 
+export function Select({ className, invalid, ...props }: ComponentProps<'select'> & { invalid?: boolean }) {
+  return (
+    <select
+      aria-invalid={invalid || undefined}
+      className={cn(
+        'h-11 w-full rounded-lg border bg-white px-3 text-sm text-slate-900 focus:outline-2 focus:outline-offset-1 focus:outline-navy-900',
+        invalid ? 'border-red-500' : 'border-slate-300', className,
+      )}
+      {...props}
+    />
+  )
+}
+
+export function Textarea({ className, invalid, ...props }: ComponentProps<'textarea'> & { invalid?: boolean }) {
+  return (
+    <textarea
+      aria-invalid={invalid || undefined}
+      className={cn(
+        'min-h-24 w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-2 focus:outline-offset-1 focus:outline-navy-900',
+        invalid ? 'border-red-500' : 'border-slate-300', className,
+      )}
+      {...props}
+    />
+  )
+}
+
 /** Label + control + error/hint, wired together for screen readers. `children` receives the ids to put on the input. */
 export function Field({
   label, error, hint, action, children,
