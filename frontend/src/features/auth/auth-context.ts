@@ -1,0 +1,27 @@
+import type { Session, User } from '@supabase/supabase-js'
+import { createContext } from 'react'
+import type { Persona } from './schemas'
+
+export interface SignUpInput {
+  fullName: string
+  email: string
+  password: string
+  persona: Persona
+}
+
+export interface AuthContextValue {
+  session: Session | null
+  user: User | null
+  /** true until the stored session (if any) has been read */
+  loading: boolean
+  /** true when the user arrived through a password-reset link */
+  recovery: boolean
+  signIn: (email: string, password: string, keep: boolean) => Promise<void>
+  /** `needsEmailConfirmation` is true when the project requires the user to confirm their email before logging in */
+  signUp: (input: SignUpInput) => Promise<{ needsEmailConfirmation: boolean }>
+  signOut: () => Promise<void>
+  requestPasswordReset: (email: string) => Promise<void>
+  updatePassword: (password: string) => Promise<void>
+}
+
+export const AuthContext = createContext<AuthContextValue | null>(null)

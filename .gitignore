@@ -1,0 +1,19 @@
+# secrets and local configuration (the *.example files ARE committed)
+.env
+.env.*
+!.env.example
+*.pem
+
+# dependencies and build output
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.vite/
+
+# local data, logs, OS files
+data/
+*.log
+.DS_Store
