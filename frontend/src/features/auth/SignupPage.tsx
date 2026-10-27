@@ -53,7 +53,7 @@ export default function SignupPage() {
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {error && <Alert tone="error">{error}</Alert>}
         <Field label="Full name" error={errors.fullName?.message}>
-          {({ id, describedBy, invalid }) => <Input id={id} autoComplete="name" placeholder="Your name" aria-describedby={describedBy} invalid={invalid} {...register('fullName')} />}
+          {({ id, describedBy, invalid }) => <Input id={id} autoComplete="name" maxLength={60} placeholder="Your name" aria-describedby={describedBy} invalid={invalid} {...register('fullName')} />}
         </Field>
         <Field label="Email" error={errors.email?.message}>
           {({ id, describedBy, invalid }) => <Input id={id} type="email" autoComplete="email" placeholder="you@example.com" aria-describedby={describedBy} invalid={invalid} {...register('email')} />}

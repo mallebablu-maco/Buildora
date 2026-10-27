@@ -159,13 +159,13 @@ describe('Settings', () => {
     expect(a.updateProfile.mock.calls[0][0]).toMatchObject({ full_name: 'Alice Rao', default_city: 'Pune', default_wastage: { tiles: 10, cement: 3, steel: 5, paint: 5 } })
     expect(await screen.findByText(/New projects use these defaults/)).toBeInTheDocument()
   })
-  it('refuses a wastage outside 0 to 100', async () => {
+  it('refuses a wastage outside 0 to 50', async () => {
     const user = userEvent.setup()
     at('/settings', <SettingsPage />, '/settings')
     await user.clear(await screen.findByLabelText('Tiles (%)'))
-    await user.type(screen.getByLabelText('Tiles (%)'), '150')
+    await user.type(screen.getByLabelText('Tiles (%)'), '60')
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
-    expect(await screen.findByText(/wastage must be between 0 and 100/)).toBeInTheDocument()
+    expect(await screen.findByText(/wastage must be between 0 and 50/)).toBeInTheDocument()
     expect(a.updateProfile).not.toHaveBeenCalled()
   })
 })

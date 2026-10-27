@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFil
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app import limits as L
 from app.api.projects import uid
 from app.core.auth import Identity, current_identity
 from app.core.db import get_db
@@ -159,13 +160,13 @@ async def import_prices(file: UploadFile = File(...), db: Session = Depends(get_
             if key not in ITEM_ORDER:
                 raise ValueError(f"estimate_key must be one of {', '.join(ITEM_ORDER)}")
             price = float(row["unit_price"])
-            if not (0 <= price < 1e12):
-                raise ValueError("unit_price must be between 0 and 1,000,000,000,000")
+            if not (0 <= price <= L.MAX_UNIT_PRICE):
+                raise ValueError(f"unit_price must be between 0 and {L.MAX_UNIT_PRICE:,.0f}")
             if not row["name"] or not row["unit"]:
                 raise ValueError("name and unit are required")
-            m = Material(owner_id=me, estimate_key=key, name=row["name"][:160], category=(row.get("category") or key.title())[:80],
-                         brand=row.get("brand", "")[:120], grade=row.get("grade", "")[:120], unit=row["unit"][:30])
-            m.prices.append(PriceRecord(owner_id=me, unit_price=price, supplier=row.get("supplier", "")[:160], location=row.get("location", "")[:160]))
+            m = Material(owner_id=me, estimate_key=key, name=row["name"][:L.MATERIAL_NAME], category=(row.get("category") or key.title())[:L.CATEGORY],
+                         brand=row.get("brand", "")[:L.BRAND], grade=row.get("grade", "")[:L.GRADE], unit=row["unit"][:L.UNIT])
+            m.prices.append(PriceRecord(owner_id=me, unit_price=price, supplier=row.get("supplier", "")[:L.SUPPLIER], location=row.get("location", "")[:L.PRICE_LOCATION]))
             db.add(m)
             created += 1
         except (ValueError, KeyError) as e:

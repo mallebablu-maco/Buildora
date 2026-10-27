@@ -16,6 +16,15 @@ export function formatMoney(v: number | null | undefined, currency = 'INR', digi
   }
 }
 
+/** Short form for chart axes: 1.2k, 3.5L (lakh), 2.1Cr (crore). */
+export function formatCompact(v: number): string {
+  const a = Math.abs(v)
+  if (a >= 1e7) return `${+(v / 1e7).toFixed(1)}Cr`
+  if (a >= 1e5) return `${+(v / 1e5).toFixed(1)}L`
+  if (a >= 1e3) return `${+(v / 1e3).toFixed(1)}k`
+  return String(+v.toFixed(1))
+}
+
 export function formatNumber(v: number | null | undefined, digits = 2): string {
   if (v === null || v === undefined || Number.isNaN(v)) return '—'
   return new Intl.NumberFormat('en-IN', { maximumFractionDigits: digits, minimumFractionDigits: 0 }).format(v)

@@ -8,6 +8,7 @@ import { Alert, Badge, EmptyState, ErrorState, Spinner } from '@/components/ui/f
 import { Input } from '@/components/ui/form'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { useEstimate } from '@/features/estimation/useEstimate'
+import { LIMITS as L } from '@/lib/limits'
 import { useToast } from '@/lib/toast'
 import { cn, formatMoney, formatNumber } from '@/lib/utils'
 import type { Recommendation } from '@/types'
@@ -63,7 +64,7 @@ function Body({ projectId }: { projectId: string }) {
     for (const [k, v] of Object.entries(plan)) {
       if (v.trim() === '') { out[k] = null; continue }
       const n = Number(v)
-      if (!Number.isFinite(n) || n < 0) { toast.error(`Planned purchase for ${k} must be zero or positive.`); return }
+      if (!Number.isFinite(n) || n < 0 || n > L.MAX_EXTRA) { toast.error(`Planned purchase for ${k} must be between 0 and ${L.MAX_EXTRA.toLocaleString('en-IN')}.`); return }
       out[k] = n
     }
     try { await applyConfig({ purchase_quantities: out }); toast.success('Purchase plan saved and recommendations refreshed.') } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed') }
@@ -90,7 +91,7 @@ function Body({ projectId }: { projectId: string }) {
               return (
                 <TR key={it.key}>
                   <TD className="font-medium">{it.name}</TD><TD className="text-right tabular-nums">{formatNumber(it.gross_quantity)}</TD><TD>{it.unit}</TD>
-                  <TD className="text-right"><Input type="number" min={0} step="any" aria-label={`Planned ${it.name}`} className="h-8 text-right" value={plan[it.key] ?? ''} onChange={(e) => setPlan((p) => ({ ...p, [it.key]: e.target.value }))} /></TD>
+                  <TD className="text-right"><Input type="number" min={0} max={L.MAX_EXTRA} step="any" aria-label={`Planned ${it.name}`} className="h-8 text-right" value={plan[it.key] ?? ''} onChange={(e) => setPlan((p) => ({ ...p, [it.key]: e.target.value }))} /></TD>
                   <TD className={cn('text-right tabular-nums', diff != null && Math.abs(diff) / (it.gross_quantity || 1) >= 0.1 && 'font-semibold text-amber-700')}>{diff == null ? '—' : `${diff > 0 ? '+' : ''}${formatNumber(diff)}`}</TD>
                 </TR>
               )

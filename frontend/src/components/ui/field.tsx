@@ -6,7 +6,7 @@ export function Input({ className, invalid, ...props }: ComponentProps<'input'> 
     <input
       aria-invalid={invalid || undefined}
       className={cn(
-        'h-11 w-full rounded-lg border bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-2 focus:outline-offset-1 focus:outline-navy-900',
+        'h-9 w-full rounded-md border bg-white px-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:bg-slate-100',
         invalid ? 'border-red-500' : 'border-slate-300', className,
       )}
       {...props}
@@ -19,7 +19,7 @@ export function Select({ className, invalid, ...props }: ComponentProps<'select'
     <select
       aria-invalid={invalid || undefined}
       className={cn(
-        'h-11 w-full rounded-lg border bg-white px-3 text-sm text-slate-900 focus:outline-2 focus:outline-offset-1 focus:outline-navy-900',
+        'h-9 w-full rounded-md border bg-white px-3 text-sm text-slate-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:bg-slate-100',
         invalid ? 'border-red-500' : 'border-slate-300', className,
       )}
       {...props}
@@ -32,7 +32,7 @@ export function Textarea({ className, invalid, ...props }: ComponentProps<'texta
     <textarea
       aria-invalid={invalid || undefined}
       className={cn(
-        'min-h-24 w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-2 focus:outline-offset-1 focus:outline-navy-900',
+        'min-h-20 w-full rounded-md border bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:bg-slate-100',
         invalid ? 'border-red-500' : 'border-slate-300', className,
       )}
       {...props}
@@ -55,7 +55,7 @@ export function Field({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <label htmlFor={id} className="text-sm font-medium text-navy-900">{label}</label>
+        <label htmlFor={id} className="text-sm font-medium text-slate-700">{label}</label>
         {action}
       </div>
       {children({ id, describedBy, invalid: !!error })}

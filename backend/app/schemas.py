@@ -6,12 +6,13 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
+from app import limits as L
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 BuildingType = Literal["residential", "commercial", "extension", "other"]
 RoomType = Literal["living", "bedroom", "kitchen", "dining", "bathroom", "study", "store", "balcony", "corridor", "staircase", "office", "other"]
 
-MAX_ROOMS = 500
+MAX_ROOMS = L.MAX_ROOMS
 
 
 class _In(BaseModel):
@@ -19,18 +20,18 @@ class _In(BaseModel):
 
 
 class RoomIn(_In):
-    name: str = Field(min_length=1, max_length=80)
+    name: str = Field(min_length=1, max_length=L.ROOM_NAME)
     room_type: RoomType = "other"
-    length: float = Field(gt=0, le=1000)
-    width: float = Field(gt=0, le=1000)
-    height: float = Field(default=3.0, ge=2, le=15)
-    floor_number: int = Field(default=1, ge=1, le=50)
-    wall_thickness: float | None = Field(default=None, gt=0, le=3)
-    doors: int = Field(default=0, ge=0, le=50)
-    windows: int = Field(default=0, ge=0, le=50)
-    area_override: float | None = Field(default=None, gt=0, le=1_000_000)
-    pos_x: float | None = Field(default=None, ge=0, le=1000)
-    pos_y: float | None = Field(default=None, ge=0, le=1000)
+    length: float = Field(ge=L.MIN_ROOM_DIM, le=L.MAX_ROOM_DIM)
+    width: float = Field(ge=L.MIN_ROOM_DIM, le=L.MAX_ROOM_DIM)
+    height: float = Field(default=3.0, ge=L.MIN_HEIGHT, le=L.MAX_HEIGHT)
+    floor_number: int = Field(default=1, ge=1, le=L.MAX_FLOORS)
+    wall_thickness: float | None = Field(default=None, ge=L.MIN_WALL, le=L.MAX_WALL)
+    doors: int = Field(default=0, ge=0, le=L.MAX_DOORS_PER_ROOM)
+    windows: int = Field(default=0, ge=0, le=L.MAX_WINDOWS_PER_ROOM)
+    area_override: float | None = Field(default=None, gt=0, le=L.MAX_AREA)
+    pos_x: float | None = Field(default=None, ge=0, le=L.MAX_DIM)
+    pos_y: float | None = Field(default=None, ge=0, le=L.MAX_DIM)
 
 
 class RoomOut(BaseModel):
@@ -61,20 +62,20 @@ class RoomOut(BaseModel):
 
 
 class ProjectIn(_In):
-    name: str = Field(min_length=1, max_length=160)
-    description: str = Field(default="", max_length=2000)
-    owner_name: str = Field(default="", max_length=120)
+    name: str = Field(min_length=1, max_length=L.PROJECT_NAME)
+    description: str = Field(default="", max_length=L.DESCRIPTION)
+    owner_name: str = Field(default="", max_length=L.OWNER_NAME)
     building_type: BuildingType = "residential"
-    location: str = Field(default="", max_length=120)
-    floors: int = Field(default=1, ge=1, le=50)
+    location: str = Field(default="", max_length=L.LOCATION)
+    floors: int = Field(default=1, ge=1, le=L.MAX_FLOORS)
     currency: str = Field(default="INR", pattern=r"^[A-Z]{3}$")
-    budget: float | None = Field(default=None, gt=0, lt=1e13)
-    length: float = Field(gt=0, le=1000)
-    width: float = Field(gt=0, le=1000)
-    height: float = Field(default=3.0, ge=2, le=15)
-    wall_thickness: float = Field(default=0.23, ge=0.05, le=1)
-    slab_thickness: float = Field(default=0.15, ge=0.05, le=1)
-    built_up_area: float | None = Field(default=None, gt=0, le=1_000_000)
+    budget: float | None = Field(default=None, gt=0, le=L.MAX_BUDGET)
+    length: float = Field(ge=L.MIN_DIM, le=L.MAX_DIM)
+    width: float = Field(ge=L.MIN_DIM, le=L.MAX_DIM)
+    height: float = Field(default=3.0, ge=L.MIN_HEIGHT, le=L.MAX_HEIGHT)
+    wall_thickness: float = Field(default=0.23, ge=L.MIN_WALL, le=L.MAX_WALL)
+    slab_thickness: float = Field(default=0.15, ge=L.MIN_SLAB, le=L.MAX_SLAB)
+    built_up_area: float | None = Field(default=None, gt=0, le=L.MAX_AREA)
 
 
 class ProjectCreate(ProjectIn):
@@ -147,7 +148,42 @@ class ProjectDetail(ProjectOut):
     floorplans: list[FloorPlanOut] = Field(default_factory=list)
 
 
-class ProjectConfigUpdate(_In):
+def _numbers_within(value, hi: float, label: str):
+    """Every number anywhere inside `value` must be between 0 and `hi` (text and flags are left alone)."""
+    if isinstance(value, bool) or value is None or isinstance(value, str):
+        return value
+    if isinstance(value, (int, float)):
+        if not 0 <= value <= hi:
+            raise ValueError(f"{label}: values must be between 0 and {hi:g}.")
+    elif isinstance(value, dict):
+        for v in value.values():
+            _numbers_within(v, hi, label)
+    elif isinstance(value, list):
+        for v in value:
+            _numbers_within(v, hi, label)
+    return value
+
+
+class _EstimateNumbers(_In):
+    """Shared range checks for the estimate settings, so an absurd number never reaches the calculator."""
+
+    @field_validator("wastage", check_fields=False)
+    @classmethod
+    def _wastage_range(cls, v):
+        return _numbers_within(v, L.MAX_WASTAGE_PCT, "Wastage (%)")
+
+    @field_validator("assumptions", check_fields=False)
+    @classmethod
+    def _assumption_range(cls, v):
+        return _numbers_within(v, L.MAX_ASSUMPTION, "Assumptions")
+
+    @field_validator("extra_costs", "purchase_quantities", check_fields=False)
+    @classmethod
+    def _extra_range(cls, v):
+        return _numbers_within(v, L.MAX_EXTRA, "Extra costs and planned quantities")
+
+
+class ProjectConfigUpdate(_EstimateNumbers):
     """Estimate settings: assumptions, wastage, chosen materials, extra costs and planned purchases."""
 
     assumptions: dict | None = None
@@ -166,9 +202,14 @@ class ProfileOut(BaseModel):
 
 
 class ProfileUpdate(_In):
-    full_name: str = Field(max_length=120)
-    default_city: str | None = Field(default=None, max_length=120)
+    full_name: str = Field(max_length=L.PERSON_NAME)
+    default_city: str | None = Field(default=None, max_length=L.CITY)
     default_wastage: dict[str, float] | None = None
+
+    @field_validator("default_wastage")
+    @classmethod
+    def _default_wastage_range(cls, v):
+        return _numbers_within(v, L.MAX_WASTAGE_PCT, "Wastage (%)")
 
 
 def check_floors(rooms, floors: int) -> None:
@@ -184,19 +225,19 @@ class CalibrationIn(_In):
     y1: float
     x2: float
     y2: float
-    real_length_m: float = Field(gt=0, le=1000)
+    real_length_m: float = Field(gt=0, le=L.MAX_DIM)
 
 
 # ---------------------------------------------------------------------------------------------------- materials and prices
 class MaterialBase(_In):
     estimate_key: str
-    name: str = Field(min_length=1, max_length=160)
-    category: str = Field(min_length=1, max_length=80)
-    brand: str = Field(default="", max_length=120)
-    grade: str = Field(default="", max_length=120)
-    specification: str = Field(default="", max_length=2000)
-    durability_notes: str = Field(default="", max_length=2000)
-    unit: str = Field(min_length=1, max_length=30)
+    name: str = Field(min_length=1, max_length=L.MATERIAL_NAME)
+    category: str = Field(min_length=1, max_length=L.CATEGORY)
+    brand: str = Field(default="", max_length=L.BRAND)
+    grade: str = Field(default="", max_length=L.GRADE)
+    specification: str = Field(default="", max_length=L.SPECIFICATION)
+    durability_notes: str = Field(default="", max_length=L.NOTES)
+    unit: str = Field(min_length=1, max_length=L.UNIT)
 
     @field_validator("estimate_key")
     @classmethod
@@ -209,9 +250,9 @@ class MaterialBase(_In):
 
 
 class MaterialCreate(MaterialBase):
-    unit_price: float | None = Field(default=None, ge=0, lt=1e12)
-    supplier: str = Field(default="", max_length=160)
-    location: str = Field(default="", max_length=160)
+    unit_price: float | None = Field(default=None, ge=0, le=L.MAX_UNIT_PRICE)
+    supplier: str = Field(default="", max_length=L.SUPPLIER)
+    location: str = Field(default="", max_length=L.PRICE_LOCATION)
     currency: str = Field(default="INR", pattern=r"^[A-Z]{3}$")
 
 
@@ -244,16 +285,16 @@ class MaterialOut(BaseModel):
 
 class PriceCreate(_In):
     material_id: uuid.UUID
-    unit_price: float = Field(ge=0, lt=1e12)
+    unit_price: float = Field(ge=0, le=L.MAX_UNIT_PRICE)
     currency: str = Field(default="INR", pattern=r"^[A-Z]{3}$")
-    supplier: str = Field(default="", max_length=160)
-    location: str = Field(default="", max_length=160)
+    supplier: str = Field(default="", max_length=L.SUPPLIER)
+    location: str = Field(default="", max_length=L.PRICE_LOCATION)
 
 
 class PriceUpdate(_In):
-    unit_price: float = Field(ge=0, lt=1e12)
-    supplier: str = Field(default="", max_length=160)
-    location: str = Field(default="", max_length=160)
+    unit_price: float = Field(ge=0, le=L.MAX_UNIT_PRICE)
+    supplier: str = Field(default="", max_length=L.SUPPLIER)
+    location: str = Field(default="", max_length=L.PRICE_LOCATION)
 
 
 class PriceOut(BaseModel):
@@ -270,7 +311,7 @@ class PriceOut(BaseModel):
 
 
 # ---------------------------------------------------------------------------------------------------- estimates and reports
-class EstimateRequest(_In):
+class EstimateRequest(_EstimateNumbers):
     persist: bool = True
     # optional what-if overrides (never saved to the project)
     assumptions: dict | None = None

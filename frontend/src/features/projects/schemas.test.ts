@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { LIMITS as L } from '@/lib/limits'
 import { buildingSchema, defaultWizardValues, detailsSchema, roomSchema, toPayload, wizardSchema } from './schemas'
 
 const valid = { ...defaultWizardValues('Asha'), name: 'Sample G+1 Residence', floors: 2, rooms: [] }
@@ -11,8 +12,21 @@ describe('project forms', () => {
     expect(detailsSchema.safeParse({ ...valid, name: '   ' }).success).toBe(false)
     expect(wizardSchema.parse({ ...valid, name: '  House  ' }).name).toBe('House')
   })
-  it.each([[0], [51], [1.5]])('rejects %s floors', (floors) => {
+  it.each([[0], [L.MAX_FLOORS + 1], [1.5]])('rejects %s floors', (floors) => {
     expect(detailsSchema.safeParse({ ...valid, floors }).success).toBe(false)
+  })
+  it('stops text at the limits and accepts text exactly at them', () => {
+    for (const [field, max] of [['name', L.PROJECT_NAME], ['owner_name', L.OWNER_NAME], ['description', L.DESCRIPTION], ['location', L.LOCATION]] as const) {
+      expect(detailsSchema.safeParse({ ...valid, [field]: 'x'.repeat(max) }).success, `${field} at limit`).toBe(true)
+      expect(detailsSchema.safeParse({ ...valid, [field]: 'x'.repeat(max + 1) }).success, `${field} over limit`).toBe(false)
+    }
+  })
+  it('keeps room doors, windows and sizes sensible', () => {
+    const room = { name: 'Bedroom', room_type: 'bedroom' as const, floor_number: 1, length: 3.5, width: 3.5, doors: 1, windows: 1 }
+    expect(roomSchema.safeParse(room).success).toBe(true)
+    for (const patch of [{ windows: L.MAX_WINDOWS_PER_ROOM + 1 }, { doors: L.MAX_DOORS_PER_ROOM + 1 }, { length: L.MAX_ROOM_DIM + 1 }, { name: 'x'.repeat(L.ROOM_NAME + 1) }]) {
+      expect(roomSchema.safeParse({ ...room, ...patch }).success, JSON.stringify(patch)).toBe(false)
+    }
   })
   it('budget is optional but must be positive when given', () => {
     expect(detailsSchema.safeParse({ ...valid, budget: null }).success).toBe(true)
@@ -21,7 +35,7 @@ describe('project forms', () => {
   })
   it('dimensions must be positive and sensible', () => {
     expect(buildingSchema.safeParse(valid).success).toBe(true)
-    for (const patch of [{ length: 0 }, { width: -3 }, { length: 5000 }, { height: 1 }, { wall_thickness: 0 }, { slab_thickness: 2 }, { length: NaN }]) {
+    for (const patch of [{ length: 0 }, { width: -3 }, { length: L.MAX_DIM + 1 }, { height: 1 }, { height: L.MAX_HEIGHT + 1 }, { wall_thickness: 0 }, { slab_thickness: 2 }, { length: NaN }]) {
       expect(buildingSchema.safeParse({ ...valid, ...patch }).success, JSON.stringify(patch)).toBe(false)
     }
   })

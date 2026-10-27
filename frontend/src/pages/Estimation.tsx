@@ -9,6 +9,7 @@ import { Field, Input, Select } from '@/components/ui/form'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { useEstimate } from '@/features/estimation/useEstimate'
 import { downloadReport } from '@/features/reports/download'
+import { LIMITS as L } from '@/lib/limits'
 import { useToast } from '@/lib/toast'
 import { useUnits } from '@/lib/units'
 import { formatMoney, formatNumber } from '@/lib/utils'
@@ -64,6 +65,8 @@ function draftToAssumptions(d: Draft): { error: string } | { value: Record<strin
   if (!(n(d.paint_coats) >= 1) || !Number.isInteger(n(d.paint_coats))) return { error: 'Paint coats must be a whole number of at least 1.' }
   if (!(n(d.mortar_joint_mm) >= 0) || !Number.isFinite(n(d.mortar_joint_mm))) return { error: 'Mortar joint must be 0 or more.' }
   if (!(n(d.frame_concrete_pct) >= 0) || !Number.isFinite(n(d.frame_concrete_pct))) return { error: 'Frame concrete allowance must be 0 or more.' }
+  const tooBig = [d.steel_kg_per_m3, d.mix_c, d.mix_s, d.mix_a, d.internal_wall_thickness, d.mortar_joint_mm, d.mortar_sand_ratio, d.plaster_sand_ratio, d.plaster_thickness_mm, d.tile_l, d.tile_w, d.paint_coats, d.paint_coverage, d.frame_concrete_pct].some((x) => n(x) > L.MAX_ASSUMPTION)
+  if (tooBig) return { error: `Assumption values must be at most ${L.MAX_ASSUMPTION.toLocaleString('en-IN')}.` }
   return {
     value: {
       steel_kg_per_m3: n(d.steel_kg_per_m3), concrete_mix: [n(d.mix_c), n(d.mix_s), n(d.mix_a)], concrete_supply: d.concrete_supply,
@@ -101,7 +104,7 @@ function EstimationBody({ projectId }: { projectId: string }) {
     const w: Record<string, number> = {}
     for (const [k, v] of Object.entries(waste)) {
       const x = Number(v)
-      if (v === '' || !Number.isFinite(x) || x < 0 || x > 100) { setFormError(`Wastage for ${k} must be between 0 and 100 %.`); return }
+      if (v === '' || !Number.isFinite(x) || x < 0 || x > L.MAX_WASTAGE_PCT) { setFormError(`Wastage for ${k} must be between 0 and ${L.MAX_WASTAGE_PCT} %.`); return }
       w[k] = x
     }
     setFormError(null)
@@ -143,7 +146,7 @@ function EstimationBody({ projectId }: { projectId: string }) {
                   <TD className="w-8">{open === it.key ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</TD>
                   <TD><span className="font-medium">{it.name}</span>{!it.counts_toward_cost && <Badge className="ml-2">quantity only</Badge>}{it.material_label && it.counts_toward_cost && <div className="text-xs text-slate-500">{it.material_label}</div>}</TD>
                   <TD className="text-right tabular-nums">{formatNumber(it.net_quantity)}</TD>
-                  <TD className="text-right" onClick={(e) => e.stopPropagation()}><Input type="number" min={0} max={100} step="any" aria-label={`Wastage for ${it.name}`} value={waste[it.key] ?? ''} onChange={(e) => setWaste((w) => ({ ...w, [it.key]: e.target.value }))} className="h-8 w-24 text-right" /></TD>
+                  <TD className="text-right" onClick={(e) => e.stopPropagation()}><Input type="number" min={0} max={L.MAX_WASTAGE_PCT} step="any" aria-label={`Wastage for ${it.name}`} value={waste[it.key] ?? ''} onChange={(e) => setWaste((w) => ({ ...w, [it.key]: e.target.value }))} className="h-8 w-24 text-right" /></TD>
                   <TD className="text-right font-medium tabular-nums">{formatNumber(it.gross_quantity)}</TD>
                   <TD>{it.unit}</TD>
                   <TD className="text-right tabular-nums">{it.unit_price != null ? <>{formatNumber(it.unit_price)}{it.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</> : it.counts_toward_cost ? <Badge tone="red">missing</Badge> : '—'}</TD>

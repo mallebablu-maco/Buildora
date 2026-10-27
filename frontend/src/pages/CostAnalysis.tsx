@@ -11,6 +11,7 @@ import { useEstimate } from '@/features/estimation/useEstimate'
 import { CostBars, CostPie } from '@/features/pricing/charts'
 import { downloadReport } from '@/features/reports/download'
 import { api } from '@/lib/api'
+import { LIMITS as L } from '@/lib/limits'
 import { useToast } from '@/lib/toast'
 import { cn, formatMoney, formatNumber } from '@/lib/utils'
 import type { Estimate, ExtraCostConfig, ProjectDetail } from '@/types'
@@ -54,14 +55,14 @@ function Body({ projectId }: { projectId: string }) {
 
   const saveBudget = () => guard(async () => {
     const v = budget.trim() === '' ? null : Number(budget)
-    if (v !== null && !(v > 0)) throw new Error('Budget must be a positive number (or blank to clear).')
+    if (v !== null && !(v > 0 && v <= L.MAX_BUDGET)) throw new Error(`Budget must be between 1 and ${L.MAX_BUDGET.toLocaleString('en-IN')} (or blank to clear).`)
     await api.updateProject(project.id, baseOf(project, v))
     await recalc()
   }, 'Budget saved.')
 
   const savePrice = (itemKey: string, materialId: string | null, value: string, current: number | null) => {
     const v = Number(value)
-    if (value.trim() === '' || !Number.isFinite(v) || v < 0) { toast.error('Enter a valid, non-negative unit price.'); return }
+    if (value.trim() === '' || !Number.isFinite(v) || v < 0 || v > L.MAX_UNIT_PRICE) { toast.error(`Unit price must be between 0 and ${L.MAX_UNIT_PRICE.toLocaleString('en-IN')}.`); return }
     if (!materialId || v === current) return
     void guard(async () => { await api.createPrice({ material_id: materialId, unit_price: v, currency: cur, supplier: 'User-entered', location: project.location }); await recalc() }, `Price for ${itemKey} saved.`)
   }
@@ -83,7 +84,7 @@ function Body({ projectId }: { projectId: string }) {
         <Card>
           <CardHeader title="Budget" description="Compared with the total including enabled extras." />
           <CardBody className="space-y-3">
-            <div className="flex gap-2"><Input type="number" min={0} step="any" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="No budget" aria-label="Project budget" /><Button variant="outline" onClick={saveBudget}>Save</Button></div>
+            <div className="flex gap-2"><Input type="number" min={0} max={L.MAX_BUDGET} step="any" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="No budget" aria-label="Project budget" /><Button variant="outline" onClick={saveBudget}>Save</Button></div>
             {s.budget ? (
               <div className={cn('rounded-lg p-3 text-sm', (s.budget_variance ?? 0) >= 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800')}>
                 <p className="font-semibold">{(s.budget_variance ?? 0) >= 0 ? 'Under budget' : 'Over budget'} by {formatMoney(Math.abs(s.budget_variance ?? 0), cur)}</p>
@@ -139,13 +140,13 @@ function Body({ projectId }: { projectId: string }) {
               <div key={e.key} className="flex flex-wrap items-center gap-3">
                 <label className="flex w-44 items-center gap-2 text-sm font-medium"><input type="checkbox" className="h-4 w-4 accent-orange-500" checked={cfg.enabled} onChange={(ev) => setExtras((x) => ({ ...x, [e.key]: { ...cfg, enabled: ev.target.checked } }))} />{EXTRA_LABEL[e.key]}</label>
                 <Select value={cfg.mode} onChange={(ev) => setExtras((x) => ({ ...x, [e.key]: { ...cfg, mode: ev.target.value as 'fixed' | 'percent' } }))} className="h-8 w-40 text-sm" aria-label={`${EXTRA_LABEL[e.key]} mode`}><option value="fixed">Fixed amount</option><option value="percent">% of materials</option></Select>
-                <Input type="number" min={0} step="any" value={cfg.value} onChange={(ev) => setExtras((x) => ({ ...x, [e.key]: { ...cfg, value: Number(ev.target.value) } }))} className="h-8 w-32" aria-label={`${EXTRA_LABEL[e.key]} value`} />
+                <Input type="number" min={0} max={cfg.mode === 'percent' ? 100 : L.MAX_EXTRA} step="any" value={cfg.value} onChange={(ev) => setExtras((x) => ({ ...x, [e.key]: { ...cfg, value: Number(ev.target.value) } }))} className="h-8 w-32" aria-label={`${EXTRA_LABEL[e.key]} value`} />
                 <span className="text-sm text-slate-500">{e.included ? `= ${formatMoney(e.amount, cur)}` : e.enabled ? 'enter a value' : 'not included'}</span>
               </div>
             )
           })}
           <Button variant="primary" size="sm" loading={calculating} onClick={() => void guard(() => {
-            for (const c of Object.values(extras)) if (!(c.value >= 0)) throw new Error('Extra costs cannot be negative.')
+            for (const c of Object.values(extras)) if (!(c.value >= 0 && c.value <= (c.mode === 'percent' ? 100 : L.MAX_EXTRA))) throw new Error(`Extra costs must be between 0 and ${c.mode === 'percent' ? '100 %' : L.MAX_EXTRA.toLocaleString('en-IN')}.`)
             return applyConfig({ extra_costs: extras })
           }, 'Additional costs updated.')}>Apply</Button>
           <p className="text-sm font-medium text-navy-900">Total including enabled extras: {formatMoney(s.project_total, cur)}</p>
@@ -186,7 +187,7 @@ function PriceCell({ value, sample, onCommit }: { value: number | null; sample: 
   return (
     <div className="flex items-center justify-end gap-1">
       {sample && <Badge tone="amber">SAMPLE</Badge>}
-      <Input type="number" min={0} step="any" value={v} aria-label="Unit price" onChange={(e) => setV(e.target.value)} onBlur={() => onCommit(v)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} className="h-8 w-24 text-right" />
+      <Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={v} aria-label="Unit price" onChange={(e) => setV(e.target.value)} onBlur={() => onCommit(v)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} className="h-8 w-28 text-right" />
     </div>
   )
 }

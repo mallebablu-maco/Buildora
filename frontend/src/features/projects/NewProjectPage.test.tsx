@@ -44,7 +44,7 @@ describe('New project wizard', () => {
     expect(screen.getByRole('heading', { name: 'Building input' })).toBeInTheDocument()
     await type(user, 'Length (m)', '0')
     await next(user)
-    expect(await screen.findByText('Length must be greater than 0.')).toBeInTheDocument()
+    expect(await screen.findByText('Length must be at least 1.')).toBeInTheDocument()
     await type(user, 'Length (m)', '')
     await next(user)
     expect(await screen.findByText('Length: enter a number.')).toBeInTheDocument()

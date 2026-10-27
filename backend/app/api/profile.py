@@ -40,9 +40,9 @@ def update_profile(body: ProfileUpdate, db: Session = Depends(get_db), identity:
     if body.default_city is not None:
         p.default_city = body.default_city
     if body.default_wastage is not None:
-        bad = [k for k, v in body.default_wastage.items() if k not in ITEM_ORDER or not 0 <= v <= 100]
+        bad = [k for k, v in body.default_wastage.items() if k not in ITEM_ORDER or not 0 <= v <= 50]
         if bad:
-            raise HTTPException(422, f"Default wastage must use known materials and values from 0 to 100 % (check: {', '.join(bad)}).")
+            raise HTTPException(422, f"Default wastage must use known materials and values from 0 to 50 % (check: {', '.join(bad)}).")
         p.default_wastage = body.default_wastage
     db.commit()
     return _out(p, identity)

@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/ui/page'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { useAsync } from '@/hooks/useApi'
 import { api, saveBlob } from '@/lib/api'
+import { LIMITS as L } from '@/lib/limits'
 import { useToast } from '@/lib/toast'
 import { formatDate } from '@/lib/utils'
 import type { Material } from '@/types'
@@ -45,8 +46,8 @@ export default function Prices() {
       {error && <ErrorState message={error} onRetry={reload} />}
       {data && (
         <Card className="mt-4">
-          <Table>
-            <THead><TR><TH>Material</TH><TH>Unit</TH><TH className="w-36">Unit price</TH><TH>Supplier</TH><TH>Location</TH><TH>Source</TH><TH>Updated</TH><TH /></TR></THead>
+          <Table className="min-w-[60rem]">
+            <THead><TR><TH>Material</TH><TH>Unit</TH><TH className="w-40">Unit price</TH><TH className="w-48">Supplier</TH><TH className="w-48">Location</TH><TH>Source</TH><TH>Updated</TH><TH /></TR></THead>
             <TBody>{data.map((m) => <PriceRow key={`${m.id}-${m.price_id}-${m.last_updated}`} m={m} onChanged={reload} />)}</TBody>
           </Table>
         </Card>
@@ -66,7 +67,7 @@ function PriceRow({ m, onChanged }: { m: Material; onChanged: () => Promise<void
 
   const save = async () => {
     const v = Number(price)
-    if (price.trim() === '' || !Number.isFinite(v) || v < 0) { toast.error('Enter a valid, non-negative unit price.'); return }
+    if (price.trim() === '' || !Number.isFinite(v) || v < 0 || v > L.MAX_UNIT_PRICE) { toast.error(`Unit price must be between 0 and ${L.MAX_UNIT_PRICE.toLocaleString('en-IN')}.`); return }
     setBusy(true)
     try {
       if (own) await api.updatePrice(m.price_id!, { unit_price: v, supplier, location })
@@ -82,11 +83,11 @@ function PriceRow({ m, onChanged }: { m: Material; onChanged: () => Promise<void
   }
   return (
     <TR>
-      <TD className="font-medium">{m.name}<div className="text-xs font-normal text-slate-500">{[m.brand, m.grade].filter(Boolean).join(' · ')}</div></TD>
+      <TD className="min-w-48 font-medium">{m.name}<div className="text-xs font-normal text-slate-500">{[m.brand, m.grade].filter(Boolean).join(' · ')}</div></TD>
       <TD>{m.unit}</TD>
-      <TD><Input type="number" min={0} step="any" value={price} aria-label={`Unit price for ${m.name}`} onChange={(e) => setPrice(e.target.value)} className="h-8" /></TD>
-      <TD><Input value={supplier} onChange={(e) => setSupplier(e.target.value)} aria-label={`Supplier for ${m.name}`} placeholder={m.price_is_sample ? 'Your supplier' : ''} className="h-8" /></TD>
-      <TD><Input value={location} onChange={(e) => setLocation(e.target.value)} aria-label={`Location for ${m.name}`} className="h-8" /></TD>
+      <TD><Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={price} aria-label={`Unit price for ${m.name}`} onChange={(e) => setPrice(e.target.value)} className="h-8 min-w-28" /></TD>
+      <TD><Input value={supplier} maxLength={L.SUPPLIER} onChange={(e) => setSupplier(e.target.value)} aria-label={`Supplier for ${m.name}`} placeholder={m.price_is_sample ? 'Your supplier' : ''} className="h-8" /></TD>
+      <TD><Input value={location} maxLength={L.PRICE_LOCATION} onChange={(e) => setLocation(e.target.value)} aria-label={`Location for ${m.name}`} className="h-8" /></TD>
       <TD>{m.price_is_sample ? <Badge tone="amber">SAMPLE</Badge> : m.unit_price == null ? <Badge tone="red">No price</Badge> : <Badge tone="green">Your price</Badge>}</TD>
       <TD className="whitespace-nowrap">{formatDate(m.last_updated)}</TD>
       <TD className="whitespace-nowrap text-right">

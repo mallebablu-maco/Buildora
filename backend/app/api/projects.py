@@ -215,9 +215,6 @@ def reset_layout(project_id: uuid.UUID, db: Session = Depends(get_db), identity:
 def update_config(project_id: uuid.UUID, body: ProjectConfigUpdate, db: Session = Depends(get_db), identity: Identity = Depends(current_identity)):
     """Estimate configuration: assumptions, wastage, material choices, extra costs, planned purchases."""
     p = owned_project(db, identity, project_id)
-    for k, v in (body.wastage or {}).items():
-        if not 0 <= v <= 100:
-            raise HTTPException(422, f"Wastage for '{k}' must be between 0 and 100 %.")
     for field in ("assumptions", "wastage", "material_selections", "extra_costs", "purchase_quantities"):
         val = getattr(body, field)
         if val is None:

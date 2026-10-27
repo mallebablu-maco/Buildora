@@ -13,11 +13,11 @@
   --color-navy-800: #172b49;
   --color-navy-900: #0b1f3a;
   --color-navy-950: #07142a;
-  --color-brand-50: #fff4e6;
-  --color-brand-100: #ffe3c2;
-  --color-brand-500: #f58a1f;
-  --color-brand-600: #e07108;
-  --color-brand-700: #b45309;
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
 }
 
 html,
@@ -26,9 +26,20 @@ body,
   min-height: 100%;
 }
 
+h1,
+h2,
+h3 {
+  color: var(--color-navy-900);
+}
+
+:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
+
 body {
   margin: 0;
-  background: #f4f6fa;
+  background: #f8fafc;
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
 }

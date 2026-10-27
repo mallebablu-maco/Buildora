@@ -38,14 +38,14 @@ export default function Catalogue() {
       {mats.loading && <Spinner />}
       {mats.error && <ErrorState message={mats.error} onRetry={mats.reload} />}
       {mats.data && (list.length === 0 ? <EmptyState title="No materials match" description="Adjust the filters or add a custom material." /> : (
-        <Card className="mb-8"><Table>
-          <THead><TR><TH>Material</TH><TH>Category</TH><TH>Brand</TH><TH>Grade / spec</TH><TH>Unit</TH><TH className="text-right">Unit price</TH><TH>Supplier</TH><TH>Location</TH><TH>Updated</TH><TH /></TR></THead>
+        <Card className="mb-8"><Table className="min-w-[64rem]">
+          <THead><TR><TH className="w-64">Material</TH><TH>Category</TH><TH>Brand</TH><TH>Grade / spec</TH><TH>Unit</TH><TH className="text-right">Unit price</TH><TH>Supplier</TH><TH>Location</TH><TH>Updated</TH><TH /></TR></THead>
           <TBody>{list.map((m) => (
             <TR key={m.id}>
-              <TD className="font-medium">{m.name}<div className="text-xs font-normal text-slate-500">{m.specification}</div></TD>
-              <TD>{m.category}</TD><TD>{m.brand || '—'}</TD><TD>{m.grade || '—'}</TD><TD>{m.unit}</TD>
-              <TD className="text-right tabular-nums">{m.unit_price != null ? formatMoney(m.unit_price, m.currency ?? 'INR', 2) : '—'}{m.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</TD>
-              <TD>{m.supplier || '—'}</TD><TD>{m.location || '—'}</TD><TD className="whitespace-nowrap">{formatDate(m.last_updated)}</TD>
+              <TD className="break-words font-medium">{m.name}<div className="line-clamp-2 break-words text-xs font-normal text-slate-500">{m.specification}</div></TD>
+              <TD className="break-words">{m.category}</TD><TD className="break-words">{m.brand || '—'}</TD><TD className="break-words">{m.grade || '—'}</TD><TD className="whitespace-nowrap">{m.unit}</TD>
+              <TD className="whitespace-nowrap text-right tabular-nums">{m.unit_price != null ? formatMoney(m.unit_price, m.currency ?? 'INR', 2) : '—'}{m.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</TD>
+              <TD className="break-words">{m.supplier || '—'}</TD><TD className="break-words">{m.location || '—'}</TD><TD className="whitespace-nowrap">{formatDate(m.last_updated)}</TD>
               <TD className="whitespace-nowrap text-right">{m.editable ? <>
                 <Button size="icon" variant="ghost" aria-label={`Edit ${m.name}`} onClick={() => setEdit({ m })}><Pencil className="h-4 w-4" /></Button>
                 <Button size="icon" variant="ghost" aria-label={`Delete ${m.name}`} onClick={() => setDel(m)}><Trash2 className="h-4 w-4 text-red-500" /></Button></> : <Badge>Built-in</Badge>}</TD>
@@ -105,17 +105,17 @@ function ComparePanel({ materials, projects }: { materials: Material[]; projects
           <>
             <p className="mb-3 text-sm text-slate-600">Project requirement: <strong>{qty != null ? `${formatNumber(qty)} ${item?.unit}` : '—'}</strong> (incl. wastage). The lowest price is highlighted for convenience only — it is <strong>not</strong> a recommendation on quality.</p>
             {alts.length === 0 ? <EmptyState title="No alternatives" description="Add materials of this type to compare." /> : (
-              <Table>
+              <Table className="min-w-[60rem]">
                 <THead><TR><TH>Option</TH><TH>Brand</TH><TH>Grade</TH><TH>Specification</TH><TH>Durability notes</TH><TH>Supplier</TH><TH className="text-right">Price / unit</TH><TH className="text-right">Cost for this project</TH><TH /></TR></THead>
                 <TBody>{alts.map((m) => {
                   const cost = m.unit_price != null && qty != null ? m.unit_price * qty : null
                   const isLow = m.unit_price != null && m.unit_price === lowest && priced.length > 1
                   return (
                     <TR key={m.id} className={cn(isLow && 'bg-emerald-50/60')}>
-                      <TD className="font-medium">{m.name}{isLow && <Badge tone="green" className="ml-2">Lowest price</Badge>}{m.id === currentId && <Badge tone="navy" className="ml-2">Selected</Badge>}</TD>
+                      <TD className="min-w-44 break-words font-medium">{m.name}{isLow && <Badge tone="green" className="ml-2">Lowest price</Badge>}{m.id === currentId && <Badge tone="navy" className="ml-2">Selected</Badge>}</TD>
                       <TD>{m.brand || '—'}</TD><TD>{m.grade || '—'}</TD><TD className="max-w-48 text-xs text-slate-600">{m.specification || '—'}</TD><TD className="max-w-48 text-xs text-slate-600">{m.durability_notes || '—'}</TD>
                       <TD>{m.supplier || '—'}</TD>
-                      <TD className="text-right tabular-nums">{m.unit_price != null ? formatMoney(m.unit_price, cur, 2) : <Badge tone="red">no price</Badge>}{m.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</TD>
+                      <TD className="whitespace-nowrap text-right tabular-nums">{m.unit_price != null ? formatMoney(m.unit_price, cur, 2) : <Badge tone="red">no price</Badge>}{m.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</TD>
                       <TD className="text-right font-medium tabular-nums">{cost != null ? formatMoney(cost, cur) : '—'}</TD>
                       <TD><Button size="sm" variant={m.id === currentId ? 'outline' : 'primary'} disabled={m.id === currentId} onClick={() => choose(m)}>{m.id === currentId ? 'In use' : 'Use in project'}</Button></TD>
                     </TR>)

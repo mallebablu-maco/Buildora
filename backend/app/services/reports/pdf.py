@@ -119,7 +119,7 @@ def build_report_pdf(data: dict) -> bytes:
         rows.append([Paragraph(name, cell), _num(it["net_quantity"]), f"{it['wastage_pct']:g}", _num(it["gross_quantity"]),
                      Paragraph(it["unit"], cell), price, cost])
     rows.append([Paragraph("<b>Total material cost</b>", cell), "", "", "", "", "", Paragraph(f"<b>{_num(summary['material_total'])}</b>", cell)])
-    t = tbl(rows, [46 * mm, 20 * mm, 14 * mm, 25 * mm, 20 * mm, 22 * mm, 23 * mm], align_right_from=1)
+    t = tbl(rows, [38 * mm, 18 * mm, 12 * mm, 22 * mm, 15 * mm, 30 * mm, 35 * mm], align_right_from=1)
     t.setStyle(TableStyle([("BACKGROUND", (0, len(rows) - 1), (-1, len(rows) - 1), colors.HexColor("#FFF3E8")), ("ALIGN", (4, 0), (4, -1), "LEFT")]))
     story.append(t)
     story.append(Paragraph("S = sample placeholder price. 'qty only' lines are priced through their constituent materials (or ready-mix) and are not added again.", small))

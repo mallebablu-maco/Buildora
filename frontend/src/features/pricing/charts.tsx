@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { formatMoney } from '@/lib/utils'
+import { formatCompact, formatMoney } from '@/lib/utils'
 
 export const PALETTE = ['#0b1f3a', '#f97316', '#3c6194', '#fdba74', '#94aecd', '#c2410c', '#243d62']
 
@@ -29,7 +29,7 @@ export function CostBars({ data, currency }: { data: { name: string; cost: numbe
         <BarChart data={data} margin={{ left: 8, right: 8 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-25} textAnchor="end" height={60} />
-          <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => (v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))} />
+          <YAxis tick={{ fontSize: 11 }} width={56} tickFormatter={(v) => formatCompact(Number(v))} />
           <Tooltip formatter={(v) => formatMoney(Number(v), currency)} />
           <Bar dataKey="cost" fill="#f97316" radius={[4, 4, 0, 0]} />
         </BarChart>
@@ -46,7 +46,7 @@ export function QuantityBars({ data }: { data: { name: string; unit: string; qua
       <ResponsiveContainer>
         <BarChart data={data} layout="vertical" margin={{ left: 30, right: 16 }}>
           <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-          <XAxis type="number" tick={{ fontSize: 11 }} />
+          <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => formatCompact(Number(v))} />
           <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
           <Tooltip formatter={(v, _n, item) => [`${Number(v).toLocaleString('en-IN', { maximumFractionDigits: 1 })} ${(item.payload as { unit: string }).unit}`, 'Quantity']} />
           <Bar dataKey="quantity" fill="#0b1f3a" radius={[0, 4, 4, 0]} />
