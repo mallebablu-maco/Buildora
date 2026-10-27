@@ -60,7 +60,7 @@ export default function ProjectPage() {
             ['Total built-up', formatArea(p.total_built_up_area)], ['Floor height', formatLength(p.height)],
             ['Walls / slab', `${formatLength(p.wall_thickness)} / ${formatLength(p.slab_thickness)}`],
           ] as const).map(([k, val]) => (
-            <div key={k} className="flex justify-between gap-4 border-b border-slate-100 py-1"><dt className="text-slate-500">{k}</dt><dd className="text-right font-medium">{val}</dd></div>
+            <div key={k} className="flex justify-between gap-4 border-b border-slate-100 py-1"><dt className="shrink-0 text-slate-500">{k}</dt><dd className="min-w-0 text-right font-medium [overflow-wrap:anywhere]">{val}</dd></div>
           ))}
         </dl>
       </Card>

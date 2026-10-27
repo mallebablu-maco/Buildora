@@ -55,20 +55,21 @@ export default function MyProjectsPage() {
           <table className="w-full min-w-[44rem] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                {['Project', 'Location', 'Type', 'Floors', 'Built-up', 'Rooms', 'Updated'].map((h) => <th key={h} scope="col" className="px-4 py-3 font-semibold">{h}</th>)}
+                {['Project', 'Location', 'Type', 'Floors', 'Built-up', 'Rooms', 'Updated'].map((h) => <th key={h} scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">{h}</th>)}
                 <th scope="col" className="px-4 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {projects.map((p) => (
                 <tr key={p.id}>
-                  <td className="px-4 py-3 font-medium"><Link to={`/projects/${p.id}`} className="text-navy-700 underline underline-offset-2">{p.name}</Link></td>
-                  <td className="px-4 py-3">{p.location || '—'}</td>
-                  <td className="px-4 py-3">{buildingTypeLabel(p.building_type)}</td>
-                  <td className="px-4 py-3">{p.floors}</td>
-                  <td className="px-4 py-3">{formatArea(p.total_built_up_area)}</td>
-                  <td className="px-4 py-3">{p.room_count}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatUpdated(p.updated_at)}</td>
+                  {/* long names/locations are cut off with "…" (full text on hover) so they cannot squash the other columns */}
+                  <td className="max-w-[16rem] truncate px-4 py-3 font-medium" title={p.name}><Link to={`/projects/${p.id}`} className="text-navy-700 underline underline-offset-2">{p.name}</Link></td>
+                  <td className="max-w-[12rem] truncate px-4 py-3" title={p.location || undefined}>{p.location || '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-3">{buildingTypeLabel(p.building_type)}</td>
+                  <td className="whitespace-nowrap px-4 py-3">{p.floors}</td>
+                  <td className="whitespace-nowrap px-4 py-3">{formatArea(p.total_built_up_area)}</td>
+                  <td className="whitespace-nowrap px-4 py-3">{p.room_count}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatUpdated(p.updated_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <Link to={`/projects/${p.id}`}><Button variant="outline" size="sm">Open</Button></Link>
