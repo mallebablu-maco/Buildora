@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import DBAPIError, TimeoutError as PoolTimeout
+from sqlalchemy.orm import Session
 
-from app.api import health, me, profile, projects
+from app.api import dashboard, floorplans, health, materials, me, profile, projects, reports
 from app.core.config import get_settings
+from app.core.db import get_engine
+from app.services.pricing.seed import seed_sample_catalogue
 
 log = logging.getLogger("buildora")
 
@@ -37,9 +41,23 @@ def install_error_handlers(app: FastAPI) -> None:
         return JSONResponse({"detail": "Something went wrong on the server."}, status_code=500)
 
 
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Make sure the shared sample catalogue exists. Runs as the database's own role (no user), once, and never stops the API from starting."""
+    settings = get_settings()
+    if settings.db_configured and settings.seed_sample_data:
+        try:
+            with Session(get_engine()) as db:
+                seed_sample_catalogue(db)
+        except Exception:  # noqa: BLE001 - e.g. the tables have not been created yet; the API must still start
+            log.exception("could not check the sample catalogue (are the database migrations applied?)")
+    yield
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
+        lifespan=lifespan,
         title="Buildora API",
         version="0.2.0",
         docs_url=None if settings.is_production else "/docs",
@@ -65,7 +83,7 @@ def create_app() -> FastAPI:
         max_age=600,
     )
 
-    for router in (health.router, me.router, profile.router, projects.router):
+    for router in (health.router, me.router, profile.router, projects.router, floorplans.router, materials.router, reports.router, dashboard.router):
         app.include_router(router, prefix="/api")
     return app
 

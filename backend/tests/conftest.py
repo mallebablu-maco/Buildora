@@ -75,6 +75,8 @@ def app_env(monkeypatch, signing_key):
     monkeypatch.setenv("SUPABASE_JWKS_JSON", jwks_for(signing_key))
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:5173")
     monkeypatch.setenv("DATABASE_URL", "")  # an empty value overrides backend/.env: tests must never reach a real database
+    monkeypatch.setenv("STORAGE_BACKEND", "memory")
+    monkeypatch.setenv("SEED_SAMPLE_DATA", "false")
     _clear_caches()
     yield monkeypatch
     _clear_caches()
@@ -110,9 +112,22 @@ def pg_uri(tmp_path_factory):
 def db_env(app_env, pg_uri):
     """app_env + DATABASE_URL pointing at the (emptied) test database."""
     with psycopg.connect(pg_uri, autocommit=True) as c:
-        c.execute("truncate public.project_rooms, public.projects, public.profiles, auth.users cascade; delete from storage.objects")
+        c.execute(
+            "truncate public.reports, public.optimization_recommendations, public.estimate_items, public.project_estimates, "
+            "public.floor_plan_files, public.material_price_records, public.materials, public.project_rooms, public.projects, "
+            "public.profiles, auth.users cascade; delete from storage.objects"
+        )
     app_env.setenv("DATABASE_URL", pg_uri)
     _clear_caches()
+    from sqlalchemy.orm import Session
+
+    from app.core.db import get_engine
+    from app.services.pricing.seed import seed_sample_catalogue
+    from app.services.storage import MemoryStorage
+
+    MemoryStorage.files.clear()
+    with Session(get_engine()) as db:  # the shared sample catalogue, as the API does at startup
+        seed_sample_catalogue(db)
     return pg_uri
 
 

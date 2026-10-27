@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # Supabase "Session pooler" connection string. It contains the database password: a SECRET. Keep it only in the
     # git-ignored backend/.env and in Render's environment settings.
     database_url: str = ""
+    # "supabase" (private Storage buckets) in real use; "memory" is for automated tests only.
+    seed_sample_data: bool = True
+    storage_backend: str = "supabase"
+    max_upload_mb: int = 10
     db_pool_size: int = 5
     db_max_overflow: int = 5
     db_pool_timeout: int = 10  # seconds to wait for a free connection before answering 503

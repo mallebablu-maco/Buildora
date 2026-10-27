@@ -40,15 +40,17 @@ def test_manual_footprint_overrides_length_times_width(db_client, alice):
     assert p["floor_area"] == 100 and p["total_built_up_area"] == 200
 
 
-def test_list_shows_room_counts_newest_first(db_client, alice):
+def test_list_shows_room_counts_and_the_newest_created_project_first(db_client, alice):
     first = create(db_client, alice, name="First")
     second = db_client.post("/api/projects", json={"name": "Second", "length": 6, "width": 6}, headers=alice.headers).json()
+    third = db_client.post("/api/projects", json={"name": "Third", "length": 7, "width": 7}, headers=alice.headers).json()
     rows = db_client.get("/api/projects", headers=alice.headers).json()
-    assert [(r["name"], r["room_count"]) for r in rows] == [("Second", 0), ("First", 3)]
+    assert [(r["name"], r["room_count"]) for r in rows] == [("Third", 0), ("Second", 0), ("First", 3)]
     assert "rooms" not in rows[0]
+    # editing an old project does NOT move it to the top: the order is by creation time
     db_client.put(f"/api/projects/{first['id']}", json=PROJECT | {"name": "First (renamed)"}, headers=alice.headers)
-    assert [r["name"] for r in db_client.get("/api/projects", headers=alice.headers).json()] == ["First (renamed)", "Second"]
-    assert second["id"] != first["id"]
+    assert [r["name"] for r in db_client.get("/api/projects", headers=alice.headers).json()] == ["Third", "Second", "First (renamed)"]
+    assert len({first["id"], second["id"], third["id"]}) == 3
 
 
 def test_update_project(db_client, alice):

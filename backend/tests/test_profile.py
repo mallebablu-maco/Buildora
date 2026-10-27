@@ -8,7 +8,7 @@ def test_profile_is_created_on_first_use_from_the_signup_name(db_client, alice, 
         assert c.execute("select count(*) from profiles").fetchone()[0] == 0  # nothing until the first request
     r = db_client.get("/api/profile", headers=alice.headers)
     assert r.status_code == 200
-    assert r.json() == {"id": alice.id, "email": "alice@example.com", "full_name": "Alice Rao"}
+    assert r.json() == {"id": alice.id, "email": "alice@example.com", "full_name": "Alice Rao", "default_city": "", "default_wastage": {}}
     assert db_client.get("/api/profile", headers=alice.headers).json() == r.json()  # idempotent
     with superuser(pg_uri) as c:
         assert c.execute("select count(*) from profiles").fetchone()[0] == 1
