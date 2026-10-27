@@ -21,6 +21,15 @@ for (const name of ['localStorage', 'sessionStorage'] as const) {
   for (const target of [globalThis, window]) Object.defineProperty(target, name, { value: storage, configurable: true, writable: true })
 }
 
+// Browser features jsdom does not have, used by the charts, the <dialog> modals and the floor plan preview.
+if (!HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) { this.setAttribute('open', '') }
+  HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) { this.removeAttribute('open'); this.dispatchEvent(new Event('close')) }
+}
+globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver
+URL.createObjectURL ??= () => 'blob:test'
+URL.revokeObjectURL ??= () => {}
+
 afterEach(() => {
   cleanup()
   localStorage.clear()

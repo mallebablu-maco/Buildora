@@ -1,4 +1,5 @@
-import { Box, Trash2 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Box, Calculator, FileDown, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -7,9 +8,11 @@ import { ConfirmDialog } from '@/components/ui/dialog'
 import { Alert, Spinner } from '@/components/ui/feedback'
 import { PageHeader } from '@/components/ui/page'
 import { ApiError } from '@/lib/api'
+import { BuildingDialog } from './BuildingDialog'
+import { FloorPlanPanel } from './FloorPlanPanel'
 import { formatArea, formatLength, formatMoney } from '@/lib/format'
 import { useToast } from '@/lib/toast'
-import { useDeleteProject, useProject } from './hooks'
+import { projectKeys, useDeleteProject, useProject } from './hooks'
 import { buildingTypeLabel, roomTypeLabel } from './types'
 
 export default function ProjectPage() {
@@ -19,6 +22,9 @@ export default function ProjectPage() {
   const { data: p, isPending, error, refetch } = useProject(id)
   const remove = useDeleteProject()
   const [confirm, setConfirm] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const qc = useQueryClient()
+  const refresh = () => { void refetch(); void qc.invalidateQueries({ queryKey: projectKeys.all, exact: true }) }
 
   if (isPending) return <Spinner label="Loading the project…" />
   if (error || !p) {
@@ -45,7 +51,10 @@ export default function ProjectPage() {
         title={p.name}
         description={p.description || undefined}
         actions={<>
-          <Button variant="outline" disabled title="Arrives in the next phase"><Box className="h-4 w-4" aria-hidden="true" /> 3D Studio (coming soon)</Button>
+          <Link to={`/studio/${p.id}`}><Button variant="accent"><Box className="h-4 w-4" aria-hidden="true" /> Open 3D Studio</Button></Link>
+          <Link to={`/estimation/${p.id}`}><Button variant="outline"><Calculator className="h-4 w-4" aria-hidden="true" /> Estimate</Button></Link>
+          <Link to="/reports"><Button variant="outline"><FileDown className="h-4 w-4" aria-hidden="true" /> Reports</Button></Link>
+          <Button variant="outline" onClick={() => setEditing(true)}><Pencil className="h-4 w-4" aria-hidden="true" /> Edit</Button>
           <Button variant="outline" onClick={() => setConfirm(true)}><Trash2 className="h-4 w-4 text-red-700" aria-hidden="true" /> Delete</Button>
         </>}
       />
@@ -95,6 +104,9 @@ export default function ProjectPage() {
           </div>
         )}
       </Card>
+
+      <FloorPlanPanel projectId={p.id} floorplans={p.floorplans} onChanged={refresh} />
+      <BuildingDialog open={editing} onClose={() => setEditing(false)} project={p} onSaved={refresh} />
 
       <ConfirmDialog
         open={confirm} title={`Delete “${p.name}”?`} confirmLabel="Delete project" busy={remove.isPending}

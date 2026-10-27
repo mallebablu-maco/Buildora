@@ -191,3 +191,19 @@ def test_other_people_cannot_touch_the_estimate_settings_or_layout(db_client, al
     assert db_client.put(f"{base}/config", json={"wastage": {"tiles": 1}}, headers=bob.headers).status_code == 404
     assert db_client.put(f"{base}/layout", json=layout_body(p), headers=bob.headers).status_code == 404
     assert db_client.delete(f"{base}/layout", headers=bob.headers).status_code == 404
+
+
+def test_new_projects_start_from_the_default_wastage_in_settings(db_client, alice):
+    assert db_client.put("/api/profile", json={"full_name": "Alice", "default_wastage": {"tiles": 12, "paint": 9}}, headers=alice.headers).status_code == 200
+    p = make(db_client, alice)
+    assert p["wastage"] == {"tiles": 12, "paint": 9}
+    by = {i["key"]: i for i in db_client.post(f"/api/projects/{p['id']}/estimate", headers=alice.headers).json()["items"]}
+    assert by["tiles"]["wastage_pct"] == 12 and by["paint"]["wastage_pct"] == 9 and by["steel"]["wastage_pct"] == 5
+    # changing the default later does not touch projects that already exist
+    db_client.put("/api/profile", json={"full_name": "Alice", "default_wastage": {"tiles": 1}}, headers=alice.headers)
+    assert db_client.get(f"/api/projects/{p['id']}", headers=alice.headers).json()["wastage"] == {"tiles": 12, "paint": 9}
+
+
+def test_invalid_default_wastage_is_rejected(db_client, alice):
+    for bad in ({"tiles": 150}, {"gold": 5}, {"tiles": -1}):
+        assert db_client.put("/api/profile", json={"full_name": "A", "default_wastage": bad}, headers=alice.headers).status_code == 422, bad

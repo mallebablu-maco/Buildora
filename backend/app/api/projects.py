@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.auth import Identity, current_identity
 from app.core.db import get_db
-from app.models import Estimate, Project, Report, Room
+from app.models import Estimate, Profile, Project, Report, Room
 from app.schemas import (
     EstimateRequest, LayoutIn, ProjectConfigUpdate, ProjectCreate, ProjectDetail, ProjectOut, ProjectUpdate, RoomIn, RoomOut,
     RoomsReplace, check_floors,
@@ -91,7 +91,9 @@ def list_projects(db: Session = Depends(get_db)):
 @router.post("/projects", response_model=ProjectDetail, status_code=status.HTTP_201_CREATED)
 def create_project(body: ProjectCreate, db: Session = Depends(get_db), identity: Identity = Depends(current_identity)):
     owner = uid(identity)
-    p = Project(id=str(uuid.uuid4()), owner_id=owner, **body.model_dump(exclude={"rooms"}))
+    profile = db.scalar(select(Profile).where(Profile.id == owner))
+    defaults = dict(profile.default_wastage or {}) if profile else {}  # Settings -> Default wastage applies to NEW projects only
+    p = Project(id=str(uuid.uuid4()), owner_id=owner, wastage=defaults, **body.model_dump(exclude={"rooms"}))
     p.rooms = [_new_room(owner, r) for r in body.rooms]
     db.add(p)
     db.commit()

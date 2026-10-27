@@ -1,0 +1,1891 @@
+{
+ "dashboard": {
+  "avg_cost_per_sqft": 411.9802780157316,
+  "cost_distribution": [
+   {
+    "category": "Cement & Binders",
+    "cost": 156520.0
+   },
+   {
+    "category": "Aggregates",
+    "cost": 94715.84896200002
+   },
+   {
+    "category": "Reinforcement",
+    "cost": 124992.0
+   },
+   {
+    "category": "Masonry",
+    "cost": 246776.0
+   },
+   {
+    "category": "Flooring",
+    "cost": 28560.0
+   },
+   {
+    "category": "Paint & Finishes",
+    "cost": 57959.16
+   }
+  ],
+  "has_demo_data": true,
+  "material_quantities": [
+   {
+    "name": "Cement",
+    "quantity": 344.0,
+    "unit": "bag (50 kg)"
+   },
+   {
+    "name": "Sand",
+    "quantity": 36.155916090000005,
+    "unit": "m\u00b3"
+   },
+   {
+    "name": "Coarse Aggregate",
+    "quantity": 21.168000000000003,
+    "unit": "m\u00b3"
+   },
+   {
+    "name": "Reinforcement Steel",
+    "quantity": 2016.0,
+    "unit": "kg"
+   },
+   {
+    "name": "Bricks",
+    "quantity": 30847.0,
+    "unit": "nos"
+   },
+   {
+    "name": "Floor Tiles",
+    "quantity": 476.0,
+    "unit": "nos"
+   },
+   {
+    "name": "Paint",
+    "quantity": 165.5976,
+    "unit": "litre"
+   }
+  ],
+  "recent_projects": [
+   {
+    "assumptions": {},
+    "budget": 2500000.0,
+    "building_type": "residential",
+    "built_up_area": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "currency": "INR",
+    "description": "Demonstration data. Dimensions are illustrative only.",
+    "extra_costs": {},
+    "floor_area": 80.0,
+    "floors": 2,
+    "has_estimate": true,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000001",
+    "is_demo": true,
+    "latest_total_cost": 709523.008962,
+    "layout": null,
+    "length": 10.0,
+    "location": "Demo location",
+    "material_selections": {
+     "cement": "00000000-0000-4000-8000-000000000002"
+    },
+    "name": "DEMO \u2013 Two-storey residence",
+    "owner_name": "Alice Rao",
+    "purchase_quantities": {},
+    "room_count": 10,
+    "slab_thickness": 0.15,
+    "total_built_up_area": 160.0,
+    "updated_at": "2026-10-27T10:00:00+00:00",
+    "wall_thickness": 0.23,
+    "wastage": {},
+    "width": 8.0
+   }
+  ],
+  "recent_reports": [
+   {
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "currency": "INR",
+    "file_name": "Buildora_DEMO_Two-storey_residence_20261027.pdf",
+    "id": "00000000-0000-4000-8000-000000000053",
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "size_bytes": 14133,
+    "total_cost": 709523.008962
+   }
+  ],
+  "saved_estimates": 1,
+  "total_estimated_cost": 709523.008962,
+  "total_projects": 1
+ },
+ "estimate": {
+  "assumptions": {
+   "bathroom_door_h": 2.0,
+   "bathroom_door_w": 0.75,
+   "block_h": 0.2,
+   "block_l": 0.4,
+   "block_w": 0.1,
+   "brick_h": 0.09,
+   "brick_l": 0.19,
+   "brick_w": 0.09,
+   "cement_bag_kg": 50.0,
+   "cement_density": 1440.0,
+   "concrete_mix": [
+    1.0,
+    1.5,
+    3.0
+   ],
+   "concrete_supply": "site_mix",
+   "door_h": 2.1,
+   "door_w": 0.9,
+   "entrance_h": 2.1,
+   "entrance_w": 1.0,
+   "external_masonry": "brick",
+   "frame_concrete_pct": 0.0,
+   "internal_masonry": "brick",
+   "internal_wall_thickness": 0.115,
+   "mortar_joint": 0.01,
+   "mortar_sand_ratio": 6.0,
+   "paint_coats": 2,
+   "paint_coverage": 10.0,
+   "plaster_ceilings": true,
+   "plaster_sand_ratio": 4.0,
+   "plaster_thickness": 0.012,
+   "steel_kg_per_m3": 80.0,
+   "tile_l": 0.6,
+   "tile_w": 0.6,
+   "tiled_room_types": null,
+   "wet_to_dry_concrete": 1.54,
+   "wet_to_dry_mortar": 1.27,
+   "window_h": 1.2,
+   "window_w": 1.2
+  },
+  "created_at": "2026-10-27T10:00:00+00:00",
+  "currency": "INR",
+  "geometry": {
+   "door_count": 9,
+   "external_perimeter": 36.0,
+   "floor_area": 80.0,
+   "internal_wall_length_per_floor": 22.0,
+   "openings_source": "estimated from room door/window counts",
+   "rooms_area_by_floor": {
+    "1": 80.0,
+    "2": 80.0
+   },
+   "total_built_up_area": 160.0,
+   "warnings": [],
+   "window_count": 12
+  },
+  "id": "00000000-0000-4000-8000-000000000014",
+  "items": [
+   {
+    "assumptions": [
+     "Concrete mix 1:1.5:3; mortar 1:6; plaster 1:4",
+     "Wet\u2192dry factors 1.54 (concrete), 1.27 (mortar/plaster)",
+     "Cement density 1440 kg/m\u00b3, bag 50 kg"
+    ],
+    "category": "Cement & Binders",
+    "cost": 156520.0,
+    "counts_toward_cost": true,
+    "formula": "\u03a3 over concrete, mortar, plaster: Dry volume \u00d7 cement part / \u03a3 parts \u00d7 density \u00f7 bag weight",
+    "gross_quantity": 344.0,
+    "key": "cement",
+    "material_id": "00000000-0000-4000-8000-000000000002",
+    "material_label": "My local cement",
+    "name": "Cement",
+    "net_quantity": 333.51008428800003,
+    "note": "Sources (bags, net): concrete 193.5; masonry mortar 70.8; plaster 69.2",
+    "price_is_sample": false,
+    "unit": "bag (50 kg)",
+    "unit_price": 455.0,
+    "wastage_pct": 3.0
+   },
+   {
+    "assumptions": [
+     "Mixes as for cement; sand proportions 1.5 (concrete), 6 (mortar), 4 (plaster)"
+    ],
+    "category": "Aggregates",
+    "cost": 65080.64896200001,
+    "counts_toward_cost": true,
+    "formula": "\u03a3 Dry volume \u00d7 sand part / \u03a3 parts (concrete, mortar, plaster)",
+    "gross_quantity": 36.155916090000005,
+    "key": "sand",
+    "material_id": "00000000-0000-4000-8000-000000000015",
+    "material_label": "River Sand (Medium)",
+    "name": "Sand",
+    "net_quantity": 34.4342058,
+    "note": "Sources (m\u00b3, net): concrete 10.08; masonry mortar 14.74; plaster 9.61",
+    "price_is_sample": true,
+    "unit": "m\u00b3",
+    "unit_price": 1800.0,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Concrete mix 1:1.5:3",
+     "Dry volume = wet \u00d7 1.54"
+    ],
+    "category": "Aggregates",
+    "cost": 29635.200000000004,
+    "counts_toward_cost": true,
+    "formula": "Dry concrete volume \u00d7 aggregate part / \u03a3 parts",
+    "gross_quantity": 21.168000000000003,
+    "key": "aggregates",
+    "material_id": "00000000-0000-4000-8000-000000000016",
+    "material_label": "20 mm Coarse Aggregate (20 mm nominal)",
+    "name": "Coarse Aggregate",
+    "net_quantity": 20.16,
+    "note": "20.16 m\u00b3 from concrete",
+    "price_is_sample": true,
+    "unit": "m\u00b3",
+    "unit_price": 1400.0,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Steel intensity 80 kg/m\u00b3 of concrete (engineer to confirm from structural design)"
+    ],
+    "category": "Reinforcement",
+    "cost": 124992.0,
+    "counts_toward_cost": true,
+    "formula": "Weight = Concrete volume \u00d7 steel intensity",
+    "gross_quantity": 2016.0,
+    "key": "steel",
+    "material_id": "00000000-0000-4000-8000-000000000017",
+    "material_label": "TMT Reinforcement Bar Fe 500 (Fe 500)",
+    "name": "Reinforcement Steel",
+    "net_quantity": 1920.0,
+    "note": "Slab reinforcement estimate only; columns, beams and footings need structural drawings.",
+    "price_is_sample": true,
+    "unit": "kg",
+    "unit_price": 62.0,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Slab thickness 0.15 m on 2 floor(s), footprint 80.00 m\u00b2",
+     "Frame allowance 0 % (columns/beams/footings not detailed)"
+    ],
+    "category": "Concrete",
+    "cost": 0.0,
+    "counts_toward_cost": false,
+    "formula": "V = Footprint \u00d7 Slab thickness \u00d7 Floors",
+    "gross_quantity": 24.48,
+    "key": "concrete",
+    "material_id": "00000000-0000-4000-8000-000000000018",
+    "material_label": "Ready-Mix Concrete M20 (M20)",
+    "name": "Concrete (RCC slabs)",
+    "net_quantity": 24.0,
+    "note": "Costed only when ready-mix supply is selected; otherwise priced through cement, sand and aggregate.",
+    "price_is_sample": true,
+    "unit": "m\u00b3",
+    "unit_price": 5500.0,
+    "wastage_pct": 2.0
+   },
+   {
+    "assumptions": [
+     "External wall 0.23 m (brick), internal wall 0.115 m (brick)",
+     "Wall height 3 m; external perimeter 36.00 m \u00d7 2 floor(s)",
+     "Internal wall length \u2248 (\u03a3 room perimeters \u2212 external perimeter) \u00f7 2 per floor = 44.00 m total (shared walls counted once)",
+     "Openings deducted (estimated from room door/window counts): 12 window(s) 17.3 m\u00b2, 9 door(s) 16.4 m\u00b2 (entrance + internal)",
+     "Net masonry volume 58.75 m\u00b3; mortar joint 10 mm"
+    ],
+    "category": "Masonry",
+    "cost": 246776.0,
+    "counts_toward_cost": true,
+    "formula": "Count = \u2308Net masonry volume \u00f7 ((l+j)(w+j)(h+j))\u2309, unit 0.19\u00d70.09\u00d70.09 m",
+    "gross_quantity": 30847.0,
+    "key": "bricks",
+    "material_id": "00000000-0000-4000-8000-000000000019",
+    "material_label": "Burnt Clay Brick (Class 1)",
+    "name": "Bricks",
+    "net_quantity": 29378,
+    "note": "",
+    "price_is_sample": true,
+    "unit": "nos",
+    "unit_price": 8.0,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Mix 1:6",
+     "Net masonry volume 58.75 m\u00b3"
+    ],
+    "category": "Mortar & Plaster",
+    "cost": null,
+    "counts_toward_cost": false,
+    "formula": "Wet mortar = Masonry volume \u2212 (unit count \u00d7 unit volume)",
+    "gross_quantity": 14.217795900000004,
+    "key": "mortar",
+    "material_id": null,
+    "material_label": null,
+    "name": "Masonry Mortar",
+    "net_quantity": 13.540758000000004,
+    "note": "Quantity only; cost is captured through cement and sand.",
+    "price_is_sample": false,
+    "unit": "m\u00b3",
+    "unit_price": null,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Plastered area 788.6 m\u00b2 (both wall faces net of openings + ceilings)",
+     "Thickness 12 mm; mix 1:4"
+    ],
+    "category": "Mortar & Plaster",
+    "cost": null,
+    "counts_toward_cost": false,
+    "formula": "Plaster volume = Plastered area \u00d7 thickness",
+    "gross_quantity": 9.935856,
+    "key": "plaster",
+    "material_id": null,
+    "material_label": null,
+    "name": "Plaster",
+    "net_quantity": 9.46272,
+    "note": "Quantity only; cost is captured through cement and sand.",
+    "price_is_sample": false,
+    "unit": "m\u00b3",
+    "unit_price": null,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Net tiled area 160.00 m\u00b2; tile 0.6\u00d70.6 m = 0.360 m\u00b2",
+     "Tiled rooms: 10 of 10 (net room floor areas).",
+     "Wall tiling (e.g. bathrooms, kitchens) is not included"
+    ],
+    "category": "Flooring",
+    "cost": 28560.0,
+    "counts_toward_cost": true,
+    "formula": "N = \u2308Net floor area \u00f7 Area per tile\u2309 (wastage applied to area before rounding)",
+    "gross_quantity": 476.0,
+    "key": "tiles",
+    "material_id": "00000000-0000-4000-8000-000000000020",
+    "material_label": "Ceramic Floor Tile 600\u00d7600 (Standard)",
+    "name": "Floor Tiles",
+    "net_quantity": 445.0,
+    "note": "",
+    "price_is_sample": true,
+    "unit": "nos",
+    "unit_price": 60.0,
+    "wastage_pct": 7.0
+   },
+   {
+    "assumptions": [
+     "Net paintable area 788.6 m\u00b2; 2 coat(s); coverage 10 m\u00b2/L/coat",
+     "Primer and external weather coat are not itemised"
+    ],
+    "category": "Paint & Finishes",
+    "cost": 57959.16,
+    "counts_toward_cost": true,
+    "formula": "Paint = Net paintable area \u00d7 Coats \u00f7 Coverage per litre",
+    "gross_quantity": 165.5976,
+    "key": "paint",
+    "material_id": "00000000-0000-4000-8000-000000000021",
+    "material_label": "Interior Emulsion Paint (Standard)",
+    "name": "Paint",
+    "net_quantity": 157.712,
+    "note": "",
+    "price_is_sample": true,
+    "unit": "litre",
+    "unit_price": 350.0,
+    "wastage_pct": 5.0
+   }
+  ],
+  "persisted": true,
+  "project_id": "00000000-0000-4000-8000-000000000001",
+  "recommendations": [
+   {
+    "explanation": "These lines use built-in sample prices, not verified market rates: Sand, Coarse Aggregate, Reinforcement Steel, Bricks, Floor Tiles, Paint.",
+    "id": "sample-prices",
+    "material": "Sand, Coarse Aggregate, Reinforcement Steel, Bricks, Floor Tiles, Paint",
+    "potential_benefit": "A cost estimate that reflects your local market.",
+    "potential_savings": null,
+    "reason": "Sample prices are placeholders for demonstration.",
+    "severity": "warning",
+    "suggested_action": "Replace them with quotations or locally verified rates before relying on the cost.",
+    "title": "Estimate uses sample prices"
+   },
+   {
+    "explanation": "'Portland Pozzolana Cement (PPC)' is priced at INR 390.00/bag (50 kg) versus INR 455.00 for the current selection.",
+    "id": "alt-cement",
+    "material": "Cement",
+    "potential_benefit": "Up to INR 22,360 at the current quantity, if the alternative meets your specification.",
+    "potential_savings": 22360.0,
+    "reason": "A lower unit price may reduce cost for the same quantity.",
+    "severity": "info",
+    "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+    "title": "Lower-priced alternative available for Cement"
+   },
+   {
+    "explanation": "'Manufactured Sand (M-Sand) (Washed)' is priced at INR 1,500.00/m\u00b3 versus INR 1,800.00 for the current selection.",
+    "id": "alt-sand",
+    "material": "Sand",
+    "potential_benefit": "Up to INR 10,847 at the current quantity, if the alternative meets your specification.",
+    "potential_savings": 10846.774827000001,
+    "reason": "A lower unit price may reduce cost for the same quantity.",
+    "severity": "info",
+    "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+    "title": "Lower-priced alternative available for Sand"
+   },
+   {
+    "explanation": "'Fly Ash Brick (Standard)' is priced at INR 7.00/nos versus INR 8.00 for the current selection.",
+    "id": "alt-bricks",
+    "material": "Bricks",
+    "potential_benefit": "Up to INR 30,847 at the current quantity, if the alternative meets your specification.",
+    "potential_savings": 30847.0,
+    "reason": "A lower unit price may reduce cost for the same quantity.",
+    "severity": "info",
+    "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+    "title": "Lower-priced alternative available for Bricks"
+   },
+   {
+    "explanation": "'Interior Distemper (Economy)' is priced at INR 150.00/litre versus INR 350.00 for the current selection.",
+    "id": "alt-paint",
+    "material": "Paint",
+    "potential_benefit": "Up to INR 33,120 at the current quantity, if the alternative meets your specification.",
+    "potential_savings": 33119.52,
+    "reason": "A lower unit price may reduce cost for the same quantity.",
+    "severity": "info",
+    "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+    "title": "Lower-priced alternative available for Paint"
+   },
+   {
+    "explanation": "The estimate needs about 476 tiles including 7 % wastage.",
+    "id": "verify-tiles",
+    "material": "Floor Tiles",
+    "potential_benefit": "Avoids over- or under-ordering of tiles (not quantified).",
+    "potential_savings": null,
+    "reason": "Tile layout, cuts and pattern change the real requirement; small measurement errors multiply over many tiles.",
+    "severity": "info",
+    "suggested_action": "Measure finished room sizes on site and confirm the tile size and layout pattern before ordering a full batch (and keep spares from one batch for colour match).",
+    "title": "Verify room dimensions before ordering tiles"
+   },
+   {
+    "explanation": "The highest-cost lines are Bricks, Cement, Reinforcement Steel.",
+    "id": "inventory-review",
+    "material": "Bricks, Cement, Reinforcement Steel",
+    "potential_benefit": "Avoids duplicate purchases; savings depend on inventory not tracked by Buildora.",
+    "potential_savings": null,
+    "reason": "Leftover stock from earlier work may cover part of the requirement.",
+    "severity": "info",
+    "suggested_action": "Check unused stock on site or at the supplier and deduct it before placing orders.",
+    "title": "Review existing inventory before ordering"
+   }
+  ],
+  "stale": false,
+  "summary": {
+   "budget": 2500000.0,
+   "budget_used_pct": 28.38092035848,
+   "budget_variance": 1790476.991038,
+   "by_category": [
+    {
+     "category": "Cement & Binders",
+     "cost": 156520.0
+    },
+    {
+     "category": "Aggregates",
+     "cost": 94715.84896200002
+    },
+    {
+     "category": "Reinforcement",
+     "cost": 124992.0
+    },
+    {
+     "category": "Masonry",
+     "cost": 246776.0
+    },
+    {
+     "category": "Flooring",
+     "cost": 28560.0
+    },
+    {
+     "category": "Paint & Finishes",
+     "cost": 57959.16
+    }
+   ],
+   "complete": true,
+   "cost_per_sqft": 411.9802780157316,
+   "cost_per_sqm": 4434.5188060125,
+   "extras": [
+    {
+     "amount": 0.0,
+     "enabled": false,
+     "included": false,
+     "key": "labour",
+     "mode": "fixed",
+     "value": 0.0
+    },
+    {
+     "amount": 0.0,
+     "enabled": false,
+     "included": false,
+     "key": "transportation",
+     "mode": "fixed",
+     "value": 0.0
+    },
+    {
+     "amount": 0.0,
+     "enabled": false,
+     "included": false,
+     "key": "contingency",
+     "mode": "fixed",
+     "value": 0.0
+    },
+    {
+     "amount": 0.0,
+     "enabled": false,
+     "included": false,
+     "key": "other",
+     "mode": "fixed",
+     "value": 0.0
+    }
+   ],
+   "extras_total": 0.0,
+   "material_total": 709523.008962,
+   "missing_price_keys": [],
+   "project_total": 709523.008962
+  },
+  "warnings": []
+ },
+ "generated_by": "backend/tests/test_export_frontend_fixtures.py",
+ "materials": [
+  {
+   "brand": "Generic (sample)",
+   "category": "Cement & Binders",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Common choice for general RCC and masonry work.",
+   "editable": false,
+   "estimate_key": "cement",
+   "grade": "OPC 43",
+   "id": "00000000-0000-4000-8000-000000000022",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Ordinary Portland Cement 43",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000033",
+   "price_is_sample": true,
+   "specification": "General-purpose Portland cement, 50 kg bag.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "bag (50 kg)",
+   "unit_price": 400.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Cement & Binders",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Faster strength gain; often specified for higher-grade concrete.",
+   "editable": false,
+   "estimate_key": "cement",
+   "grade": "OPC 53",
+   "id": "00000000-0000-4000-8000-000000000023",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Ordinary Portland Cement 53",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000034",
+   "price_is_sample": true,
+   "specification": "Higher-strength Portland cement, 50 kg bag.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "bag (50 kg)",
+   "unit_price": 430.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Cement & Binders",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Slower early strength; commonly used for general construction and plaster.",
+   "editable": false,
+   "estimate_key": "cement",
+   "grade": "PPC",
+   "id": "00000000-0000-4000-8000-000000000024",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Portland Pozzolana Cement",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000035",
+   "price_is_sample": true,
+   "specification": "Blended cement with pozzolanic material, 50 kg bag.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "bag (50 kg)",
+   "unit_price": 390.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Aggregates",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Availability and extraction are regulated in many regions.",
+   "editable": false,
+   "estimate_key": "sand",
+   "grade": "Medium",
+   "id": "00000000-0000-4000-8000-000000000015",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "River Sand",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000036",
+   "price_is_sample": true,
+   "specification": "Natural river sand.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "m\u00b3",
+   "unit_price": 1800.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Aggregates",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Consistent grading when sourced from a quality crusher.",
+   "editable": false,
+   "estimate_key": "sand",
+   "grade": "Washed",
+   "id": "00000000-0000-4000-8000-000000000025",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Manufactured Sand (M-Sand)",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000037",
+   "price_is_sample": true,
+   "specification": "Crushed-rock fine aggregate.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "m\u00b3",
+   "unit_price": 1500.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Aggregates",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Standard size for slabs and beams.",
+   "editable": false,
+   "estimate_key": "aggregates",
+   "grade": "20 mm nominal",
+   "id": "00000000-0000-4000-8000-000000000016",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "20 mm Coarse Aggregate",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000038",
+   "price_is_sample": true,
+   "specification": "Crushed stone aggregate.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "m\u00b3",
+   "unit_price": 1400.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Reinforcement",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Standard grade for RCC.",
+   "editable": false,
+   "estimate_key": "steel",
+   "grade": "Fe 500",
+   "id": "00000000-0000-4000-8000-000000000017",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "TMT Reinforcement Bar Fe 500",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000039",
+   "price_is_sample": true,
+   "specification": "Thermo-mechanically treated rebar.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "kg",
+   "unit_price": 62.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Reinforcement",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Higher ductility grade; check structural drawings for the required grade.",
+   "editable": false,
+   "estimate_key": "steel",
+   "grade": "Fe 500D",
+   "id": "00000000-0000-4000-8000-000000000026",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "TMT Reinforcement Bar Fe 500D",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000040",
+   "price_is_sample": true,
+   "specification": "TMT rebar with higher ductility.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "kg",
+   "unit_price": 66.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Concrete",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Pumping and delivery charges may be extra.",
+   "editable": false,
+   "estimate_key": "concrete",
+   "grade": "M20",
+   "id": "00000000-0000-4000-8000-000000000018",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Ready-Mix Concrete M20",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000041",
+   "price_is_sample": true,
+   "specification": "Ready-mixed concrete delivered to site.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "m\u00b3",
+   "unit_price": 5500.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Concrete",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Higher grade; confirm with structural design.",
+   "editable": false,
+   "estimate_key": "concrete",
+   "grade": "M25",
+   "id": "00000000-0000-4000-8000-000000000027",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Ready-Mix Concrete M25",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000042",
+   "price_is_sample": true,
+   "specification": "Ready-mixed concrete delivered to site.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "m\u00b3",
+   "unit_price": 6000.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Masonry",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Widely available; water absorption varies by kiln.",
+   "editable": false,
+   "estimate_key": "bricks",
+   "grade": "Class 1",
+   "id": "00000000-0000-4000-8000-000000000019",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Burnt Clay Brick",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000043",
+   "price_is_sample": true,
+   "specification": "Standard modular burnt clay brick.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "nos",
+   "unit_price": 8.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Masonry",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Uniform size can reduce mortar use.",
+   "editable": false,
+   "estimate_key": "bricks",
+   "grade": "Standard",
+   "id": "00000000-0000-4000-8000-000000000028",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Fly Ash Brick",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000044",
+   "price_is_sample": true,
+   "specification": "Brick made with fly ash.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "nos",
+   "unit_price": 7.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Masonry",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Lightweight; needs suitable jointing mortar/adhesive.",
+   "editable": false,
+   "estimate_key": "blocks",
+   "grade": "600\u00d7200\u00d7100",
+   "id": "00000000-0000-4000-8000-000000000029",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "AAC Block",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000045",
+   "price_is_sample": true,
+   "specification": "Autoclaved aerated concrete block.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "nos",
+   "unit_price": 55.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Masonry",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Heavier than AAC; good load-bearing options exist.",
+   "editable": false,
+   "estimate_key": "blocks",
+   "grade": "400\u00d7200\u00d7100",
+   "id": "00000000-0000-4000-8000-000000000030",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Solid Concrete Block",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000046",
+   "price_is_sample": true,
+   "specification": "Concrete masonry block.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "nos",
+   "unit_price": 42.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Flooring",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Suitable for interior areas.",
+   "editable": false,
+   "estimate_key": "tiles",
+   "grade": "Standard",
+   "id": "00000000-0000-4000-8000-000000000020",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Ceramic Floor Tile 600\u00d7600",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000047",
+   "price_is_sample": true,
+   "specification": "Ceramic tile, per piece.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "nos",
+   "unit_price": 60.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Flooring",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Lower water absorption than ceramic.",
+   "editable": false,
+   "estimate_key": "tiles",
+   "grade": "Standard",
+   "id": "00000000-0000-4000-8000-000000000031",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Vitrified Floor Tile 600\u00d7600",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000048",
+   "price_is_sample": true,
+   "specification": "Vitrified tile, per piece.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "nos",
+   "unit_price": 90.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Paint & Finishes",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Washability varies by product line.",
+   "editable": false,
+   "estimate_key": "paint",
+   "grade": "Standard",
+   "id": "00000000-0000-4000-8000-000000000021",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Interior Emulsion Paint",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000049",
+   "price_is_sample": true,
+   "specification": "Water-based interior emulsion.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "litre",
+   "unit_price": 350.0
+  },
+  {
+   "brand": "Generic (sample)",
+   "category": "Paint & Finishes",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "Lower washability than emulsions.",
+   "editable": false,
+   "estimate_key": "paint",
+   "grade": "Economy",
+   "id": "00000000-0000-4000-8000-000000000032",
+   "is_sample": true,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Sample data",
+   "name": "Interior Distemper",
+   "owner_id": null,
+   "price_id": "00000000-0000-4000-8000-000000000050",
+   "price_is_sample": true,
+   "specification": "Economy interior distemper.",
+   "supplier": "SAMPLE - not a real quote",
+   "unit": "litre",
+   "unit_price": 150.0
+  },
+  {
+   "brand": "",
+   "category": "Cement & Binders",
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "durability_notes": "",
+   "editable": true,
+   "estimate_key": "cement",
+   "grade": "",
+   "id": "00000000-0000-4000-8000-000000000002",
+   "is_sample": false,
+   "last_updated": "2026-10-27T10:00:00+00:00",
+   "location": "Pune",
+   "name": "My local cement",
+   "owner_id": "00000000-0000-4000-8000-000000000051",
+   "price_id": "00000000-0000-4000-8000-000000000052",
+   "price_is_sample": false,
+   "specification": "",
+   "supplier": "Nair Traders",
+   "unit": "bag (50 kg)",
+   "unit_price": 455.0
+  }
+ ],
+ "profile": {
+  "default_city": "Pune",
+  "default_wastage": {},
+  "email": "alice@example.com",
+  "full_name": "Alice Rao",
+  "id": "00000000-0000-4000-8000-000000000051"
+ },
+ "project": {
+  "assumptions": {},
+  "budget": 2500000.0,
+  "building_type": "residential",
+  "built_up_area": null,
+  "created_at": "2026-10-27T10:00:00+00:00",
+  "currency": "INR",
+  "description": "Demonstration data. Dimensions are illustrative only.",
+  "extra_costs": {},
+  "floor_area": 80.0,
+  "floorplans": [
+   {
+    "calibration": null,
+    "content_type": "image/png",
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "height_px": 300,
+    "id": "00000000-0000-4000-8000-000000000013",
+    "original_name": "ground-floor-plan.png",
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "scale_m_per_px": null,
+    "size_bytes": 1111,
+    "width_px": 400
+   }
+  ],
+  "floors": 2,
+  "has_estimate": true,
+  "height": 3.0,
+  "id": "00000000-0000-4000-8000-000000000001",
+  "is_demo": true,
+  "latest_total_cost": 709523.008962,
+  "layout": null,
+  "length": 10.0,
+  "location": "Demo location",
+  "material_selections": {
+   "cement": "00000000-0000-4000-8000-000000000002"
+  },
+  "name": "DEMO \u2013 Two-storey residence",
+  "owner_name": "Alice Rao",
+  "purchase_quantities": {},
+  "room_count": 10,
+  "rooms": [
+   {
+    "area": 20.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 2,
+    "floor_number": 1,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000003",
+    "length": 5.0,
+    "name": "Living Room",
+    "pos_x": 0.0,
+    "pos_y": 0.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "living",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 2
+   },
+   {
+    "area": 20.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 1,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000004",
+    "length": 5.0,
+    "name": "Kitchen",
+    "pos_x": 5.0,
+    "pos_y": 0.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "kitchen",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 2
+   },
+   {
+    "area": 20.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 1,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000005",
+    "length": 5.0,
+    "name": "Master Bedroom",
+    "pos_x": 0.0,
+    "pos_y": 4.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "bedroom",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 2
+   },
+   {
+    "area": 10.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 1,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000006",
+    "length": 2.5,
+    "name": "Bathroom",
+    "pos_x": 5.0,
+    "pos_y": 4.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "bathroom",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 0
+   },
+   {
+    "area": 10.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 1,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000007",
+    "length": 2.5,
+    "name": "Staircase",
+    "pos_x": 7.5,
+    "pos_y": 4.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "staircase",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 0
+   },
+   {
+    "area": 20.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 2,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000008",
+    "length": 5.0,
+    "name": "Bedroom 2",
+    "pos_x": 0.0,
+    "pos_y": 0.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "bedroom",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 2
+   },
+   {
+    "area": 20.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 2,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000009",
+    "length": 5.0,
+    "name": "Study",
+    "pos_x": 5.0,
+    "pos_y": 0.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "study",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 2
+   },
+   {
+    "area": 10.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 2,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000010",
+    "length": 2.5,
+    "name": "Bathroom 2",
+    "pos_x": 0.0,
+    "pos_y": 4.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "bathroom",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 1
+   },
+   {
+    "area": 20.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 2,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000011",
+    "length": 5.0,
+    "name": "Landing",
+    "pos_x": 2.5,
+    "pos_y": 4.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "corridor",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 1
+   },
+   {
+    "area": 10.0,
+    "area_override": null,
+    "created_at": "2026-10-27T10:00:00+00:00",
+    "doors": 1,
+    "floor_number": 2,
+    "height": 3.0,
+    "id": "00000000-0000-4000-8000-000000000012",
+    "length": 2.5,
+    "name": "Staircase 2",
+    "pos_x": 7.5,
+    "pos_y": 4.0,
+    "project_id": "00000000-0000-4000-8000-000000000001",
+    "room_type": "staircase",
+    "wall_thickness": null,
+    "width": 4.0,
+    "windows": 0
+   }
+  ],
+  "slab_thickness": 0.15,
+  "total_built_up_area": 160.0,
+  "updated_at": "2026-10-27T10:00:00+00:00",
+  "wall_thickness": 0.23,
+  "wastage": {},
+  "width": 8.0
+ },
+ "projects": [
+  {
+   "assumptions": {},
+   "budget": 2500000.0,
+   "building_type": "residential",
+   "built_up_area": null,
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "description": "Demonstration data. Dimensions are illustrative only.",
+   "extra_costs": {},
+   "floor_area": 80.0,
+   "floors": 2,
+   "has_estimate": true,
+   "height": 3.0,
+   "id": "00000000-0000-4000-8000-000000000001",
+   "is_demo": true,
+   "latest_total_cost": 709523.008962,
+   "layout": null,
+   "length": 10.0,
+   "location": "Demo location",
+   "material_selections": {
+    "cement": "00000000-0000-4000-8000-000000000002"
+   },
+   "name": "DEMO \u2013 Two-storey residence",
+   "owner_name": "Alice Rao",
+   "purchase_quantities": {},
+   "room_count": 10,
+   "slab_thickness": 0.15,
+   "total_built_up_area": 160.0,
+   "updated_at": "2026-10-27T10:00:00+00:00",
+   "wall_thickness": 0.23,
+   "wastage": {},
+   "width": 8.0
+  }
+ ],
+ "recommendations": [
+  {
+   "explanation": "These lines use built-in sample prices, not verified market rates: Sand, Coarse Aggregate, Reinforcement Steel, Bricks, Floor Tiles, Paint.",
+   "id": "sample-prices",
+   "material": "Sand, Coarse Aggregate, Reinforcement Steel, Bricks, Floor Tiles, Paint",
+   "potential_benefit": "A cost estimate that reflects your local market.",
+   "potential_savings": null,
+   "reason": "Sample prices are placeholders for demonstration.",
+   "severity": "warning",
+   "suggested_action": "Replace them with quotations or locally verified rates before relying on the cost.",
+   "title": "Estimate uses sample prices"
+  },
+  {
+   "explanation": "'Portland Pozzolana Cement (PPC)' is priced at INR 390.00/bag (50 kg) versus INR 455.00 for the current selection.",
+   "id": "alt-cement",
+   "material": "Cement",
+   "potential_benefit": "Up to INR 22,360 at the current quantity, if the alternative meets your specification.",
+   "potential_savings": 22360.0,
+   "reason": "A lower unit price may reduce cost for the same quantity.",
+   "severity": "info",
+   "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+   "title": "Lower-priced alternative available for Cement"
+  },
+  {
+   "explanation": "'Manufactured Sand (M-Sand) (Washed)' is priced at INR 1,500.00/m\u00b3 versus INR 1,800.00 for the current selection.",
+   "id": "alt-sand",
+   "material": "Sand",
+   "potential_benefit": "Up to INR 10,847 at the current quantity, if the alternative meets your specification.",
+   "potential_savings": 10846.774827000001,
+   "reason": "A lower unit price may reduce cost for the same quantity.",
+   "severity": "info",
+   "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+   "title": "Lower-priced alternative available for Sand"
+  },
+  {
+   "explanation": "'Fly Ash Brick (Standard)' is priced at INR 7.00/nos versus INR 8.00 for the current selection.",
+   "id": "alt-bricks",
+   "material": "Bricks",
+   "potential_benefit": "Up to INR 30,847 at the current quantity, if the alternative meets your specification.",
+   "potential_savings": 30847.0,
+   "reason": "A lower unit price may reduce cost for the same quantity.",
+   "severity": "info",
+   "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+   "title": "Lower-priced alternative available for Bricks"
+  },
+  {
+   "explanation": "'Interior Distemper (Economy)' is priced at INR 150.00/litre versus INR 350.00 for the current selection.",
+   "id": "alt-paint",
+   "material": "Paint",
+   "potential_benefit": "Up to INR 33,120 at the current quantity, if the alternative meets your specification.",
+   "potential_savings": 33119.52,
+   "reason": "A lower unit price may reduce cost for the same quantity.",
+   "severity": "info",
+   "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+   "title": "Lower-priced alternative available for Paint"
+  },
+  {
+   "explanation": "The estimate needs about 476 tiles including 7 % wastage.",
+   "id": "verify-tiles",
+   "material": "Floor Tiles",
+   "potential_benefit": "Avoids over- or under-ordering of tiles (not quantified).",
+   "potential_savings": null,
+   "reason": "Tile layout, cuts and pattern change the real requirement; small measurement errors multiply over many tiles.",
+   "severity": "info",
+   "suggested_action": "Measure finished room sizes on site and confirm the tile size and layout pattern before ordering a full batch (and keep spares from one batch for colour match).",
+   "title": "Verify room dimensions before ordering tiles"
+  },
+  {
+   "explanation": "The highest-cost lines are Bricks, Cement, Reinforcement Steel.",
+   "id": "inventory-review",
+   "material": "Bricks, Cement, Reinforcement Steel",
+   "potential_benefit": "Avoids duplicate purchases; savings depend on inventory not tracked by Buildora.",
+   "potential_savings": null,
+   "reason": "Leftover stock from earlier work may cover part of the requirement.",
+   "severity": "info",
+   "suggested_action": "Check unused stock on site or at the supplier and deduct it before placing orders.",
+   "title": "Review existing inventory before ordering"
+  }
+ ],
+ "reports": [
+  {
+   "created_at": "2026-10-27T10:00:00+00:00",
+   "currency": "INR",
+   "file_name": "Buildora_DEMO_Two-storey_residence_20261027.pdf",
+   "id": "00000000-0000-4000-8000-000000000053",
+   "project_id": "00000000-0000-4000-8000-000000000001",
+   "size_bytes": 14133,
+   "total_cost": 709523.008962
+  }
+ ],
+ "what_if_estimate": {
+  "alternatives": {
+   "aggregates": [
+    {
+     "id": "00000000-0000-4000-8000-000000000016",
+     "is_sample": true,
+     "label": "20 mm Coarse Aggregate (20 mm nominal)",
+     "unit_price": 1400.0
+    }
+   ],
+   "blocks": [
+    {
+     "id": "00000000-0000-4000-8000-000000000029",
+     "is_sample": true,
+     "label": "AAC Block (600\u00d7200\u00d7100)",
+     "unit_price": 55.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000030",
+     "is_sample": true,
+     "label": "Solid Concrete Block (400\u00d7200\u00d7100)",
+     "unit_price": 42.0
+    }
+   ],
+   "bricks": [
+    {
+     "id": "00000000-0000-4000-8000-000000000019",
+     "is_sample": true,
+     "label": "Burnt Clay Brick (Class 1)",
+     "unit_price": 8.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000028",
+     "is_sample": true,
+     "label": "Fly Ash Brick (Standard)",
+     "unit_price": 7.0
+    }
+   ],
+   "cement": [
+    {
+     "id": "00000000-0000-4000-8000-000000000022",
+     "is_sample": true,
+     "label": "Ordinary Portland Cement 43 (OPC 43)",
+     "unit_price": 400.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000023",
+     "is_sample": true,
+     "label": "Ordinary Portland Cement 53 (OPC 53)",
+     "unit_price": 430.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000024",
+     "is_sample": true,
+     "label": "Portland Pozzolana Cement (PPC)",
+     "unit_price": 390.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000002",
+     "is_sample": false,
+     "label": "My local cement",
+     "unit_price": 455.0
+    }
+   ],
+   "concrete": [
+    {
+     "id": "00000000-0000-4000-8000-000000000018",
+     "is_sample": true,
+     "label": "Ready-Mix Concrete M20 (M20)",
+     "unit_price": 5500.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000027",
+     "is_sample": true,
+     "label": "Ready-Mix Concrete M25 (M25)",
+     "unit_price": 6000.0
+    }
+   ],
+   "paint": [
+    {
+     "id": "00000000-0000-4000-8000-000000000021",
+     "is_sample": true,
+     "label": "Interior Emulsion Paint (Standard)",
+     "unit_price": 350.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000032",
+     "is_sample": true,
+     "label": "Interior Distemper (Economy)",
+     "unit_price": 150.0
+    }
+   ],
+   "sand": [
+    {
+     "id": "00000000-0000-4000-8000-000000000015",
+     "is_sample": true,
+     "label": "River Sand (Medium)",
+     "unit_price": 1800.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000025",
+     "is_sample": true,
+     "label": "Manufactured Sand (M-Sand) (Washed)",
+     "unit_price": 1500.0
+    }
+   ],
+   "steel": [
+    {
+     "id": "00000000-0000-4000-8000-000000000017",
+     "is_sample": true,
+     "label": "TMT Reinforcement Bar Fe 500 (Fe 500)",
+     "unit_price": 62.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000026",
+     "is_sample": true,
+     "label": "TMT Reinforcement Bar Fe 500D (Fe 500D)",
+     "unit_price": 66.0
+    }
+   ],
+   "tiles": [
+    {
+     "id": "00000000-0000-4000-8000-000000000020",
+     "is_sample": true,
+     "label": "Ceramic Floor Tile 600\u00d7600 (Standard)",
+     "unit_price": 60.0
+    },
+    {
+     "id": "00000000-0000-4000-8000-000000000031",
+     "is_sample": true,
+     "label": "Vitrified Floor Tile 600\u00d7600 (Standard)",
+     "unit_price": 90.0
+    }
+   ]
+  },
+  "assumptions": {
+   "bathroom_door_h": 2.0,
+   "bathroom_door_w": 0.75,
+   "block_h": 0.2,
+   "block_l": 0.4,
+   "block_w": 0.1,
+   "brick_h": 0.09,
+   "brick_l": 0.19,
+   "brick_w": 0.09,
+   "cement_bag_kg": 50.0,
+   "cement_density": 1440.0,
+   "concrete_mix": [
+    1.0,
+    1.5,
+    3.0
+   ],
+   "concrete_supply": "site_mix",
+   "door_h": 2.1,
+   "door_w": 0.9,
+   "entrance_h": 2.1,
+   "entrance_w": 1.0,
+   "external_masonry": "brick",
+   "frame_concrete_pct": 0.0,
+   "internal_masonry": "brick",
+   "internal_wall_thickness": 0.115,
+   "mortar_joint": 0.01,
+   "mortar_sand_ratio": 6.0,
+   "paint_coats": 2,
+   "paint_coverage": 10.0,
+   "plaster_ceilings": true,
+   "plaster_sand_ratio": 4.0,
+   "plaster_thickness": 0.012,
+   "steel_kg_per_m3": 80.0,
+   "tile_l": 0.6,
+   "tile_w": 0.6,
+   "tiled_room_types": null,
+   "wet_to_dry_concrete": 1.54,
+   "wet_to_dry_mortar": 1.27,
+   "window_h": 1.2,
+   "window_w": 1.2
+  },
+  "currency": "INR",
+  "geometry": {
+   "door_count": 9,
+   "external_perimeter": 36.0,
+   "floor_area": 80.0,
+   "internal_wall_length_per_floor": 22.0,
+   "openings_source": "estimated from room door/window counts",
+   "rooms_area_by_floor": {
+    "1": 80.0,
+    "2": 80.0
+   },
+   "total_built_up_area": 160.0,
+   "warnings": [],
+   "window_count": 12
+  },
+  "items": [
+   {
+    "assumptions": [
+     "Concrete mix 1:1.5:3; mortar 1:6; plaster 1:4",
+     "Wet\u2192dry factors 1.54 (concrete), 1.27 (mortar/plaster)",
+     "Cement density 1440 kg/m\u00b3, bag 50 kg"
+    ],
+    "category": "Cement & Binders",
+    "cost": 156520.0,
+    "counts_toward_cost": true,
+    "formula": "\u03a3 over concrete, mortar, plaster: Dry volume \u00d7 cement part / \u03a3 parts \u00d7 density \u00f7 bag weight",
+    "gross_quantity": 344.0,
+    "key": "cement",
+    "material_id": "00000000-0000-4000-8000-000000000002",
+    "material_label": "My local cement",
+    "name": "Cement",
+    "net_quantity": 333.51008428800003,
+    "note": "Sources (bags, net): concrete 193.5; masonry mortar 70.8; plaster 69.2",
+    "price_is_sample": false,
+    "unit": "bag (50 kg)",
+    "unit_price": 455.0,
+    "wastage_pct": 3.0
+   },
+   {
+    "assumptions": [
+     "Mixes as for cement; sand proportions 1.5 (concrete), 6 (mortar), 4 (plaster)"
+    ],
+    "category": "Aggregates",
+    "cost": 65080.64896200001,
+    "counts_toward_cost": true,
+    "formula": "\u03a3 Dry volume \u00d7 sand part / \u03a3 parts (concrete, mortar, plaster)",
+    "gross_quantity": 36.155916090000005,
+    "key": "sand",
+    "material_id": "00000000-0000-4000-8000-000000000015",
+    "material_label": "River Sand (Medium)",
+    "name": "Sand",
+    "net_quantity": 34.4342058,
+    "note": "Sources (m\u00b3, net): concrete 10.08; masonry mortar 14.74; plaster 9.61",
+    "price_is_sample": true,
+    "unit": "m\u00b3",
+    "unit_price": 1800.0,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Concrete mix 1:1.5:3",
+     "Dry volume = wet \u00d7 1.54"
+    ],
+    "category": "Aggregates",
+    "cost": 29635.200000000004,
+    "counts_toward_cost": true,
+    "formula": "Dry concrete volume \u00d7 aggregate part / \u03a3 parts",
+    "gross_quantity": 21.168000000000003,
+    "key": "aggregates",
+    "material_id": "00000000-0000-4000-8000-000000000016",
+    "material_label": "20 mm Coarse Aggregate (20 mm nominal)",
+    "name": "Coarse Aggregate",
+    "net_quantity": 20.16,
+    "note": "20.16 m\u00b3 from concrete",
+    "price_is_sample": true,
+    "unit": "m\u00b3",
+    "unit_price": 1400.0,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Steel intensity 80 kg/m\u00b3 of concrete (engineer to confirm from structural design)"
+    ],
+    "category": "Reinforcement",
+    "cost": 124992.0,
+    "counts_toward_cost": true,
+    "formula": "Weight = Concrete volume \u00d7 steel intensity",
+    "gross_quantity": 2016.0,
+    "key": "steel",
+    "material_id": "00000000-0000-4000-8000-000000000017",
+    "material_label": "TMT Reinforcement Bar Fe 500 (Fe 500)",
+    "name": "Reinforcement Steel",
+    "net_quantity": 1920.0,
+    "note": "Slab reinforcement estimate only; columns, beams and footings need structural drawings.",
+    "price_is_sample": true,
+    "unit": "kg",
+    "unit_price": 62.0,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Slab thickness 0.15 m on 2 floor(s), footprint 80.00 m\u00b2",
+     "Frame allowance 0 % (columns/beams/footings not detailed)"
+    ],
+    "category": "Concrete",
+    "cost": 0.0,
+    "counts_toward_cost": false,
+    "formula": "V = Footprint \u00d7 Slab thickness \u00d7 Floors",
+    "gross_quantity": 24.48,
+    "key": "concrete",
+    "material_id": "00000000-0000-4000-8000-000000000018",
+    "material_label": "Ready-Mix Concrete M20 (M20)",
+    "name": "Concrete (RCC slabs)",
+    "net_quantity": 24.0,
+    "note": "Costed only when ready-mix supply is selected; otherwise priced through cement, sand and aggregate.",
+    "price_is_sample": true,
+    "unit": "m\u00b3",
+    "unit_price": 5500.0,
+    "wastage_pct": 2.0
+   },
+   {
+    "assumptions": [
+     "External wall 0.23 m (brick), internal wall 0.115 m (brick)",
+     "Wall height 3 m; external perimeter 36.00 m \u00d7 2 floor(s)",
+     "Internal wall length \u2248 (\u03a3 room perimeters \u2212 external perimeter) \u00f7 2 per floor = 44.00 m total (shared walls counted once)",
+     "Openings deducted (estimated from room door/window counts): 12 window(s) 17.3 m\u00b2, 9 door(s) 16.4 m\u00b2 (entrance + internal)",
+     "Net masonry volume 58.75 m\u00b3; mortar joint 10 mm"
+    ],
+    "category": "Masonry",
+    "cost": 246776.0,
+    "counts_toward_cost": true,
+    "formula": "Count = \u2308Net masonry volume \u00f7 ((l+j)(w+j)(h+j))\u2309, unit 0.19\u00d70.09\u00d70.09 m",
+    "gross_quantity": 30847.0,
+    "key": "bricks",
+    "material_id": "00000000-0000-4000-8000-000000000019",
+    "material_label": "Burnt Clay Brick (Class 1)",
+    "name": "Bricks",
+    "net_quantity": 29378,
+    "note": "",
+    "price_is_sample": true,
+    "unit": "nos",
+    "unit_price": 8.0,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Mix 1:6",
+     "Net masonry volume 58.75 m\u00b3"
+    ],
+    "category": "Mortar & Plaster",
+    "cost": null,
+    "counts_toward_cost": false,
+    "formula": "Wet mortar = Masonry volume \u2212 (unit count \u00d7 unit volume)",
+    "gross_quantity": 14.217795900000004,
+    "key": "mortar",
+    "material_id": null,
+    "material_label": null,
+    "name": "Masonry Mortar",
+    "net_quantity": 13.540758000000004,
+    "note": "Quantity only; cost is captured through cement and sand.",
+    "price_is_sample": false,
+    "unit": "m\u00b3",
+    "unit_price": null,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Plastered area 788.6 m\u00b2 (both wall faces net of openings + ceilings)",
+     "Thickness 12 mm; mix 1:4"
+    ],
+    "category": "Mortar & Plaster",
+    "cost": null,
+    "counts_toward_cost": false,
+    "formula": "Plaster volume = Plastered area \u00d7 thickness",
+    "gross_quantity": 9.935856,
+    "key": "plaster",
+    "material_id": null,
+    "material_label": null,
+    "name": "Plaster",
+    "net_quantity": 9.46272,
+    "note": "Quantity only; cost is captured through cement and sand.",
+    "price_is_sample": false,
+    "unit": "m\u00b3",
+    "unit_price": null,
+    "wastage_pct": 5.0
+   },
+   {
+    "assumptions": [
+     "Net tiled area 160.00 m\u00b2; tile 0.6\u00d70.6 m = 0.360 m\u00b2",
+     "Tiled rooms: 10 of 10 (net room floor areas).",
+     "Wall tiling (e.g. bathrooms, kitchens) is not included"
+    ],
+    "category": "Flooring",
+    "cost": 29880.0,
+    "counts_toward_cost": true,
+    "formula": "N = \u2308Net floor area \u00f7 Area per tile\u2309 (wastage applied to area before rounding)",
+    "gross_quantity": 498.0,
+    "key": "tiles",
+    "material_id": "00000000-0000-4000-8000-000000000020",
+    "material_label": "Ceramic Floor Tile 600\u00d7600 (Standard)",
+    "name": "Floor Tiles",
+    "net_quantity": 445.0,
+    "note": "",
+    "price_is_sample": true,
+    "unit": "nos",
+    "unit_price": 60.0,
+    "wastage_pct": 12.0
+   },
+   {
+    "assumptions": [
+     "Net paintable area 788.6 m\u00b2; 2 coat(s); coverage 10 m\u00b2/L/coat",
+     "Primer and external weather coat are not itemised"
+    ],
+    "category": "Paint & Finishes",
+    "cost": 57959.16,
+    "counts_toward_cost": true,
+    "formula": "Paint = Net paintable area \u00d7 Coats \u00f7 Coverage per litre",
+    "gross_quantity": 165.5976,
+    "key": "paint",
+    "material_id": "00000000-0000-4000-8000-000000000021",
+    "material_label": "Interior Emulsion Paint (Standard)",
+    "name": "Paint",
+    "net_quantity": 157.712,
+    "note": "",
+    "price_is_sample": true,
+    "unit": "litre",
+    "unit_price": 350.0,
+    "wastage_pct": 5.0
+   }
+  ],
+  "persisted": false,
+  "project_id": "00000000-0000-4000-8000-000000000001",
+  "recommendations": [
+   {
+    "explanation": "These lines use built-in sample prices, not verified market rates: Sand, Coarse Aggregate, Reinforcement Steel, Bricks, Floor Tiles, Paint.",
+    "id": "sample-prices",
+    "material": "Sand, Coarse Aggregate, Reinforcement Steel, Bricks, Floor Tiles, Paint",
+    "potential_benefit": "A cost estimate that reflects your local market.",
+    "potential_savings": null,
+    "reason": "Sample prices are placeholders for demonstration.",
+    "severity": "warning",
+    "suggested_action": "Replace them with quotations or locally verified rates before relying on the cost.",
+    "title": "Estimate uses sample prices"
+   },
+   {
+    "explanation": "'Portland Pozzolana Cement (PPC)' is priced at INR 390.00/bag (50 kg) versus INR 455.00 for the current selection.",
+    "id": "alt-cement",
+    "material": "Cement",
+    "potential_benefit": "Up to INR 22,360 at the current quantity, if the alternative meets your specification.",
+    "potential_savings": 22360.0,
+    "reason": "A lower unit price may reduce cost for the same quantity.",
+    "severity": "info",
+    "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+    "title": "Lower-priced alternative available for Cement"
+   },
+   {
+    "explanation": "'Manufactured Sand (M-Sand) (Washed)' is priced at INR 1,500.00/m\u00b3 versus INR 1,800.00 for the current selection.",
+    "id": "alt-sand",
+    "material": "Sand",
+    "potential_benefit": "Up to INR 10,847 at the current quantity, if the alternative meets your specification.",
+    "potential_savings": 10846.774827000001,
+    "reason": "A lower unit price may reduce cost for the same quantity.",
+    "severity": "info",
+    "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+    "title": "Lower-priced alternative available for Sand"
+   },
+   {
+    "explanation": "'Fly Ash Brick (Standard)' is priced at INR 7.00/nos versus INR 8.00 for the current selection.",
+    "id": "alt-bricks",
+    "material": "Bricks",
+    "potential_benefit": "Up to INR 30,847 at the current quantity, if the alternative meets your specification.",
+    "potential_savings": 30847.0,
+    "reason": "A lower unit price may reduce cost for the same quantity.",
+    "severity": "info",
+    "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+    "title": "Lower-priced alternative available for Bricks"
+   },
+   {
+    "explanation": "'Interior Distemper (Economy)' is priced at INR 150.00/litre versus INR 350.00 for the current selection.",
+    "id": "alt-paint",
+    "material": "Paint",
+    "potential_benefit": "Up to INR 33,120 at the current quantity, if the alternative meets your specification.",
+    "potential_savings": 33119.52,
+    "reason": "A lower unit price may reduce cost for the same quantity.",
+    "severity": "info",
+    "suggested_action": "Compare specifications, grade and durability in Material Catalogue before switching. Lowest price does not mean equal quality.",
+    "title": "Lower-priced alternative available for Paint"
+   },
+   {
+    "explanation": "The estimate needs about 498 tiles including 12 % wastage.",
+    "id": "verify-tiles",
+    "material": "Floor Tiles",
+    "potential_benefit": "Avoids over- or under-ordering of tiles (not quantified).",
+    "potential_savings": null,
+    "reason": "Tile layout, cuts and pattern change the real requirement; small measurement errors multiply over many tiles.",
+    "severity": "info",
+    "suggested_action": "Measure finished room sizes on site and confirm the tile size and layout pattern before ordering a full batch (and keep spares from one batch for colour match).",
+    "title": "Verify room dimensions before ordering tiles"
+   },
+   {
+    "explanation": "The highest-cost lines are Bricks, Cement, Reinforcement Steel.",
+    "id": "inventory-review",
+    "material": "Bricks, Cement, Reinforcement Steel",
+    "potential_benefit": "Avoids duplicate purchases; savings depend on inventory not tracked by Buildora.",
+    "potential_savings": null,
+    "reason": "Leftover stock from earlier work may cover part of the requirement.",
+    "severity": "info",
+    "suggested_action": "Check unused stock on site or at the supplier and deduct it before placing orders.",
+    "title": "Review existing inventory before ordering"
+   }
+  ],
+  "summary": {
+   "budget": 2500000.0,
+   "budget_used_pct": 28.433720358480002,
+   "budget_variance": 1789156.991038,
+   "by_category": [
+    {
+     "category": "Cement & Binders",
+     "cost": 156520.0
+    },
+    {
+     "category": "Aggregates",
+     "cost": 94715.84896200002
+    },
+    {
+     "category": "Reinforcement",
+     "cost": 124992.0
+    },
+    {
+     "category": "Masonry",
+     "cost": 246776.0
+    },
+    {
+     "category": "Flooring",
+     "cost": 29880.0
+    },
+    {
+     "category": "Paint & Finishes",
+     "cost": 57959.16
+    }
+   ],
+   "complete": true,
+   "cost_per_sqft": 412.74672809573156,
+   "cost_per_sqm": 4442.7688060125,
+   "extras": [
+    {
+     "amount": 0.0,
+     "enabled": false,
+     "included": false,
+     "key": "labour",
+     "mode": "fixed",
+     "value": 0.0
+    },
+    {
+     "amount": 0.0,
+     "enabled": false,
+     "included": false,
+     "key": "transportation",
+     "mode": "fixed",
+     "value": 0.0
+    },
+    {
+     "amount": 0.0,
+     "enabled": false,
+     "included": false,
+     "key": "contingency",
+     "mode": "fixed",
+     "value": 0.0
+    },
+    {
+     "amount": 0.0,
+     "enabled": false,
+     "included": false,
+     "key": "other",
+     "mode": "fixed",
+     "value": 0.0
+    }
+   ],
+   "extras_total": 0.0,
+   "material_total": 710843.008962,
+   "missing_price_keys": [],
+   "project_total": 710843.008962
+  },
+  "warnings": []
+ }
+}

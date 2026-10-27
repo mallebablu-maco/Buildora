@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import ForgotPasswordPage from '@/features/auth/ForgotPasswordPage'
@@ -8,9 +9,19 @@ import MyProjectsPage from '@/features/projects/MyProjectsPage'
 import NewProjectPage from '@/features/projects/NewProjectPage'
 import ProjectPage from '@/features/projects/ProjectPage'
 import { AppLayout } from '@/layouts/AppLayout'
-import Dashboard from '@/pages/Dashboard'
 import Landing from '@/pages/Landing'
 import NotFound from '@/pages/NotFound'
+import SettingsPage from '@/pages/Settings'
+
+// the 3D scene and the charts are large: they are downloaded only when their page is opened
+const Catalogue = lazy(() => import('@/pages/Catalogue'))
+const CostAnalysis = lazy(() => import('@/pages/CostAnalysis'))
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Estimation = lazy(() => import('@/pages/Estimation'))
+const Optimization = lazy(() => import('@/pages/Optimization'))
+const Prices = lazy(() => import('@/pages/Prices'))
+const Reports = lazy(() => import('@/pages/Reports'))
+const Studio = lazy(() => import('@/pages/Studio'))
 
 export default function App() {
   return (
@@ -26,6 +37,14 @@ export default function App() {
           <Route path="/projects" element={<MyProjectsPage />} />
           <Route path="/projects/new" element={<NewProjectPage />} />
           <Route path="/projects/:id" element={<ProjectPage />} />
+          <Route path="/studio/:projectId?" element={<Studio />} />
+          <Route path="/estimation/:projectId?" element={<Estimation />} />
+          <Route path="/catalogue" element={<Catalogue />} />
+          <Route path="/prices" element={<Prices />} />
+          <Route path="/cost-analysis/:projectId?" element={<CostAnalysis />} />
+          <Route path="/optimization/:projectId?" element={<Optimization />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFound />} />

@@ -50,6 +50,26 @@ It does not touch Supabase's own user accounts.
 - **Storage** (left menu): you see two buckets, `floorplans` and `reports`, both **private**.
 - **Authentication → Users** still lists your account (nothing there changes).
 
-## What comes later
+## Migration 2: everything the Studio, estimates, catalogue and reports need
 
-More tables (materials and prices, estimates, reports, floor plan files, the 3D layout) arrive in later steps, each as its own SQL file that I will show you first.
+File: [`supabase/migrations/20261027000000_layout_catalogue_estimates_reports.sql`](../supabase/migrations/20261027000000_layout_catalogue_estimates_reports.sql). Run it **after** migration 1, the same way.
+
+**It adds columns to existing tables** (nothing is removed or changed):
+- `projects`: the saved 3D layout (door and window positions, furniture), the estimate settings (wastage, chosen materials, extra costs, planned purchases) and a "demo" flag.
+- `profiles`: your default city and your default wastage percentages (Settings page).
+
+**It adds seven tables:**
+
+| Table | What it holds |
+|---|---|
+| `floor_plan_files` | A record per uploaded floor plan: name, type, size, the scale you set. The picture itself is in Storage. |
+| `materials` | The material catalogue. Shared sample materials (read-only for everyone) plus each person's own. |
+| `material_price_records` | Prices for those materials: shared sample prices, plus each person's own prices. |
+| `project_estimates` | The latest estimate of each project: totals and assumptions. |
+| `estimate_items` | The lines of an estimate (cement, steel, bricks…). |
+| `optimization_recommendations` | The waste-optimization advice for an estimate. |
+| `reports` | A record per generated PDF report. The PDF itself is in Storage. |
+
+**Who can see what, again:** everything above belongs to its owner and nobody else can see or change it, enforced by the database. The one deliberate exception is the **shared sample catalogue**: everyone signed in can read it, nobody can change or delete it, and everyone can add their own price for a sample material without affecting anyone else.
+
+**Safe to run twice; it contains no DROP TABLE, DROP COLUMN, DELETE or TRUNCATE.** After running it, restart the backend: it fills in the shared sample catalogue (18 materials with clearly labelled *sample* prices) the first time it starts.

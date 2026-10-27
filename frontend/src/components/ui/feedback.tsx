@@ -1,6 +1,7 @@
-import { AlertTriangle, CheckCircle2, Info, Loader2, XCircle } from 'lucide-react'
+import { AlertCircle, AlertTriangle, CheckCircle2, Inbox, Info, Loader2, XCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { Button } from './button'
 
 const tones = {
   error: { box: 'border-red-200 bg-red-50 text-red-900', Icon: XCircle },
@@ -29,4 +30,49 @@ export function Spinner({ label = 'Loading…', className }: { label?: string; c
       {label}
     </div>
   )
+}
+
+export function Skeleton({ className }: { className?: string }) {
+  return <div className={cn('animate-pulse rounded-md bg-slate-200', className)} />
+}
+
+export function EmptyState({ title, description, action, icon }: { title: string; description?: string; action?: ReactNode; icon?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+      <span className="mb-3 rounded-full bg-slate-100 p-3 text-slate-500">{icon ?? <Inbox className="h-6 w-6" aria-hidden="true" />}</span>
+      <h3 className="text-base font-semibold text-navy-900">{title}</h3>
+      {description && <p className="mt-1 max-w-md text-sm text-slate-600">{description}</p>}
+      {action && <div className="mt-4">{action}</div>}
+    </div>
+  )
+}
+
+export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div role="alert" className="flex flex-col items-center rounded-xl border border-red-200 bg-red-50 px-6 py-10 text-center">
+      <AlertCircle className="mb-2 h-6 w-6 text-red-600" aria-hidden="true" />
+      <p className="max-w-md text-sm text-red-800">{message}</p>
+      {onRetry && <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>Try again</Button>}
+    </div>
+  )
+}
+
+const badgeTones = {
+  neutral: 'bg-slate-100 text-slate-700',
+  navy: 'bg-navy-100 text-navy-800',
+  orange: 'bg-brand-100 text-brand-700',
+  green: 'bg-emerald-100 text-emerald-800',
+  red: 'bg-red-100 text-red-700',
+  amber: 'bg-amber-100 text-amber-800',
+}
+
+export function Badge({ tone = 'neutral', className, children }: { tone?: keyof typeof badgeTones; className?: string; children: ReactNode }) {
+  return <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', badgeTones[tone], className)}>{children}</span>
+}
+
+export const DISCLAIMER =
+  'These are preliminary planning estimates based on rule-based calculations and the assumptions shown. They must be verified by a qualified engineer before procurement or construction.'
+
+export function Disclaimer() {
+  return <Alert tone="warning" title="Preliminary estimate">{DISCLAIMER}</Alert>
 }

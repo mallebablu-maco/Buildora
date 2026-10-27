@@ -1,8 +1,9 @@
 import { BarChart3, BookOpen, Box, Calculator, FileText, FolderOpen, LayoutDashboard, LogOut, Menu, PlusSquare, Settings, Tag, TrendingDown, X } from 'lucide-react'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/feedback'
 import { useAuth } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
 
@@ -11,14 +12,14 @@ const NAV = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
   { label: 'My Projects', icon: FolderOpen, to: '/projects', end: true },
   { label: 'New Project', icon: PlusSquare, to: '/projects/new' },
-  { label: '3D Building Studio', icon: Box },
-  { label: 'Material Estimation', icon: Calculator },
-  { label: 'Material Catalogue', icon: BookOpen },
-  { label: 'Material Prices', icon: Tag },
-  { label: 'Cost Analysis', icon: BarChart3 },
-  { label: 'Waste Optimization', icon: TrendingDown },
-  { label: 'Reports', icon: FileText },
-  { label: 'Settings', icon: Settings },
+  { label: '3D Building Studio', to: '/studio', icon: Box },
+  { label: 'Material Estimation', to: '/estimation', icon: Calculator },
+  { label: 'Material Catalogue', to: '/catalogue', icon: BookOpen },
+  { label: 'Material Prices', to: '/prices', icon: Tag },
+  { label: 'Cost Analysis', to: '/cost-analysis', icon: BarChart3 },
+  { label: 'Waste Optimization', to: '/optimization', icon: TrendingDown },
+  { label: 'Reports', to: '/reports', icon: FileText },
+  { label: 'Settings', to: '/settings', icon: Settings },
 ] as { label: string; icon: typeof Box; to?: string; end?: boolean }[]
 
 export function AppLayout() {
@@ -60,7 +61,7 @@ export function AppLayout() {
             <Button variant="outline" size="sm" onClick={() => void signOut()}><LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Log out</Button>
           </div>
         </header>
-        <main className="flex-1 p-4 sm:p-6"><Outlet /></main>
+        <main className="flex-1 p-4 sm:p-6"><Suspense fallback={<Spinner />}><Outlet /></Suspense></main>
       </div>
     </div>
   )

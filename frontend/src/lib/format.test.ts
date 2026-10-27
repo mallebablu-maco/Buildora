@@ -28,6 +28,9 @@ describe('errorMessage', () => {
   })
   it('falls back to the status', () => {
     expect(errorMessage(500, null)).toBe('Request failed (500).')
-    expect(errorMessage(502, { detail: [] })).toBe('Request failed (502).')
+    expect(errorMessage(418, { detail: [] })).toBe('Request failed (418).')
+  })
+  it('explains a server that cannot be reached in plain words', () => {
+    for (const code of [502, 503, 504]) expect(errorMessage(code, null)).toMatch(/not reachable/)
   })
 })

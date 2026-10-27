@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { AuthContext } from '@/features/auth/auth-context'
 import { authValue, fakeSession } from '@/features/auth/test-utils'
 import { ToastProvider } from '@/lib/toast'
+import { UnitsProvider } from '@/lib/units'
 
 /** Render a screen the way the app does: router, data cache (no retries), toasts and a signed-in user. */
 export function renderApp(ui: ReactNode, route = '/') {
@@ -14,7 +15,9 @@ export function renderApp(ui: ReactNode, route = '/') {
     <QueryClientProvider client={client}>
       <AuthContext.Provider value={value}>
         <ToastProvider>
-          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+          <UnitsProvider>
+            <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+          </UnitsProvider>
         </ToastProvider>
       </AuthContext.Provider>
     </QueryClientProvider>,

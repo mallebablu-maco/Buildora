@@ -12,9 +12,10 @@ Construction planning and material estimation, built around a **3D Building Stud
 
 ## Status
 
-Phases 0-2 are built: spec, Supabase Auth, and projects with rooms (database design in [docs/DATABASE.md](docs/DATABASE.md), tested locally;
-the SQL still has to be run on your Supabase project). See [docs/SPEC.md](docs/SPEC.md) for the decisions, the 3D Studio checklist,
-the phases and exactly what has and has not been verified.
+All the pages in the design are built: Dashboard, My Projects, New Project, **3D Building Studio** (3D view, 2D plan editor, doors and windows,
+furniture, layout generator, floor plan import), Material Estimation, Catalogue, Prices, Cost Analysis, Waste Optimization, Reports and Settings.
+They are tested without a browser; **how the 3D scene looks has not been checked by a person yet**. The database needs both SQL files in
+`supabase/migrations/` run once. See [docs/SPEC.md](docs/SPEC.md) for the decisions, the Studio checklist and exactly what has and has not been verified.
 
 ## Run locally
 
@@ -34,6 +35,8 @@ npm run dev                       # http://localhost:5173  (forwards /api to the
 ```
 
 Tests: `cd backend && python -m pytest` and `cd frontend && npm test` (also `npm run typecheck`, `npm run build`).
+
+Two test files write shared fixtures into the other folder on purpose (`frontend/.../contract.test.ts` -> `backend/tests/fixtures`, and `backend/tests/test_export_frontend_fixtures.py` -> `frontend/src/test/fixtures`): they keep the browser and the API agreeing on the data format. Commit the regenerated files when the format changes on purpose.
 
 Platform setup (Supabase Auth settings, Render): [docs/SETUP.md](docs/SETUP.md).
 

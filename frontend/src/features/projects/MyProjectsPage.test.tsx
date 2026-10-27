@@ -13,7 +13,9 @@ vi.mock('./api', () => ({ projectsApi: { list: vi.fn(), get: vi.fn(), create: vi
 const project = (over: Partial<Project> = {}): Project => ({
   id: 'p1', name: 'Sample G+1 Residence', description: '', owner_name: '', building_type: 'residential', location: 'Pune', floors: 2, currency: 'INR',
   budget: 1500000, length: 12, width: 9, height: 3, wall_thickness: 0.23, slab_thickness: 0.15, built_up_area: null,
-  created_at: '2026-10-07T09:00:00Z', updated_at: '2026-10-07T09:00:00Z', room_count: 9, floor_area: 108, total_built_up_area: 216, ...over,
+  created_at: '2026-10-07T09:00:00Z', updated_at: '2026-10-07T09:00:00Z', room_count: 9, floor_area: 108, total_built_up_area: 216,
+  is_demo: false, assumptions: {}, wastage: {}, material_selections: {}, extra_costs: {}, purchase_quantities: {}, layout: null,
+  latest_total_cost: null, has_estimate: false, ...over,
 })
 
 const page = <Routes><Route path="/projects" element={<MyProjectsPage />} /><Route path="/projects/new" element={<p>new project page</p>} /><Route path="/projects/:id" element={<p>project page</p>} /></Routes>

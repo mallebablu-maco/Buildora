@@ -41,15 +41,11 @@ for the 3D Studio; the **PDF** wins for pages the code does not have.
 | 0 | This spec, decisions, golden fixtures plan | Done (fixtures arrive with Phase 3 tests) |
 | 1 | Skeleton, Supabase Auth end to end, Render blueprint | **Built; see section 4 for what is verified** |
 | 2 | Database (profiles, projects, rooms), RLS, projects CRUD, 4-step New Project wizard, My Projects, project page | **Built and tested locally; the SQL has NOT been applied to your Supabase yet** (see section 4) |
-| 3 | Studio core: geometry port + 3D viewer (Exterior/Top-down, floors, toggles, cut-away, labels, dimensions, selection) | Not started |
-| 4 | Room panel, Rooms list, layout save/reset | Not started |
-| 5 | 2D plan editor (doors, windows, validation panel) | Not started |
-| 6 | Layout generator ("From building details", variants, fit to footprint) | Not started |
-| 7 | Furniture (automatic, edit, regenerate, restore) | Not started |
-| 8 | Estimation engine (pure Python port) + catalogue + prices | Not started |
-| 9 | Floor plan upload, scale calibration, room detection, confirm | Not started |
-| 10 | Cost analysis, comparison, optimization, PDF reports, dashboard, settings | Not started |
-| 11 | Hardening: RLS tests on the real project, rate limits, load test, mobile, production deploy | Not started |
+| 3-7 | **3D Studio:** geometry, 3D viewer, room panel, 2D plan editor (doors/windows), layout generator, furniture, validation, save/reset | **Ported with the reference's tests and built into the app; tested without WebGL (see section 4).** Needs migration 2 on your Supabase |
+| 8 | Estimation engine, material catalogue and prices (CSV import), cost analysis, material comparison | Built and tested; needs migration 2 |
+| 9 | Floor plan upload, scale calibration, room detection, confirm | Built and tested with a generated plan; needs migration 2 |
+| 10 | Waste optimization, PDF reports, dashboard, settings (profile, default wastage, units) | Built and tested; needs migration 2 |
+| 11 | Hardening: rate limits, load test, mobile/touch, production deploy | Not started |
 
 A feature is only called working when it is built **and** tested. "Seen in the video" is not "implemented".
 
@@ -73,13 +69,24 @@ A feature is only called working when it is built **and** tested. "Seen in the v
 - Frontend: 65 tests pass: form rules, the 4-step wizard (validation per step, draft save, server errors), My Projects (list, empty,
   error + retry, delete with confirmation, Escape), formatting. `tsc` clean; production build succeeds.
 
-**NOT verified yet**
-- The SQL has not been run on your Supabase project, so: the database connection through Supabase's Session pooler, `SET ROLE authenticated`
-  through that pooler, Supabase's own default table privileges, and the Storage rules on the real Storage service are all untested there.
-  The local test database uses stand-ins for Supabase's `auth` and `storage` parts.
-- Projects pages in a real browser (no browser is available to the assistant).
-- A real Supabase-issued token being accepted by `/api/me`, and the password-reset email flow.
-- The Render deployment (`render.yaml` is untested).
+**Phases 3-10 (Studio, estimates, catalogue, floor plans, reports, dashboard, settings), tested locally**
+- Backend: 215 tests pass against a throw-away PostgreSQL with the real migrations: estimation (reference formulas and their tests), prices and
+  the catalogue, layout save/reset, floor plans (upload, calibration, OpenCV room detection on a generated plan), PDF reports (text read
+  back out of the file), dashboard, demo project, per-user isolation and database rules for every new table.
+- **Frontend and backend agree on the data:** the REAL Studio code generates payloads for four kinds of building (1-3 storeys, up to 25 rooms and
+  70 furniture pieces) which are replayed against the real API (saved, used by the estimate, reported); the plan signature has the same golden
+  value in TypeScript and Python. In the other direction, the API's real responses are captured and every page is rendered with them.
+- Frontend: 177 tests pass, including the reference's 86 Studio tests (walls, doors, windows, validation, furniture, generator, 2D plan) running on
+  the ported code, and render tests for every page and the Studio's main interactions.
+
+**NOT verified yet (be aware)**
+- **How the 3D scene LOOKS and feels in a real browser** (WebGL, orbit/zoom/pan, shadows, labels, cut-away). The geometry behind it is tested, but the
+  test environment has no WebGL, so the canvas itself was replaced by a stand-in. Needs a human look.
+- The PDF's visual layout (its text is verified, its appearance was not looked at).
+- Supabase Storage with real files (tests use an in-memory stand-in with the same per-user folder rule), and the database changes on the real
+  Supabase project (migration 2 has not been run there).
+- Mobile/touch behaviour of the Studio, the Render deployment, rate limiting, and a load test.
+- A real Supabase-issued token being accepted end to end was confirmed by the user logging in (Phase 1), not by an automated test.
 
 ## 5. 3D Studio checklist (acceptance list)
 

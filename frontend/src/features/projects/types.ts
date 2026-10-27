@@ -32,12 +32,8 @@ export interface RoomInput {
   pos_y?: number | null
 }
 
-export interface Room extends RoomInput {
-  id: string
-  project_id: string
-  created_at: string
-  area: number
-}
+/** Stored shapes come from the API types, so every screen agrees on them. */
+export type { Project, ProjectDetail, Room } from '@/types'
 
 export interface ProjectInput {
   name: string
@@ -53,18 +49,4 @@ export interface ProjectInput {
   height: number
   wall_thickness: number
   slab_thickness: number
-}
-
-export interface Project extends ProjectInput {
-  id: string
-  built_up_area: number | null
-  created_at: string
-  updated_at: string
-  room_count: number
-  floor_area: number
-  total_built_up_area: number
-}
-
-export interface ProjectDetail extends Project {
-  rooms: Room[]
 }

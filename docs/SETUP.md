@@ -18,7 +18,7 @@ Never use the `service_role` / secret key in this project.
 
 ## Supabase (database): from Phase 2
 
-1. **Create the tables:** follow "How to run it" in [DATABASE.md](DATABASE.md) (SQL Editor, paste, Run). Do this once.
+1. **Create the tables:** follow "How to run it" in [DATABASE.md](DATABASE.md) (SQL Editor, paste, Run). Run **both** migration files in `supabase/migrations/`, oldest first, once each.
 2. **Get the connection string:** click **Connect** at the top of your Supabase project, choose **Session pooler**, and copy the connection string.
    It contains `[YOUR-PASSWORD]`: replace that with your database password (the one you saved when creating the project;
    you can reset it under Project Settings → Database if you lost it).

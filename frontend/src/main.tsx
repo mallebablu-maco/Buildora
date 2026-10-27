@@ -8,6 +8,7 @@ import './index.css'
 import { ApiError } from './lib/api'
 import { configProblems } from './lib/env'
 import { ToastProvider } from './lib/toast'
+import { UnitsProvider } from './lib/units'
 import ConfigError from './pages/ConfigError'
 
 const problems = configProblems()
@@ -32,7 +33,9 @@ createRoot(document.getElementById('root')!).render(
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <ToastProvider>
-              <App />
+              <UnitsProvider>
+                <App />
+              </UnitsProvider>
             </ToastProvider>
           </AuthProvider>
         </QueryClientProvider>
