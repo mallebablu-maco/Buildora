@@ -48,8 +48,8 @@ def test_list_shows_room_counts_and_the_newest_created_project_first(db_client, 
     assert [(r["name"], r["room_count"]) for r in rows] == [("Third", 0), ("Second", 0), ("First", 3)]
     assert "rooms" not in rows[0]
     # editing an old project does NOT move it to the top: the order is by creation time
-    db_client.put(f"/api/projects/{first['id']}", json=PROJECT | {"name": "First (renamed)"}, headers=alice.headers)
-    assert [r["name"] for r in db_client.get("/api/projects", headers=alice.headers).json()] == ["Third", "Second", "First (renamed)"]
+    db_client.put(f"/api/projects/{first['id']}", json=PROJECT | {"name": "First renamed"}, headers=alice.headers)
+    assert [r["name"] for r in db_client.get("/api/projects", headers=alice.headers).json()] == ["Third", "Second", "First renamed"]
     assert len({first["id"], second["id"], third["id"]}) == 3
 
 

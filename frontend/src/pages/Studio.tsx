@@ -22,6 +22,7 @@ import { api } from '@/lib/api'
 import { useToast } from '@/lib/toast'
 import { useUnits } from '@/lib/units'
 import { LIMITS as L } from '@/lib/limits'
+import { numberError, rangeHint } from '@/lib/validate'
 import { cn } from '@/lib/utils'
 import type { ProjectDetail, RoomInput } from '@/types'
 
@@ -332,13 +333,20 @@ function RoomEditor({ project, roomId, onSaved, schematic }: { project: ProjectD
   const [busy, setBusy] = useState(false)
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((s) => ({ ...s, [k]: e.target.value }))
 
+  const errs = {
+    length: numberError(f.length, L.MIN_ROOM_DIM, L.MAX_ROOM_DIM, { unit: 'm' }),
+    width: numberError(f.width, L.MIN_ROOM_DIM, L.MAX_ROOM_DIM, { unit: 'm' }),
+    height: numberError(f.height, L.MIN_HEIGHT, L.MAX_HEIGHT, { unit: 'm' }),
+    doors: numberError(f.doors, 0, L.MAX_DOORS_PER_ROOM, { whole: true }),
+    windows: numberError(f.windows, 0, L.MAX_WINDOWS_PER_ROOM, { whole: true }),
+    x: numberError(f.x, 0, L.MAX_DIM, { optional: true, unit: 'm' }),
+    y: numberError(f.y, 0, L.MAX_DIM, { optional: true, unit: 'm' }),
+  }
+  const hasErrors = Object.values(errs).some(Boolean)
+
   const save = async () => {
     const n = (s: string) => Number(s)
-    const inside = (v: number, lo: number, hi: number) => Number.isFinite(v) && v >= lo && v <= hi
-    if (!inside(n(f.length), L.MIN_ROOM_DIM, L.MAX_ROOM_DIM) || !inside(n(f.width), L.MIN_ROOM_DIM, L.MAX_ROOM_DIM)) { toast.error(`Length and width must be between ${L.MIN_ROOM_DIM} and ${L.MAX_ROOM_DIM} m.`); return }
-    if (!inside(n(f.height), L.MIN_HEIGHT, L.MAX_HEIGHT)) { toast.error(`Height must be between ${L.MIN_HEIGHT} and ${L.MAX_HEIGHT} m.`); return }
-    if (!inside(n(f.doors) || 0, 0, L.MAX_DOORS_PER_ROOM)) { toast.error(`A room can have 0 to ${L.MAX_DOORS_PER_ROOM} doors.`); return }
-    if (!inside(n(f.windows) || 0, 0, L.MAX_WINDOWS_PER_ROOM)) { toast.error(`A room can have 0 to ${L.MAX_WINDOWS_PER_ROOM} windows.`); return }
+    if (hasErrors) return
     const input: RoomInput = {
       name: room.name, room_type: room.room_type, floor_number: room.floor_number, wall_thickness: room.wall_thickness, area_override: null,
       length: n(f.length), width: n(f.width), height: n(f.height), doors: Math.max(0, Math.round(n(f.doors) || 0)), windows: Math.max(0, Math.round(n(f.windows) || 0)),
@@ -357,16 +365,16 @@ function RoomEditor({ project, roomId, onSaved, schematic }: { project: ProjectD
         <span className="text-slate-500">Height</span><span className="text-right font-medium">{units.length(room.height)}</span></div>
       {schematic && <p className="rounded bg-amber-50 p-2 text-xs text-amber-800">Position is schematic (not stored). Use “Save this layout” to fix it.</p>}
       <div className="grid grid-cols-3 gap-2">
-        <Field label="L (m)"><Input type="number" min={L.MIN_ROOM_DIM} max={L.MAX_ROOM_DIM} step="any" value={f.length} onChange={set('length')} /></Field>
-        <Field label="W (m)"><Input type="number" min={L.MIN_ROOM_DIM} max={L.MAX_ROOM_DIM} step="any" value={f.width} onChange={set('width')} /></Field>
-        <Field label="H (m)"><Input type="number" min={L.MIN_HEIGHT} max={L.MAX_HEIGHT} step="any" value={f.height} onChange={set('height')} /></Field>
-        <Field label="Doors"><Input type="number" min={0} max={L.MAX_DOORS_PER_ROOM} step={1} value={f.doors} onChange={set('doors')} /></Field>
-        <Field label="Windows"><Input type="number" min={0} max={L.MAX_WINDOWS_PER_ROOM} step={1} value={f.windows} onChange={set('windows')} /></Field>
+        <Field label="L (m)" error={errs.length} hint={rangeHint(L.MIN_ROOM_DIM, L.MAX_ROOM_DIM)}><Input type="number" min={L.MIN_ROOM_DIM} max={L.MAX_ROOM_DIM} step="any" value={f.length} onChange={set('length')} invalid={!!errs.length} /></Field>
+        <Field label="W (m)" error={errs.width} hint={rangeHint(L.MIN_ROOM_DIM, L.MAX_ROOM_DIM)}><Input type="number" min={L.MIN_ROOM_DIM} max={L.MAX_ROOM_DIM} step="any" value={f.width} onChange={set('width')} invalid={!!errs.width} /></Field>
+        <Field label="H (m)" error={errs.height} hint={rangeHint(L.MIN_HEIGHT, L.MAX_HEIGHT)}><Input type="number" min={L.MIN_HEIGHT} max={L.MAX_HEIGHT} step="any" value={f.height} onChange={set('height')} invalid={!!errs.height} /></Field>
+        <Field label="Doors" error={errs.doors} hint={rangeHint(0, L.MAX_DOORS_PER_ROOM)}><Input type="number" min={0} max={L.MAX_DOORS_PER_ROOM} step={1} value={f.doors} onChange={set('doors')} invalid={!!errs.doors} /></Field>
+        <Field label="Windows" error={errs.windows} hint={rangeHint(0, L.MAX_WINDOWS_PER_ROOM)}><Input type="number" min={0} max={L.MAX_WINDOWS_PER_ROOM} step={1} value={f.windows} onChange={set('windows')} invalid={!!errs.windows} /></Field>
         <span />
-        <Field label="X (m)"><Input type="number" step="any" value={f.x} onChange={set('x')} placeholder="auto" /></Field>
-        <Field label="Y (m)"><Input type="number" step="any" value={f.y} onChange={set('y')} placeholder="auto" /></Field>
+        <Field label="X (m)" error={errs.x}><Input type="number" step="any" value={f.x} onChange={set('x')} placeholder="auto" invalid={!!errs.x} /></Field>
+        <Field label="Y (m)" error={errs.y}><Input type="number" step="any" value={f.y} onChange={set('y')} placeholder="auto" invalid={!!errs.y} /></Field>
       </div>
-      <Button variant="accent" size="sm" loading={busy} onClick={save}><Save className="h-3.5 w-3.5" /> Save & update model</Button>
+      <Button variant="accent" size="sm" loading={busy} disabled={hasErrors} onClick={save}><Save className="h-3.5 w-3.5" /> Save & update model</Button>
       <p className="flex items-center gap-1 text-xs text-slate-500"><Ruler className="h-3 w-3" /> Estimates use these values after recalculation.</p>
     </div>
   )

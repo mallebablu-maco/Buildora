@@ -3,12 +3,13 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Alert, Badge, ErrorState, Spinner } from '@/components/ui/feedback'
-import { Input } from '@/components/ui/form'
+import { Input, Under } from '@/components/ui/form'
 import { PageHeader } from '@/components/ui/page'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { useAsync } from '@/hooks/useApi'
 import { api, saveBlob } from '@/lib/api'
 import { LIMITS as L } from '@/lib/limits'
+import { numberError, rangeHint, textError } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
 import { formatDate } from '@/lib/utils'
 import type { Material } from '@/types'
@@ -64,8 +65,15 @@ function PriceRow({ m, onChanged }: { m: Material; onChanged: () => Promise<void
   const [busy, setBusy] = useState(false)
   const dirty = price !== (m.unit_price != null ? String(m.unit_price) : '') || supplier !== (m.price_is_sample ? '' : m.supplier) || location !== (m.price_is_sample ? '' : m.location)
   const own = !m.price_is_sample && m.price_id
+  const errs = {
+    price: numberError(price, 0, L.MAX_UNIT_PRICE),
+    supplier: textError('title', supplier, { max: L.SUPPLIER }),
+    location: textError('place', location, { max: L.PRICE_LOCATION }),
+  }
+  const hasErrors = Object.values(errs).some(Boolean)
 
   const save = async () => {
+    if (hasErrors) return
     const v = Number(price)
     if (price.trim() === '' || !Number.isFinite(v) || v < 0 || v > L.MAX_UNIT_PRICE) { toast.error(`Unit price must be between 0 and ${L.MAX_UNIT_PRICE.toLocaleString('en-IN')}.`); return }
     setBusy(true)
@@ -85,13 +93,13 @@ function PriceRow({ m, onChanged }: { m: Material; onChanged: () => Promise<void
     <TR>
       <TD className="min-w-48 font-medium">{m.name}<div className="text-xs font-normal text-slate-500">{[m.brand, m.grade].filter(Boolean).join(' · ')}</div></TD>
       <TD>{m.unit}</TD>
-      <TD><Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={price} aria-label={`Unit price for ${m.name}`} onChange={(e) => setPrice(e.target.value)} className="h-8 min-w-28" /></TD>
-      <TD><Input value={supplier} maxLength={L.SUPPLIER} onChange={(e) => setSupplier(e.target.value)} aria-label={`Supplier for ${m.name}`} placeholder={m.price_is_sample ? 'Your supplier' : ''} className="h-8" /></TD>
-      <TD><Input value={location} maxLength={L.PRICE_LOCATION} onChange={(e) => setLocation(e.target.value)} aria-label={`Location for ${m.name}`} className="h-8" /></TD>
+      <TD><Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={price} aria-label={`Unit price for ${m.name}`} onChange={(e) => setPrice(e.target.value)} className="h-8 min-w-28" invalid={!!errs.price} /><Under error={errs.price} hint={rangeHint(0, L.MAX_UNIT_PRICE)} /></TD>
+      <TD><Input value={supplier} maxLength={L.SUPPLIER} onChange={(e) => setSupplier(e.target.value)} aria-label={`Supplier for ${m.name}`} placeholder={m.price_is_sample ? 'Your supplier' : ''} className="h-8" invalid={!!errs.supplier} /><Under error={errs.supplier} /></TD>
+      <TD><Input value={location} maxLength={L.PRICE_LOCATION} onChange={(e) => setLocation(e.target.value)} aria-label={`Location for ${m.name}`} className="h-8" invalid={!!errs.location} /><Under error={errs.location} /></TD>
       <TD>{m.price_is_sample ? <Badge tone="amber">SAMPLE</Badge> : m.unit_price == null ? <Badge tone="red">No price</Badge> : <Badge tone="green">Your price</Badge>}</TD>
       <TD className="whitespace-nowrap">{formatDate(m.last_updated)}</TD>
       <TD className="whitespace-nowrap text-right">
-        <Button size="sm" variant={dirty ? 'accent' : 'outline'} disabled={!dirty} loading={busy} onClick={save}><Save className="h-3.5 w-3.5" /> Save</Button>
+        <Button size="sm" variant={dirty ? 'accent' : 'outline'} disabled={!dirty || hasErrors} loading={busy} onClick={save}><Save className="h-3.5 w-3.5" /> Save</Button>
         {own && <Button size="icon" variant="ghost" aria-label={`Reset price for ${m.name}`} title={m.editable ? 'Remove price' : 'Revert to sample price'} onClick={reset}><Undo2 className="h-4 w-4" /></Button>}
       </TD>
     </TR>

@@ -5,10 +5,11 @@ import { ProjectScope } from '@/components/ProjectScope'
 import { Button } from '@/components/ui/button'
 import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { Alert, Badge, EmptyState, ErrorState, Spinner } from '@/components/ui/feedback'
-import { Input } from '@/components/ui/form'
+import { Input, Under } from '@/components/ui/form'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { useEstimate } from '@/features/estimation/useEstimate'
 import { LIMITS as L } from '@/lib/limits'
+import { numberError } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
 import { cn, formatMoney, formatNumber } from '@/lib/utils'
 import type { Recommendation } from '@/types'
@@ -87,11 +88,12 @@ function Body({ projectId }: { projectId: string }) {
           <TBody>
             {estimate.items.filter((i) => i.counts_toward_cost).map((it) => {
               const planned = plan[it.key] !== undefined && plan[it.key] !== '' ? Number(plan[it.key]) : null
+              const planErr = numberError(plan[it.key] ?? '', 0, L.MAX_EXTRA, { optional: true })
               const diff = planned !== null && Number.isFinite(planned) ? planned - it.gross_quantity : null
               return (
                 <TR key={it.key}>
                   <TD className="font-medium">{it.name}</TD><TD className="text-right tabular-nums">{formatNumber(it.gross_quantity)}</TD><TD>{it.unit}</TD>
-                  <TD className="text-right"><Input type="number" min={0} max={L.MAX_EXTRA} step="any" aria-label={`Planned ${it.name}`} className="h-8 text-right" value={plan[it.key] ?? ''} onChange={(e) => setPlan((p) => ({ ...p, [it.key]: e.target.value }))} /></TD>
+                  <TD className="text-right"><Input type="number" min={0} max={L.MAX_EXTRA} step="any" aria-label={`Planned ${it.name}`} className="h-8 text-right" value={plan[it.key] ?? ''} onChange={(e) => setPlan((p) => ({ ...p, [it.key]: e.target.value }))} invalid={!!planErr} /><Under error={planErr} /></TD>
                   <TD className={cn('text-right tabular-nums', diff != null && Math.abs(diff) / (it.gross_quantity || 1) >= 0.1 && 'font-semibold text-amber-700')}>{diff == null ? '—' : `${diff > 0 ? '+' : ''}${formatNumber(diff)}`}</TD>
                 </TR>
               )

@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/ui/page'
 import { useAuth } from '@/features/auth/useAuth'
 import { formatArea, formatLength, formatMoney } from '@/lib/format'
 import { LIMITS as L } from '@/lib/limits'
+import { rangeHint } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import { useCreateProject } from './hooks'
@@ -26,6 +27,11 @@ const STEPS = [
 
 const num = { valueAsNumber: true } as const
 
+const BUILDING_HINT = {
+  length: rangeHint(L.MIN_DIM, L.MAX_DIM, 'm'), width: rangeHint(L.MIN_DIM, L.MAX_DIM, 'm'), height: rangeHint(L.MIN_HEIGHT, L.MAX_HEIGHT, 'm'),
+  wall_thickness: rangeHint(L.MIN_WALL, L.MAX_WALL, 'm'), slab_thickness: rangeHint(L.MIN_SLAB, L.MAX_SLAB, 'm'),
+} as const
+
 export default function NewProjectPage() {
   const navigate = useNavigate()
   const toast = useToast()
@@ -36,6 +42,7 @@ export default function NewProjectPage() {
 
   const { register, control, handleSubmit, trigger, getValues, formState: { errors } } = useForm<WizardValues>({
     resolver: zodResolver(wizardSchema),
+    mode: 'onChange',
     defaultValues: defaultWizardValues((user?.user_metadata?.full_name as string | undefined) ?? ''),
   })
   const rooms = useFieldArray({ control, name: 'rooms' })
@@ -95,24 +102,24 @@ export default function NewProjectPage() {
             <section aria-labelledby="s1" className="space-y-4">
               <div><h2 id="s1" className="text-lg font-bold text-navy-900">Project details</h2><p className="text-sm text-slate-600">Basic information that appears on your estimate and report.</p></div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Project name" error={errors.name?.message}>
+                <Field label="Project name" error={errors.name?.message} hint={`Up to ${L.PROJECT_NAME} characters`}>
                   {({ id, describedBy, invalid }) => <Input id={id} aria-describedby={describedBy} invalid={invalid} maxLength={L.PROJECT_NAME} {...register('name')} />}
                 </Field>
-                <Field label="Owner" error={errors.owner_name?.message}>
+                <Field label="Owner" error={errors.owner_name?.message} hint={`Letters only, up to ${L.OWNER_NAME} characters`}>
                   {({ id, describedBy, invalid }) => <Input id={id} aria-describedby={describedBy} invalid={invalid} maxLength={L.OWNER_NAME} {...register('owner_name')} />}
                 </Field>
               </div>
-              <Field label="Description (optional)" error={errors.description?.message}>
+              <Field label="Description (optional)" error={errors.description?.message} hint={`Up to ${L.DESCRIPTION} characters`}>
                 {({ id, describedBy, invalid }) => <Textarea id={id} aria-describedby={describedBy} invalid={invalid} maxLength={L.DESCRIPTION} {...register('description')} />}
               </Field>
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label="Building type" error={errors.building_type?.message}>
                   {({ id, invalid }) => <Select id={id} invalid={invalid} {...register('building_type')}>{BUILDING_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</Select>}
                 </Field>
-                <Field label="Location (city)" error={errors.location?.message}>
+                <Field label="Location (city)" error={errors.location?.message} hint={`Up to ${L.LOCATION} characters`}>
                   {({ id, describedBy, invalid }) => <Input id={id} aria-describedby={describedBy} invalid={invalid} maxLength={L.LOCATION} {...register('location')} />}
                 </Field>
-                <Field label="Floors" error={errors.floors?.message} hint="1 = ground floor only">
+                <Field label="Floors" error={errors.floors?.message} hint={`${rangeHint(1, L.MAX_FLOORS)} (1 = ground floor only)`}>
                   {({ id, describedBy, invalid }) => <Input id={id} type="number" min={1} max={L.MAX_FLOORS} step={1} aria-describedby={describedBy} invalid={invalid} {...register('floors', num)} />}
                 </Field>
               </div>
@@ -120,7 +127,7 @@ export default function NewProjectPage() {
                 <Field label="Currency" hint="Prices are in Indian rupees for now.">
                   {({ id }) => <Input id={id} value="INR (₹)" disabled readOnly />}
                 </Field>
-                <Field label="Budget (optional)" error={errors.budget?.message} hint="Used to show over / under against the estimate.">
+                <Field label="Budget (optional)" error={errors.budget?.message} hint={`Optional, up to ${L.MAX_BUDGET.toLocaleString('en-IN')}. Used to show over / under against the estimate.`}>
                   {({ id, describedBy, invalid }) => (
                     <Input id={id} type="number" min={0} max={L.MAX_BUDGET} step="any" aria-describedby={describedBy} invalid={invalid}
                       {...register('budget', { setValueAs: (x) => (x === '' || x == null ? null : Number(x)) })} />
@@ -137,7 +144,7 @@ export default function NewProjectPage() {
                 {([
                   ['length', 'Length (m)'], ['width', 'Width (m)'], ['height', 'Floor height (m)'], ['wall_thickness', 'External wall thickness (m)'], ['slab_thickness', 'Slab thickness (m)'],
                 ] as const).map(([name, label]) => (
-                  <Field key={name} label={label} error={errors[name]?.message}>
+                  <Field key={name} label={label} error={errors[name]?.message} hint={BUILDING_HINT[name]}>
                     {({ id, describedBy, invalid }) => <Input id={id} type="number" min={0} step="any" aria-describedby={describedBy} invalid={invalid} {...register(name, num)} />}
                   </Field>
                 ))}
@@ -159,14 +166,14 @@ export default function NewProjectPage() {
                     <fieldset key={f.id} className="rounded-lg border border-slate-200 p-3">
                       <legend className="px-1 text-sm font-semibold text-navy-900">Room {i + 1}</legend>
                       <div className="grid gap-3 sm:grid-cols-4">
-                        <Field label="Name" error={e?.name?.message}>{({ id, invalid }) => <Input id={id} invalid={invalid} maxLength={L.ROOM_NAME} {...register(`rooms.${i}.name`)} />}</Field>
+                        <Field label="Name" error={e?.name?.message} hint={`Up to ${L.ROOM_NAME} characters`}>{({ id, invalid }) => <Input id={id} invalid={invalid} maxLength={L.ROOM_NAME} {...register(`rooms.${i}.name`)} />}</Field>
                         <Field label="Type" error={e?.room_type?.message}>{({ id, invalid }) => <Select id={id} invalid={invalid} {...register(`rooms.${i}.room_type`)}>{ROOM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</Select>}</Field>
-                        <Field label="Floor" error={e?.floor_number?.message}>{({ id, invalid }) => <Input id={id} type="number" step={1} min={1} max={L.MAX_FLOORS} invalid={invalid} {...register(`rooms.${i}.floor_number`, num)} />}</Field>
+                        <Field label="Floor" error={e?.floor_number?.message} hint={rangeHint(1, L.MAX_FLOORS)}>{({ id, invalid }) => <Input id={id} type="number" step={1} min={1} max={L.MAX_FLOORS} invalid={invalid} {...register(`rooms.${i}.floor_number`, num)} />}</Field>
                         <div className="flex items-end justify-end"><Button variant="ghost" size="sm" onClick={() => rooms.remove(i)} aria-label={`Remove room ${i + 1}`}><Trash2 className="h-4 w-4" aria-hidden="true" /> Remove</Button></div>
-                        <Field label="Length (m)" error={e?.length?.message}>{({ id, invalid }) => <Input id={id} type="number" min={L.MIN_ROOM_DIM} max={L.MAX_ROOM_DIM} step="any" invalid={invalid} {...register(`rooms.${i}.length`, num)} />}</Field>
-                        <Field label="Width (m)" error={e?.width?.message}>{({ id, invalid }) => <Input id={id} type="number" min={L.MIN_ROOM_DIM} max={L.MAX_ROOM_DIM} step="any" invalid={invalid} {...register(`rooms.${i}.width`, num)} />}</Field>
-                        <Field label="Doors" error={e?.doors?.message}>{({ id, invalid }) => <Input id={id} type="number" step={1} min={0} max={L.MAX_DOORS_PER_ROOM} invalid={invalid} {...register(`rooms.${i}.doors`, num)} />}</Field>
-                        <Field label="Windows" error={e?.windows?.message}>{({ id, invalid }) => <Input id={id} type="number" step={1} min={0} max={L.MAX_WINDOWS_PER_ROOM} invalid={invalid} {...register(`rooms.${i}.windows`, num)} />}</Field>
+                        <Field label="Length (m)" error={e?.length?.message} hint={rangeHint(L.MIN_ROOM_DIM, L.MAX_ROOM_DIM, 'm')}>{({ id, invalid }) => <Input id={id} type="number" min={L.MIN_ROOM_DIM} max={L.MAX_ROOM_DIM} step="any" invalid={invalid} {...register(`rooms.${i}.length`, num)} />}</Field>
+                        <Field label="Width (m)" error={e?.width?.message} hint={rangeHint(L.MIN_ROOM_DIM, L.MAX_ROOM_DIM, 'm')}>{({ id, invalid }) => <Input id={id} type="number" min={L.MIN_ROOM_DIM} max={L.MAX_ROOM_DIM} step="any" invalid={invalid} {...register(`rooms.${i}.width`, num)} />}</Field>
+                        <Field label="Doors" error={e?.doors?.message} hint={rangeHint(0, L.MAX_DOORS_PER_ROOM)}>{({ id, invalid }) => <Input id={id} type="number" step={1} min={0} max={L.MAX_DOORS_PER_ROOM} invalid={invalid} {...register(`rooms.${i}.doors`, num)} />}</Field>
+                        <Field label="Windows" error={e?.windows?.message} hint={rangeHint(0, L.MAX_WINDOWS_PER_ROOM)}>{({ id, invalid }) => <Input id={id} type="number" step={1} min={0} max={L.MAX_WINDOWS_PER_ROOM} invalid={invalid} {...register(`rooms.${i}.windows`, num)} />}</Field>
                       </div>
                     </fieldset>
                   )

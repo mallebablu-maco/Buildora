@@ -2,6 +2,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 from app import limits
 
 TS = Path(__file__).resolve().parents[2] / "frontend" / "src" / "lib" / "limits.ts"
@@ -9,6 +11,23 @@ TS = Path(__file__).resolve().parents[2] / "frontend" / "src" / "lib" / "limits.
 
 def _ts_limits() -> dict[str, float]:
     return {k: float(v.replace("_", "")) for k, v in re.findall(r"^\s{2}([A-Z_]+):\s*([\d_.]+),", TS.read_text(), re.M)}
+
+
+def test_text_character_rules_are_identical_in_browser_and_api():
+    rows = re.findall(r"^\s{2}(\w+): \{ extra: (['\"])(.*?)\2, digits: (true|false), help: (['\"])(.*?)\5 \}", TS.read_text(), re.M)
+    assert {k: (e, d == "true") for k, _, e, d, _, _ in rows} == limits.TEXT_KINDS
+    assert {k: h for k, _, _, _, _, h in rows} == limits.TEXT_HELP
+
+
+@pytest.mark.parametrize("kind,value,ok", [
+    ("person", "Asha Rao", True), ("person", "Asha 2", False), ("person", "D'Souza-Rao Jr.", True), ("person", "a@b", False),
+    ("title", "Sample G+1 Residence", True), ("title", "Room 1", True), ("title", "12345", False), ("title", "hyderabd@ghewrkj", False),
+    ("title", "House #1", False), ("title", "Bhāratī Nivās", True), ("place", "Hyderabad, Telangana", True), ("place", "98", False),
+    ("place", "<script>", False), ("material", "Cement (OPC) 43", True), ("grade", "Fe 500D", True), ("unit", "bag (50 kg)", True),
+    ("unit", "m³", True), ("title", "", True),
+])
+def test_text_character_rules(kind, value, ok):
+    assert (limits.text_problem(kind, value) is None) is ok, value
 
 
 def test_frontend_and_backend_limits_are_identical():
@@ -71,3 +90,21 @@ def test_estimate_settings_out_of_range_are_rejected(db_client, alice):
                  {"purchase_quantities": {"cement": L.MAX_EXTRA + 1}}):
         assert db_client.put(f"/api/projects/{p['id']}/config", json=body, headers=alice.headers).status_code == 422, body
     assert db_client.put(f"/api/projects/{p['id']}/config", json={"wastage": {"cement": L.MAX_WASTAGE_PCT}}, headers=alice.headers).status_code == 200
+
+
+@pytest.mark.parametrize("field,value", [("name", "House @ 1"), ("name", "12345"), ("owner_name", "Asha 2"), ("location", "hyderabd@ghewrkj"), ("location", "98")])
+def test_project_text_with_special_characters_or_no_letters_is_rejected(db_client, alice, field, value):
+    body = copy.deepcopy(PROJECT) | {field: value}
+    body.pop("rooms", None)
+    r = db_client.post("/api/projects", json=body, headers=alice.headers)
+    assert r.status_code == 422, r.text
+    assert "letter" in r.text.lower() or "only" in r.text.lower(), r.text
+
+
+def test_supplier_and_location_text_rules_on_prices(db_client, alice):
+    m = db_client.get("/api/materials", headers=alice.headers).json()[0]
+    for bad in ({"supplier": "1232341244"}, {"supplier": "Acme <b>"}, {"location": "235232345234"}):
+        r = db_client.post("/api/prices", json={"material_id": m["id"], "unit_price": 10} | bad, headers=alice.headers)
+        assert r.status_code == 422, bad
+    ok = db_client.post("/api/prices", json={"material_id": m["id"], "unit_price": 10, "supplier": "Sri Lakshmi Traders", "location": "Hyderabad, TS"}, headers=alice.headers)
+    assert ok.status_code in (200, 201), ok.text

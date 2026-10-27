@@ -164,6 +164,10 @@ async def import_prices(file: UploadFile = File(...), db: Session = Depends(get_
                 raise ValueError(f"unit_price must be between 0 and {L.MAX_UNIT_PRICE:,.0f}")
             if not row["name"] or not row["unit"]:
                 raise ValueError("name and unit are required")
+            for field, kind in (("name", "material"), ("category", "title"), ("brand", "material"), ("grade", "grade"), ("unit", "unit"), ("supplier", "title"), ("location", "place")):
+                problem = L.text_problem(kind, row.get(field, ""))
+                if problem:
+                    raise ValueError(f"{field}: {problem}")
             m = Material(owner_id=me, estimate_key=key, name=row["name"][:L.MATERIAL_NAME], category=(row.get("category") or key.title())[:L.CATEGORY],
                          brand=row.get("brand", "")[:L.BRAND], grade=row.get("grade", "")[:L.GRADE], unit=row["unit"][:L.UNIT])
             m.prices.append(PriceRecord(owner_id=me, unit_price=price, supplier=row.get("supplier", "")[:L.SUPPLIER], location=row.get("location", "")[:L.PRICE_LOCATION]))

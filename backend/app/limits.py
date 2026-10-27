@@ -37,3 +37,36 @@ MAX_UNIT_PRICE = 1_000_000.0
 MAX_WASTAGE_PCT = 50.0
 MAX_EXTRA = 1_000_000_000.0  # one extra-cost value / planned quantity
 MAX_ASSUMPTION = 100_000.0
+
+
+# ---- which characters text fields accept: letters (any language), spaces and the extra characters listed here; digits only where allowed.
+# A value must also contain at least one letter, so "12345" or "@@@" is never a name. frontend/src/lib/limits.ts repeats this table.
+TEXT_KINDS = {
+    "person": (".'-", False),  # names of people: no digits
+    "title": (".,'&+-", True),  # project, room, supplier, brand, category names
+    "place": (".,-", True),  # city / location
+    "material": (".,'&+-()/", True),  # material names
+    "grade": (".,-/+()", True),
+    "unit": ("()./-³²", True),
+}
+TEXT_HELP = {
+    "person": "letters, spaces and . ' - only",
+    "title": "letters, numbers, spaces and . , ' & + - only",
+    "place": "letters, numbers, spaces and . , - only",
+    "material": "letters, numbers, spaces and . , ' & + - ( ) / only",
+    "grade": "letters, numbers, spaces and . , - / + ( ) only",
+    "unit": "letters, numbers, spaces and ( ) . / - only",
+}
+
+
+def text_problem(kind: str, value: str) -> str | None:
+    """None when `value` is acceptable, else a short message that says what to change."""
+    extra, digits = TEXT_KINDS[kind]
+    if value == "":
+        return None
+    for ch in value:
+        if not (ch.isalpha() or ch == " " or ch in extra or (digits and ch.isdigit())):
+            return f"Use {TEXT_HELP[kind]}."
+    if not any(ch.isalpha() for ch in value):
+        return "Include at least one letter."
+    return None

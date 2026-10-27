@@ -39,3 +39,15 @@ export const LIMITS = {
   MAX_EXTRA: 1000000000,
   MAX_ASSUMPTION: 100000,
 } as const
+
+/** Which characters text fields accept: letters (any language), spaces and `extra`; digits only where `digits` is true.
+ *  A value must also contain a letter. backend/app/limits.py repeats this table (a test checks they match). */
+export type TextKind = 'person' | 'title' | 'place' | 'material' | 'grade' | 'unit'
+export const TEXT_KINDS: Record<TextKind, { extra: string; digits: boolean; help: string }> = {
+  person: { extra: ".'-", digits: false, help: "letters, spaces and . ' - only" },
+  title: { extra: ".,'&+-", digits: true, help: "letters, numbers, spaces and . , ' & + - only" },
+  place: { extra: ".,-", digits: true, help: 'letters, numbers, spaces and . , - only' },
+  material: { extra: ".,'&+-()/", digits: true, help: "letters, numbers, spaces and . , ' & + - ( ) / only" },
+  grade: { extra: '.,-/+()', digits: true, help: 'letters, numbers, spaces and . , - / + ( ) only' },
+  unit: { extra: '()./-³²', digits: true, help: 'letters, numbers, spaces and ( ) . / - only' },
+}

@@ -50,6 +50,22 @@ describe('New project wizard', () => {
     expect(await screen.findByText('Length: enter a number.')).toBeInTheDocument()
   })
 
+  it('shows the limit and any problem under the boxes while typing, before Next is pressed', async () => {
+    const user = setup()
+    expect(screen.getByText('Up to 60 characters')).toBeInTheDocument()
+    expect(screen.getByText('1 to 30 (1 = ground floor only)')).toBeInTheDocument()
+    await type(user, 'Project name', 'House @ 1')
+    expect(await screen.findByText(/Use letters, numbers, spaces and/)).toBeInTheDocument()
+    await type(user, 'Project name', '12345')
+    expect(await screen.findByText('Include at least one letter.')).toBeInTheDocument()
+    await type(user, 'Location (city)', 'hyderabd@ghewrkj')
+    expect(await screen.findAllByText(/only\./)).not.toHaveLength(0)
+    await type(user, 'Floors', '45')
+    expect(await screen.findByText('Floors must be at most 30.')).toBeInTheDocument()
+    await type(user, 'Project name', 'My House')
+    await waitFor(() => expect(screen.queryByText('Include at least one letter.')).not.toBeInTheDocument())
+  })
+
   it('refuses a room on a floor the project does not have', async () => {
     const user = setup()
     await type(user, 'Project name', 'My House')

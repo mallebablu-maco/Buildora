@@ -17,6 +17,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [confirmEmail, setConfirmEmail] = useState<string | null>(null)
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<SignupValues>({
+    mode: 'onChange',
     resolver: zodResolver(signupSchema),
     defaultValues: { fullName: '', email: '', password: '', persona: 'homeowner', acceptDisclaimer: false },
   })

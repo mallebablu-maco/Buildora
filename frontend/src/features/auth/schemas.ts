@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { LIMITS } from '@/lib/limits'
+import { textError } from '@/lib/validate'
 
 export const PERSONAS = [
   { value: 'homeowner', title: 'Homeowner', description: 'Planning my own build' },
@@ -22,7 +23,7 @@ export const loginSchema = z.object({
 export type LoginValues = z.infer<typeof loginSchema>
 
 export const signupSchema = z.object({
-  fullName: z.string().trim().min(1, 'Enter your name.').max(LIMITS.PERSON_NAME, `Use at most ${LIMITS.PERSON_NAME} characters.`),
+  fullName: z.string().trim().superRefine((v, ctx) => { const m = textError('person', v, { max: LIMITS.PERSON_NAME, required: 'Enter your name.' }); if (m) ctx.addIssue({ code: 'custom', message: m }) }),
   email,
   password: newPassword,
   persona: z.enum(['homeowner', 'contractor', 'engineer', 'student']),

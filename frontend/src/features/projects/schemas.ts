@@ -1,23 +1,25 @@
 import { z } from 'zod'
 import type { ProjectInput, RoomInput, RoomType } from './types'
-import { LIMITS as L } from '@/lib/limits'
+import { LIMITS as L, type TextKind } from '@/lib/limits'
+import { textError } from '@/lib/validate'
 import { ROOM_TYPES } from './types'
 
 // Same limits as the API, so people see a clear message here instead of a rejected request.
 const metres = (label: string, { min, max }: { min: number; max: number }) =>
   z.number({ invalid_type_error: `${label}: enter a number.`, required_error: `${label}: enter a number.` })
     .min(min, `${label} must be at least ${min}.`).max(max, `${label} must be at most ${max}.`)
-const text = (max: number) => z.string().trim().max(max, `Use at most ${max} characters.`)
+const text = (kind: TextKind, max: number, required?: string) =>
+  z.string().trim().superRefine((v, ctx) => { const m = textError(kind, v, { max, required }); if (m) ctx.addIssue({ code: 'custom', message: m }) })
 const whole = (label: string, min: number, max: number) =>
   z.number({ invalid_type_error: `${label}: enter a whole number.`, required_error: `${label}: enter a whole number.` })
     .int(`${label} must be a whole number.`).min(min, `${label} must be at least ${min}.`).max(max, `${label} must be at most ${max}.`)
 
 export const detailsSchema = z.object({
-  name: z.string().trim().min(1, 'Enter a project name.').max(L.PROJECT_NAME, `Use at most ${L.PROJECT_NAME} characters.`),
-  owner_name: text(L.OWNER_NAME),
-  description: text(L.DESCRIPTION),
+  name: text('title', L.PROJECT_NAME, 'Enter a project name.'),
+  owner_name: text('person', L.OWNER_NAME),
+  description: z.string().trim().max(L.DESCRIPTION, `Use at most ${L.DESCRIPTION} characters.`),
   building_type: z.enum(['residential', 'commercial', 'extension', 'other']),
-  location: text(L.LOCATION),
+  location: text('place', L.LOCATION),
   floors: whole('Floors', 1, L.MAX_FLOORS),
   budget: z.number({ invalid_type_error: 'Budget: enter a number.' }).gt(0, 'Budget must be more than 0.').max(L.MAX_BUDGET, `Budget must be at most ${L.MAX_BUDGET.toLocaleString('en-IN')}.`).nullable(),
 })
@@ -33,7 +35,7 @@ export const buildingSchema = z.object({
 const ROOM_VALUES = ROOM_TYPES.map((t) => t.value) as [RoomType, ...RoomType[]]
 
 export const roomSchema = z.object({
-  name: z.string().trim().min(1, 'Name the room.').max(L.ROOM_NAME, `Use at most ${L.ROOM_NAME} characters.`),
+  name: text('title', L.ROOM_NAME, 'Name the room.'),
   room_type: z.enum(ROOM_VALUES),
   floor_number: whole('Floor', 1, L.MAX_FLOORS),
   length: metres('Length', { min: L.MIN_ROOM_DIM, max: L.MAX_ROOM_DIM }),

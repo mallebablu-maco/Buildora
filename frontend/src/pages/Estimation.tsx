@@ -5,11 +5,12 @@ import { ProjectScope } from '@/components/ProjectScope'
 import { Button } from '@/components/ui/button'
 import { Card, CardBody, CardHeader, Stat } from '@/components/ui/card'
 import { Alert, Badge, Disclaimer, ErrorState, Spinner } from '@/components/ui/feedback'
-import { Field, Input, Select } from '@/components/ui/form'
+import { Field, Input, Select, Under } from '@/components/ui/form'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { useEstimate } from '@/features/estimation/useEstimate'
 import { downloadReport } from '@/features/reports/download'
 import { LIMITS as L } from '@/lib/limits'
+import { numberError, rangeHint } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
 import { useUnits } from '@/lib/units'
 import { formatMoney, formatNumber } from '@/lib/utils'
@@ -54,19 +55,37 @@ function draftFrom(a: Record<string, unknown>): Draft {
   }
 }
 
+type NumKey = 'steel_kg_per_m3' | 'mix_c' | 'mix_s' | 'mix_a' | 'frame_concrete_pct' | 'internal_wall_thickness' | 'mortar_joint_mm' | 'mortar_sand_ratio' | 'plaster_sand_ratio' | 'plaster_thickness_mm' | 'tile_l' | 'tile_w' | 'paint_coats' | 'paint_coverage'
+
+/** Allowed values for the typed assumptions; the message appears under the box as the person types. All are far inside the API's own cap. */
+const RULES: Record<NumKey, { label: string; min: number; max: number; whole?: boolean; unit?: string }> = {
+  steel_kg_per_m3: { label: 'Steel intensity', min: 1, max: 500, unit: 'kg/m³' },
+  mix_c: { label: 'Mix cement part', min: 0.1, max: 20 }, mix_s: { label: 'Mix sand part', min: 0.1, max: 20 }, mix_a: { label: 'Mix aggregate part', min: 0.1, max: 20 },
+  frame_concrete_pct: { label: 'Frame concrete allowance', min: 0, max: 100, unit: '%' },
+  internal_wall_thickness: { label: 'Internal wall thickness', min: L.MIN_WALL, max: L.MAX_WALL, unit: 'm' },
+  mortar_joint_mm: { label: 'Mortar joint', min: 0, max: 50, unit: 'mm' },
+  mortar_sand_ratio: { label: 'Mortar sand ratio', min: 1, max: 10 }, plaster_sand_ratio: { label: 'Plaster sand ratio', min: 1, max: 10 },
+  plaster_thickness_mm: { label: 'Plaster thickness', min: 3, max: 50, unit: 'mm' },
+  tile_l: { label: 'Tile length', min: 0.1, max: 3, unit: 'm' }, tile_w: { label: 'Tile width', min: 0.1, max: 3, unit: 'm' },
+  paint_coats: { label: 'Paint coats', min: 1, max: 6, whole: true },
+  paint_coverage: { label: 'Paint coverage', min: 1, max: 30, unit: 'm²/litre/coat' },
+}
+const hintFor = (k: NumKey) => rangeHint(RULES[k].min, RULES[k].max, RULES[k].unit)
+function draftErrors(d: Draft): Partial<Record<NumKey, string>> {
+  const out: Partial<Record<NumKey, string>> = {}
+  for (const k of Object.keys(RULES) as NumKey[]) {
+    const r = RULES[k]
+    const m = numberError(d[k], r.min, r.max, { whole: r.whole })
+    if (m) out[k] = m
+  }
+  return out
+}
+
 /** Returns an error message, or the assumptions payload. */
 function draftToAssumptions(d: Draft): { error: string } | { value: Record<string, unknown> } {
   const n = (s: string) => Number(s)
-  const pos = (s: string, label: string) => (n(s) > 0 && Number.isFinite(n(s)) ? null : `${label} must be greater than 0.`)
-  const err = pos(d.steel_kg_per_m3, 'Steel intensity') ?? pos(d.mix_c, 'Mix cement part') ?? pos(d.mix_s, 'Mix sand part') ?? pos(d.mix_a, 'Mix aggregate part')
-    ?? pos(d.internal_wall_thickness, 'Internal wall thickness') ?? pos(d.mortar_sand_ratio, 'Mortar sand ratio') ?? pos(d.plaster_sand_ratio, 'Plaster sand ratio')
-    ?? pos(d.plaster_thickness_mm, 'Plaster thickness') ?? pos(d.tile_l, 'Tile length') ?? pos(d.tile_w, 'Tile width') ?? pos(d.paint_coverage, 'Paint coverage')
-  if (err) return { error: err }
-  if (!(n(d.paint_coats) >= 1) || !Number.isInteger(n(d.paint_coats))) return { error: 'Paint coats must be a whole number of at least 1.' }
-  if (!(n(d.mortar_joint_mm) >= 0) || !Number.isFinite(n(d.mortar_joint_mm))) return { error: 'Mortar joint must be 0 or more.' }
-  if (!(n(d.frame_concrete_pct) >= 0) || !Number.isFinite(n(d.frame_concrete_pct))) return { error: 'Frame concrete allowance must be 0 or more.' }
-  const tooBig = [d.steel_kg_per_m3, d.mix_c, d.mix_s, d.mix_a, d.internal_wall_thickness, d.mortar_joint_mm, d.mortar_sand_ratio, d.plaster_sand_ratio, d.plaster_thickness_mm, d.tile_l, d.tile_w, d.paint_coats, d.paint_coverage, d.frame_concrete_pct].some((x) => n(x) > L.MAX_ASSUMPTION)
-  if (tooBig) return { error: `Assumption values must be at most ${L.MAX_ASSUMPTION.toLocaleString('en-IN')}.` }
+  const first = Object.entries(draftErrors(d))[0]
+  if (first) return { error: `${RULES[first[0] as NumKey].label}: ${first[1]}` }
   return {
     value: {
       steel_kg_per_m3: n(d.steel_kg_per_m3), concrete_mix: [n(d.mix_c), n(d.mix_s), n(d.mix_a)], concrete_supply: d.concrete_supply,
@@ -121,6 +140,10 @@ function EstimationBody({ projectId }: { projectId: string }) {
     )
   }
 
+  const wasteErr = Object.fromEntries(Object.entries(waste).map(([k, v]) => [k, numberError(v, 0, L.MAX_WASTAGE_PCT, { unit: '%' })]))
+  const errs = draftErrors(draft)
+  const hasErrors = Object.values(wasteErr).some(Boolean) || Object.keys(errs).length > 0
+
   const set = (k: keyof Draft) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setDraft((d) => d && { ...d, [k]: e.target.value })
   return (
     <div className="space-y-6">
@@ -136,7 +159,7 @@ function EstimationBody({ projectId }: { projectId: string }) {
 
       <Card>
         <CardHeader title="Quantities" description="Net = exact requirement; quantity including wastage is what you should plan to procure. Click a row for the formula and assumptions."
-          action={<Button variant="primary" size="sm" loading={calculating} onClick={apply}><RefreshCw className="h-4 w-4" /> Apply changes & recalculate</Button>} />
+          action={<Button variant="primary" size="sm" loading={calculating} disabled={hasErrors} onClick={apply}><RefreshCw className="h-4 w-4" /> Apply changes & recalculate</Button>} />
         <Table>
           <THead><TR><TH /><TH>Material</TH><TH className="text-right">Net qty</TH><TH className="w-28 text-right">Wastage %</TH><TH className="text-right">Qty incl. wastage</TH><TH>Unit</TH><TH className="text-right">Unit price</TH><TH className="text-right">Cost</TH></TR></THead>
           <TBody>
@@ -146,7 +169,7 @@ function EstimationBody({ projectId }: { projectId: string }) {
                   <TD className="w-8">{open === it.key ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</TD>
                   <TD><span className="font-medium">{it.name}</span>{!it.counts_toward_cost && <Badge className="ml-2">quantity only</Badge>}{it.material_label && it.counts_toward_cost && <div className="text-xs text-slate-500">{it.material_label}</div>}</TD>
                   <TD className="text-right tabular-nums">{formatNumber(it.net_quantity)}</TD>
-                  <TD className="text-right" onClick={(e) => e.stopPropagation()}><Input type="number" min={0} max={L.MAX_WASTAGE_PCT} step="any" aria-label={`Wastage for ${it.name}`} value={waste[it.key] ?? ''} onChange={(e) => setWaste((w) => ({ ...w, [it.key]: e.target.value }))} className="h-8 w-24 text-right" /></TD>
+                  <TD className="text-right" onClick={(e) => e.stopPropagation()}><Input type="number" min={0} max={L.MAX_WASTAGE_PCT} step="any" aria-label={`Wastage for ${it.name}`} value={waste[it.key] ?? ''} onChange={(e) => setWaste((w) => ({ ...w, [it.key]: e.target.value }))} className="ml-auto h-8 w-24 text-right" invalid={!!wasteErr[it.key]} /><Under error={wasteErr[it.key]} hint={rangeHint(0, L.MAX_WASTAGE_PCT, '%')} className="w-28" /></TD>
                   <TD className="text-right font-medium tabular-nums">{formatNumber(it.gross_quantity)}</TD>
                   <TD>{it.unit}</TD>
                   <TD className="text-right tabular-nums">{it.unit_price != null ? <>{formatNumber(it.unit_price)}{it.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</> : it.counts_toward_cost ? <Badge tone="red">missing</Badge> : '—'}</TD>
@@ -171,26 +194,26 @@ function EstimationBody({ projectId }: { projectId: string }) {
         <CardBody className="space-y-4">
           {formError && <Alert tone="error">{formError}</Alert>}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="Steel intensity (kg/m³ concrete)"><Input type="number" step="any" value={draft.steel_kg_per_m3} onChange={set('steel_kg_per_m3')} /></Field>
-            <Field label="Concrete mix cement : sand : aggregate">
+            <Field label="Steel intensity (kg/m³ concrete)" error={errs.steel_kg_per_m3} hint={hintFor('steel_kg_per_m3')+''}><Input type="number" step="any" value={draft.steel_kg_per_m3} onChange={set('steel_kg_per_m3')} invalid={!!errs.steel_kg_per_m3} /></Field>
+            <Field label="Concrete mix cement : sand : aggregate" error={errs.mix_c ?? errs.mix_s ?? errs.mix_a} hint={hintFor('mix_c') + ' for each part'}>
               <div className="flex gap-1"><Input type="number" step="any" value={draft.mix_c} onChange={set('mix_c')} aria-label="Cement part" /><Input type="number" step="any" value={draft.mix_s} onChange={set('mix_s')} aria-label="Sand part" /><Input type="number" step="any" value={draft.mix_a} onChange={set('mix_a')} aria-label="Aggregate part" /></div>
             </Field>
             <Field label="Concrete supply"><Select value={draft.concrete_supply} onChange={set('concrete_supply')}><option value="site_mix">Site mix (cement, sand, aggregate)</option><option value="ready_mix">Ready-mix concrete</option></Select></Field>
-            <Field label="Frame concrete allowance (% of slab)" hint="Columns, beams, footings"><Input type="number" step="any" value={draft.frame_concrete_pct} onChange={set('frame_concrete_pct')} /></Field>
+            <Field label="Frame concrete allowance (% of slab)" error={errs.frame_concrete_pct} hint={hintFor('frame_concrete_pct')+' (Columns, beams, footings)'}><Input type="number" step="any" value={draft.frame_concrete_pct} onChange={set('frame_concrete_pct')} invalid={!!errs.frame_concrete_pct} /></Field>
             <Field label="External masonry"><Select value={draft.external_masonry} onChange={set('external_masonry')}><option value="brick">Bricks</option><option value="block">Blocks</option></Select></Field>
             <Field label="Internal masonry"><Select value={draft.internal_masonry} onChange={set('internal_masonry')}><option value="brick">Bricks</option><option value="block">Blocks</option></Select></Field>
-            <Field label="Internal wall thickness (m)"><Input type="number" step="any" value={draft.internal_wall_thickness} onChange={set('internal_wall_thickness')} /></Field>
-            <Field label="Mortar joint (mm)"><Input type="number" step="any" value={draft.mortar_joint_mm} onChange={set('mortar_joint_mm')} /></Field>
-            <Field label="Mortar mix 1 : sand"><Input type="number" step="any" value={draft.mortar_sand_ratio} onChange={set('mortar_sand_ratio')} /></Field>
-            <Field label="Plaster mix 1 : sand"><Input type="number" step="any" value={draft.plaster_sand_ratio} onChange={set('plaster_sand_ratio')} /></Field>
-            <Field label="Plaster thickness (mm)"><Input type="number" step="any" value={draft.plaster_thickness_mm} onChange={set('plaster_thickness_mm')} /></Field>
+            <Field label="Internal wall thickness (m)" error={errs.internal_wall_thickness} hint={hintFor('internal_wall_thickness')+''}><Input type="number" step="any" value={draft.internal_wall_thickness} onChange={set('internal_wall_thickness')} invalid={!!errs.internal_wall_thickness} /></Field>
+            <Field label="Mortar joint (mm)" error={errs.mortar_joint_mm} hint={hintFor('mortar_joint_mm')+''}><Input type="number" step="any" value={draft.mortar_joint_mm} onChange={set('mortar_joint_mm')} invalid={!!errs.mortar_joint_mm} /></Field>
+            <Field label="Mortar mix 1 : sand" error={errs.mortar_sand_ratio} hint={hintFor('mortar_sand_ratio')+''}><Input type="number" step="any" value={draft.mortar_sand_ratio} onChange={set('mortar_sand_ratio')} invalid={!!errs.mortar_sand_ratio} /></Field>
+            <Field label="Plaster mix 1 : sand" error={errs.plaster_sand_ratio} hint={hintFor('plaster_sand_ratio')+''}><Input type="number" step="any" value={draft.plaster_sand_ratio} onChange={set('plaster_sand_ratio')} invalid={!!errs.plaster_sand_ratio} /></Field>
+            <Field label="Plaster thickness (mm)" error={errs.plaster_thickness_mm} hint={hintFor('plaster_thickness_mm')+''}><Input type="number" step="any" value={draft.plaster_thickness_mm} onChange={set('plaster_thickness_mm')} invalid={!!errs.plaster_thickness_mm} /></Field>
             <Field label="Plaster ceilings"><Select value={draft.plaster_ceilings ? 'yes' : 'no'} onChange={(e) => setDraft((d) => d && { ...d, plaster_ceilings: e.target.value === 'yes' })}><option value="yes">Yes</option><option value="no">No</option></Select></Field>
-            <Field label="Tile length (m)"><Input type="number" step="any" value={draft.tile_l} onChange={set('tile_l')} /></Field>
-            <Field label="Tile width (m)"><Input type="number" step="any" value={draft.tile_w} onChange={set('tile_w')} /></Field>
-            <Field label="Paint coats"><Input type="number" step={1} value={draft.paint_coats} onChange={set('paint_coats')} /></Field>
-            <Field label="Paint coverage (m²/litre/coat)"><Input type="number" step="any" value={draft.paint_coverage} onChange={set('paint_coverage')} /></Field>
+            <Field label="Tile length (m)" error={errs.tile_l} hint={hintFor('tile_l')+''}><Input type="number" step="any" value={draft.tile_l} onChange={set('tile_l')} invalid={!!errs.tile_l} /></Field>
+            <Field label="Tile width (m)" error={errs.tile_w} hint={hintFor('tile_w')+''}><Input type="number" step="any" value={draft.tile_w} onChange={set('tile_w')} invalid={!!errs.tile_w} /></Field>
+            <Field label="Paint coats" error={errs.paint_coats} hint={hintFor('paint_coats')+''}><Input type="number" step={1} value={draft.paint_coats} onChange={set('paint_coats')} invalid={!!errs.paint_coats} /></Field>
+            <Field label="Paint coverage (m²/litre/coat)" error={errs.paint_coverage} hint={hintFor('paint_coverage')+''}><Input type="number" step="any" value={draft.paint_coverage} onChange={set('paint_coverage')} invalid={!!errs.paint_coverage} /></Field>
           </div>
-          <Button variant="primary" loading={calculating} onClick={apply}><RefreshCw className="h-4 w-4" /> Apply changes & recalculate</Button>
+          <Button variant="primary" loading={calculating} disabled={hasErrors} onClick={apply}><RefreshCw className="h-4 w-4" /> Apply changes & recalculate</Button>
         </CardBody>
       </Card>
       <ExtraNotes estimate={estimate} project={project} />

@@ -18,13 +18,21 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
 ))
 Select.displayName = 'Select'
 
-export function Field({ label, error, hint, children, className }: { label: string; error?: string; hint?: string; children: ReactNode; className?: string }) {
+/** Message for under a plain box (table cells, inline editors): the problem in red, or the allowed range as a hint. */
+export function Under({ error, hint, className }: { error?: string | null; hint?: string; className?: string }) {
+  if (error) return <p role="alert" className={cn('mt-1 text-xs text-red-600', className)}>{error}</p>
+  return hint ? <p className={cn('mt-1 text-xs text-slate-500', className)}>{hint}</p> : null
+}
+
+export function Field({ label, error, hint, children, className }: { label: string; error?: string | null; hint?: string; children: ReactNode; className?: string }) {
   return (
-    <label className={cn('block', className)}>
-      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
-      {children}
-      {hint && !error && <span className="mt-1 block text-xs text-slate-500">{hint}</span>}
-      {error && <span role="alert" className="mt-1 block text-xs text-red-600">{error}</span>}
-    </label>
+    <div className={cn('block', className)}>
+      <label className="block">
+        <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
+        {children}
+      </label>
+      {hint && !error && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {error && <p role="alert" className="mt-1 text-xs text-red-600">{error}</p>}
+    </div>
   )
 }

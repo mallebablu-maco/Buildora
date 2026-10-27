@@ -5,13 +5,14 @@ import { ProjectScope } from '@/components/ProjectScope'
 import { Button } from '@/components/ui/button'
 import { Card, CardBody, CardHeader, Stat } from '@/components/ui/card'
 import { Alert, Badge, Disclaimer, ErrorState, Spinner } from '@/components/ui/feedback'
-import { Input, Select } from '@/components/ui/form'
+import { Input, Select, Under } from '@/components/ui/form'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { useEstimate } from '@/features/estimation/useEstimate'
 import { CostBars, CostPie } from '@/features/pricing/charts'
 import { downloadReport } from '@/features/reports/download'
 import { api } from '@/lib/api'
 import { LIMITS as L } from '@/lib/limits'
+import { numberError, rangeHint } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
 import { cn, formatMoney, formatNumber } from '@/lib/utils'
 import type { Estimate, ExtraCostConfig, ProjectDetail } from '@/types'
@@ -67,6 +68,9 @@ function Body({ projectId }: { projectId: string }) {
     void guard(async () => { await api.createPrice({ material_id: materialId, unit_price: v, currency: cur, supplier: 'User-entered', location: project.location }); await recalc() }, `Price for ${itemKey} saved.`)
   }
 
+  const budgetErr = numberError(budget, 1, L.MAX_BUDGET, { optional: true })
+  const extraErr = (key: string) => { const c = extras[key]; return c ? numberError(c.value, 0, c.mode === 'percent' ? 100 : L.MAX_EXTRA, { unit: c.mode === 'percent' ? '%' : '' }) : null }
+  const extrasInvalid = s.extras.some((e) => extraErr(e.key))
   const scenarioDelta = scenarioResult ? scenarioResult.summary.material_total - s.material_total : null
   return (
     <div className="space-y-6">
@@ -84,7 +88,7 @@ function Body({ projectId }: { projectId: string }) {
         <Card>
           <CardHeader title="Budget" description="Compared with the total including enabled extras." />
           <CardBody className="space-y-3">
-            <div className="flex gap-2"><Input type="number" min={0} max={L.MAX_BUDGET} step="any" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="No budget" aria-label="Project budget" /><Button variant="outline" onClick={saveBudget}>Save</Button></div>
+            <div><div className="flex gap-2"><Input type="number" min={0} max={L.MAX_BUDGET} step="any" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="No budget" aria-label="Project budget" invalid={!!budgetErr} /><Button variant="outline" disabled={!!budgetErr} onClick={saveBudget}>Save</Button></div><Under error={budgetErr} hint={`Optional, ${rangeHint(1, L.MAX_BUDGET)}`} /></div>
             {s.budget ? (
               <div className={cn('rounded-lg p-3 text-sm', (s.budget_variance ?? 0) >= 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800')}>
                 <p className="font-semibold">{(s.budget_variance ?? 0) >= 0 ? 'Under budget' : 'Over budget'} by {formatMoney(Math.abs(s.budget_variance ?? 0), cur)}</p>
@@ -140,12 +144,12 @@ function Body({ projectId }: { projectId: string }) {
               <div key={e.key} className="flex flex-wrap items-center gap-3">
                 <label className="flex w-44 items-center gap-2 text-sm font-medium"><input type="checkbox" className="h-4 w-4 accent-orange-500" checked={cfg.enabled} onChange={(ev) => setExtras((x) => ({ ...x, [e.key]: { ...cfg, enabled: ev.target.checked } }))} />{EXTRA_LABEL[e.key]}</label>
                 <Select value={cfg.mode} onChange={(ev) => setExtras((x) => ({ ...x, [e.key]: { ...cfg, mode: ev.target.value as 'fixed' | 'percent' } }))} className="h-8 w-40 text-sm" aria-label={`${EXTRA_LABEL[e.key]} mode`}><option value="fixed">Fixed amount</option><option value="percent">% of materials</option></Select>
-                <Input type="number" min={0} max={cfg.mode === 'percent' ? 100 : L.MAX_EXTRA} step="any" value={cfg.value} onChange={(ev) => setExtras((x) => ({ ...x, [e.key]: { ...cfg, value: Number(ev.target.value) } }))} className="h-8 w-32" aria-label={`${EXTRA_LABEL[e.key]} value`} />
+                <div><Input type="number" min={0} max={cfg.mode === 'percent' ? 100 : L.MAX_EXTRA} step="any" value={cfg.value} onChange={(ev) => setExtras((x) => ({ ...x, [e.key]: { ...cfg, value: Number(ev.target.value) } }))} className="h-8 w-32" aria-label={`${EXTRA_LABEL[e.key]} value`} invalid={!!extraErr(e.key)} /><Under error={extraErr(e.key)} /></div>
                 <span className="text-sm text-slate-500">{e.included ? `= ${formatMoney(e.amount, cur)}` : e.enabled ? 'enter a value' : 'not included'}</span>
               </div>
             )
           })}
-          <Button variant="primary" size="sm" loading={calculating} onClick={() => void guard(() => {
+          <Button variant="primary" size="sm" loading={calculating} disabled={extrasInvalid} onClick={() => void guard(() => {
             for (const c of Object.values(extras)) if (!(c.value >= 0 && c.value <= (c.mode === 'percent' ? 100 : L.MAX_EXTRA))) throw new Error(`Extra costs must be between 0 and ${c.mode === 'percent' ? '100 %' : L.MAX_EXTRA.toLocaleString('en-IN')}.`)
             return applyConfig({ extra_costs: extras })
           }, 'Additional costs updated.')}>Apply</Button>
@@ -184,10 +188,14 @@ function Body({ projectId }: { projectId: string }) {
 
 function PriceCell({ value, sample, onCommit }: { value: number | null; sample: boolean; onCommit: (v: string) => void }) {
   const [v, setV] = useState(value != null ? String(value) : '')
+  const err = numberError(v, 0, L.MAX_UNIT_PRICE)
   return (
+    <div>
     <div className="flex items-center justify-end gap-1">
       {sample && <Badge tone="amber">SAMPLE</Badge>}
-      <Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={v} aria-label="Unit price" onChange={(e) => setV(e.target.value)} onBlur={() => onCommit(v)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} className="h-8 w-28 text-right" />
+      <Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={v} aria-label="Unit price" invalid={!!err} onChange={(e) => setV(e.target.value)} onBlur={() => { if (!err) onCommit(v) }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} className="h-8 w-28 text-right" />
+    </div>
+    <Under error={err} className="text-right" />
     </div>
   )
 }

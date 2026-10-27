@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from app import limits as L
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 BuildingType = Literal["residential", "commercial", "extension", "other"]
 RoomType = Literal["living", "bedroom", "kitchen", "dining", "bathroom", "study", "store", "balcony", "corridor", "staircase", "office", "other"]
@@ -15,12 +15,31 @@ RoomType = Literal["living", "bedroom", "kitchen", "dining", "bathroom", "study"
 MAX_ROOMS = L.MAX_ROOMS
 
 
+def _only(kind: str):
+    def check(v: str) -> str:
+        problem = L.text_problem(kind, v)
+        if problem:
+            raise ValueError(problem)
+        return v
+
+    return AfterValidator(check)
+
+
+# text that may only hold letters, numbers and a few safe characters (see limits.TEXT_KINDS)
+Person = Annotated[str, _only("person")]
+Title = Annotated[str, _only("title")]
+Place = Annotated[str, _only("place")]
+MaterialText = Annotated[str, _only("material")]
+Grade = Annotated[str, _only("grade")]
+Unit = Annotated[str, _only("unit")]
+
+
 class _In(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, allow_inf_nan=False, extra="forbid")
 
 
 class RoomIn(_In):
-    name: str = Field(min_length=1, max_length=L.ROOM_NAME)
+    name: Title = Field(min_length=1, max_length=L.ROOM_NAME)
     room_type: RoomType = "other"
     length: float = Field(ge=L.MIN_ROOM_DIM, le=L.MAX_ROOM_DIM)
     width: float = Field(ge=L.MIN_ROOM_DIM, le=L.MAX_ROOM_DIM)
@@ -62,11 +81,11 @@ class RoomOut(BaseModel):
 
 
 class ProjectIn(_In):
-    name: str = Field(min_length=1, max_length=L.PROJECT_NAME)
+    name: Title = Field(min_length=1, max_length=L.PROJECT_NAME)
     description: str = Field(default="", max_length=L.DESCRIPTION)
-    owner_name: str = Field(default="", max_length=L.OWNER_NAME)
+    owner_name: Person = Field(default="", max_length=L.OWNER_NAME)
     building_type: BuildingType = "residential"
-    location: str = Field(default="", max_length=L.LOCATION)
+    location: Place = Field(default="", max_length=L.LOCATION)
     floors: int = Field(default=1, ge=1, le=L.MAX_FLOORS)
     currency: str = Field(default="INR", pattern=r"^[A-Z]{3}$")
     budget: float | None = Field(default=None, gt=0, le=L.MAX_BUDGET)
@@ -202,8 +221,8 @@ class ProfileOut(BaseModel):
 
 
 class ProfileUpdate(_In):
-    full_name: str = Field(max_length=L.PERSON_NAME)
-    default_city: str | None = Field(default=None, max_length=L.CITY)
+    full_name: Person = Field(max_length=L.PERSON_NAME)
+    default_city: Place | None = Field(default=None, max_length=L.CITY)
     default_wastage: dict[str, float] | None = None
 
     @field_validator("default_wastage")
@@ -231,13 +250,13 @@ class CalibrationIn(_In):
 # ---------------------------------------------------------------------------------------------------- materials and prices
 class MaterialBase(_In):
     estimate_key: str
-    name: str = Field(min_length=1, max_length=L.MATERIAL_NAME)
-    category: str = Field(min_length=1, max_length=L.CATEGORY)
-    brand: str = Field(default="", max_length=L.BRAND)
-    grade: str = Field(default="", max_length=L.GRADE)
+    name: MaterialText = Field(min_length=1, max_length=L.MATERIAL_NAME)
+    category: Title = Field(min_length=1, max_length=L.CATEGORY)
+    brand: MaterialText = Field(default="", max_length=L.BRAND)
+    grade: Grade = Field(default="", max_length=L.GRADE)
     specification: str = Field(default="", max_length=L.SPECIFICATION)
     durability_notes: str = Field(default="", max_length=L.NOTES)
-    unit: str = Field(min_length=1, max_length=L.UNIT)
+    unit: Unit = Field(min_length=1, max_length=L.UNIT)
 
     @field_validator("estimate_key")
     @classmethod
@@ -251,8 +270,8 @@ class MaterialBase(_In):
 
 class MaterialCreate(MaterialBase):
     unit_price: float | None = Field(default=None, ge=0, le=L.MAX_UNIT_PRICE)
-    supplier: str = Field(default="", max_length=L.SUPPLIER)
-    location: str = Field(default="", max_length=L.PRICE_LOCATION)
+    supplier: Title = Field(default="", max_length=L.SUPPLIER)
+    location: Place = Field(default="", max_length=L.PRICE_LOCATION)
     currency: str = Field(default="INR", pattern=r"^[A-Z]{3}$")
 
 
@@ -287,14 +306,14 @@ class PriceCreate(_In):
     material_id: uuid.UUID
     unit_price: float = Field(ge=0, le=L.MAX_UNIT_PRICE)
     currency: str = Field(default="INR", pattern=r"^[A-Z]{3}$")
-    supplier: str = Field(default="", max_length=L.SUPPLIER)
-    location: str = Field(default="", max_length=L.PRICE_LOCATION)
+    supplier: Title = Field(default="", max_length=L.SUPPLIER)
+    location: Place = Field(default="", max_length=L.PRICE_LOCATION)
 
 
 class PriceUpdate(_In):
     unit_price: float = Field(ge=0, le=L.MAX_UNIT_PRICE)
-    supplier: str = Field(default="", max_length=L.SUPPLIER)
-    location: str = Field(default="", max_length=L.PRICE_LOCATION)
+    supplier: Title = Field(default="", max_length=L.SUPPLIER)
+    location: Place = Field(default="", max_length=L.PRICE_LOCATION)
 
 
 class PriceOut(BaseModel):

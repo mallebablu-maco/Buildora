@@ -164,8 +164,9 @@ describe('Settings', () => {
     at('/settings', <SettingsPage />, '/settings')
     await user.clear(await screen.findByLabelText('Tiles (%)'))
     await user.type(screen.getByLabelText('Tiles (%)'), '60')
-    await user.click(screen.getByRole('button', { name: 'Save changes' }))
-    expect(await screen.findByText(/wastage must be between 0 and 50/)).toBeInTheDocument()
+    // the message appears under the box while typing, and saving is blocked
+    expect(await screen.findByText('Must be between 0 and 50 %.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
     expect(a.updateProfile).not.toHaveBeenCalled()
   })
 })
