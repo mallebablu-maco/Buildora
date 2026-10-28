@@ -26,9 +26,15 @@ email + password, **Continue with Google**, and **Email me a login code** (no pa
    The client secret is a secret: only in Supabase, never in this repo or in chat.
 4. Supabase → *Authentication → URL Configuration → Redirect URLs* must contain `http://localhost:5173/login`.
 
-**Email code**: works with the built-in sender for testing (a few emails per hour). To make the email show the 6-digit code,
-Supabase → *Authentication → Emails* → edit **Magic Link** and **Confirm signup** and add `{{ .Token }}` to the message
-(the link keeps working too). Before launch, connect your own SMTP (e.g. Brevo, Resend) under *Authentication → Emails → SMTP settings*.
+**Email code / emails in general** (done for this project with Brevo, free plan: 300 emails a day):
+- Supabase's built-in sender allows only ~2 emails an hour and its templates cannot be edited, so a custom SMTP sender is used.
+- Brevo → Settings → *Senders* (verified sender) and *SMTP & API* → SMTP key. Supabase → *Authentication → Emails → SMTP Settings*:
+  host `smtp-relay.brevo.com`, port `587`, username = the Brevo SMTP login, password = the SMTP key (a secret: only in Supabase).
+  Do not turn on Brevo's "block unauthorized IPs" for SMTP keys: Supabase sends from changing addresses.
+- Templates (*Authentication → Emails → Templates*): **Magic link or OTP** and **Confirm sign up** contain `{{ .Token }}` (the code) and the link;
+  **Reset password** contains the link.
+- The sender is currently a Gmail address, so some emails may land in Spam (Google/Yahoo/Microsoft rules). Before launch, use an address on your own
+  domain and authenticate that domain in Brevo (DKIM/DMARC).
 
 Keys used by the app (all public): **Project URL** (`https://<ref>.supabase.co`, without `/rest/v1`) and the **publishable key**.
 Never use the `service_role` / secret key in this project.

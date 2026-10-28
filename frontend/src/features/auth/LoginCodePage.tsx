@@ -11,8 +11,8 @@ import { useAuth } from './useAuth'
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const RESEND_AFTER = 60 // seconds; Supabase refuses a new code sooner anyway
 
-/** Log in (or sign up) without a password: we email a one-time sign-in link, plus a code once the email template shows one
- *  (Supabase lets the template be edited only with custom SMTP). Clicking the link, or typing the code, signs you in. */
+/** Log in (or sign up) without a password: we email a one-time code and link (the code appears because the Supabase email
+ *  template includes {{ .Token }}, which needs custom SMTP). Typing the code, or clicking the link, signs you in. */
 export default function LoginCodePage() {
   const { session, loading, sendLoginCode, verifyLoginCode } = useAuth()
   const redirect = useAuthRedirect(!!session)
@@ -46,7 +46,7 @@ export default function LoginCodePage() {
   }
 
   return (
-    <AuthShell title="Log in with email" subtitle={sentTo ? undefined : 'No password needed. We email you a one-time sign-in link. New here? This also creates your account.'}>
+    <AuthShell title="Log in with email" subtitle={sentTo ? undefined : 'No password needed. We email you a one-time code and link. New here? This also creates your account.'}>
       {(error ?? redirect.error) && <Alert tone="error" className="mb-4">{error ?? redirect.error}</Alert>}
       {!sentTo ? (
         <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (email.trim() && !emailError) void send(email.trim()) }}>
@@ -57,8 +57,7 @@ export default function LoginCodePage() {
         </form>
       ) : (
         <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (code && !codeError) void verify() }}>
-          <Alert tone="success">We sent an email to <strong>{sentTo}</strong>. Open it and click <strong>Sign in</strong>. It can take a minute; check spam too.</Alert>
-          <p className="text-sm text-slate-600">If the email shows a code instead, type it here:</p>
+          <Alert tone="success">We sent an email to <strong>{sentTo}</strong>. Type the code from it below, or click the link in the email. It can take a minute; check spam too.</Alert>
           <Field label="Code from the email" error={codeError ?? undefined}>
             {({ id, describedBy, invalid }) => (
               <Input id={id} inputMode="numeric" autoComplete="one-time-code" maxLength={10} placeholder="123456" value={code}
