@@ -21,7 +21,7 @@ export default function CostAnalysis() {
   const toast = useToast()
   return (
     <ProjectScope basePath="/cost-analysis" title="Cost Analysis" description="Material cost, budget variance and alternative scenarios. Material-only cost is kept separate from optional extras."
-      actions={(id) => <Button variant="accent" onClick={async () => { try { await downloadReport(id); toast.success('Report downloaded.') } catch (e) { toast.error(e instanceof Error ? e.message : 'Report failed') } }}><Download className="h-4 w-4" /> Download PDF</Button>}>
+      actions={(id) => <Button variant="accent" onClick={async () => { try { const { downloaded } = await downloadReport(id); if (downloaded) toast.success('Report downloaded.'); else toast.error('The report was generated but failed to download. Open it from Reports to try again.') } catch (e) { toast.error(e instanceof Error ? e.message : 'Report failed') } }}><Download className="h-4 w-4" /> Download PDF</Button>}>
       {(id) => <Body key={id} projectId={id} />}
     </ProjectScope>
   )

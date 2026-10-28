@@ -1,4 +1,4 @@
-import { Download, FilePlus2, Trash2 } from 'lucide-react'
+import { CheckCircle2, Eye, FilePlus2, Trash2, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -7,7 +7,8 @@ import { ConfirmDialog } from '@/components/ui/dialog'
 import { EmptyState, ErrorState, Spinner } from '@/components/ui/feedback'
 import { PageHeader, ProjectPicker } from '@/components/ui/page'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
-import { downloadExisting, downloadReport } from '@/features/reports/download'
+import { downloadExisting, downloadReport, readStatuses, type DownloadStatus } from '@/features/reports/download'
+import { ReportPreview } from '@/features/reports/ReportPreview'
 import { useAsync } from '@/hooks/useApi'
 import { api } from '@/lib/api'
 import { useToast } from '@/lib/toast'
@@ -21,6 +22,9 @@ export default function Reports() {
   const [pid, setPid] = useState<string>()
   const [busy, setBusy] = useState(false)
   const [del, setDel] = useState<Report | null>(null)
+  const [preview, setPreview] = useState<Report | null>(null)
+  const [statuses, setStatuses] = useState<Record<string, DownloadStatus>>(readStatuses)
+  const refreshStatuses = () => setStatuses(readStatuses())
   const pidResolved = pid ?? projects.data?.[0]?.id
   const nameOf = (id: string) => projects.data?.find((p) => p.id === id)?.name ?? 'Deleted project'
 
@@ -38,7 +42,12 @@ export default function Reports() {
               <Button variant="accent" loading={busy} onClick={async () => {
                 if (!pidResolved) return
                 setBusy(true)
-                try { await downloadReport(pidResolved); toast.success('Report generated and downloaded.'); await reports.reload() } catch (e) { toast.error(e instanceof Error ? e.message : 'Report generation failed') } finally { setBusy(false) }
+                try {
+                  const { downloaded } = await downloadReport(pidResolved)
+                  if (downloaded) toast.success('Report generated and downloaded.')
+                  else toast.error('The report was generated but failed to download. Open Preview to try again.')
+                  refreshStatuses(); await reports.reload()
+                } catch (e) { toast.error(e instanceof Error ? e.message : 'Report generation failed') } finally { setBusy(false) }
               }}><FilePlus2 className="h-4 w-4" /> Generate & download PDF</Button>
             </div>
           )}
@@ -57,7 +66,10 @@ export default function Reports() {
                 <TD className="font-medium">{r.file_name}</TD><TD>{nameOf(r.project_id)}</TD><TD className="text-right tabular-nums">{formatMoney(r.total_cost, r.currency)}</TD>
                 <TD>{formatDate(r.created_at)}</TD><TD>{(r.size_bytes / 1024).toFixed(0)} KB</TD>
                 <TD className="whitespace-nowrap text-right">
-                  <Button size="sm" variant="outline" onClick={async () => { try { await downloadExisting(r.id, r.file_name) } catch (e) { toast.error(e instanceof Error ? e.message : 'Download failed') } }}><Download className="h-4 w-4" /> Download</Button>
+                  <span className="inline-flex items-center gap-3">
+                    <DownloadNote status={statuses[r.id]} />
+                    <Button size="sm" variant="outline" onClick={() => setPreview(r)}><Eye className="h-4 w-4" /> Preview</Button>
+                  </span>
                   <Button size="icon" variant="ghost" aria-label={`Delete ${r.file_name}`} onClick={() => setDel(r)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                 </TD>
               </TR>))}
@@ -65,8 +77,21 @@ export default function Reports() {
           </Table>
         ))}
       </Card>
+      <ReportPreview report={preview} onClose={() => setPreview(null)} onDownload={async (r) => {
+        const ok = await downloadExisting(r.id, r.file_name)
+        refreshStatuses()
+        if (ok) toast.success('Report downloaded.')
+        else toast.error('Failed to download the report.')
+      }} />
       <ConfirmDialog open={!!del} onClose={() => setDel(null)} title="Delete report?" message={`“${del?.file_name}” will be permanently deleted.`}
         onConfirm={async () => { try { await api.deleteReport(del!.id); toast.success('Report deleted.'); await reports.reload() } catch (e) { toast.error(e instanceof Error ? e.message : 'Delete failed') } setDel(null) }} />
     </>
   )
+}
+
+/** "Successfully downloaded" / "Failed to download", for reports downloaded in this browser. */
+function DownloadNote({ status }: { status?: DownloadStatus }) {
+  if (status === 'ok') return <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Successfully downloaded</span>
+  if (status === 'failed') return <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600"><XCircle className="h-4 w-4" aria-hidden="true" />Failed to download</span>
+  return null
 }

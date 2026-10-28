@@ -49,6 +49,7 @@ beforeEach(() => {
   a.resetLayout.mockResolvedValue(F.project as never)
   a.updateConfig.mockResolvedValue(F.project as never)
   a.createReport.mockResolvedValue(F.reports[0] as never)
+  a.reportBlob.mockResolvedValue(new Blob(['%PDF-1.4'], { type: 'application/pdf' }))
 })
 
 describe('Dashboard', () => {
@@ -126,6 +127,24 @@ describe('Reports', () => {
     expect(screen.getByText(F.reports[0].file_name)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /generate/i }))
     await waitFor(() => expect(a.createReport).toHaveBeenCalledWith(pid))
+    expect(await screen.findByText('Successfully downloaded')).toBeInTheDocument()
+  })
+  it('history has Preview (no Download button), and the preview shows the PDF with a Download button', async () => {
+    const user = userEvent.setup()
+    at('/reports', <Reports />, '/reports')
+    await screen.findByText(F.reports[0].file_name)
+    expect(screen.queryByRole('button', { name: /^download$/i })).not.toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: /preview/i })[0])
+    expect(await screen.findByTitle(`Preview of ${F.reports[0].file_name}`)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^download$/i }))
+    expect(await screen.findByText('Successfully downloaded')).toBeInTheDocument()
+  })
+  it('says "Failed to download" when the PDF cannot be fetched', async () => {
+    const user = userEvent.setup()
+    a.reportBlob.mockRejectedValue(new Error('network down'))
+    at('/reports', <Reports />, '/reports')
+    await user.click(await screen.findByRole('button', { name: /generate/i }))
+    expect(await screen.findByText('Failed to download')).toBeInTheDocument()
   })
 })
 

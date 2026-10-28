@@ -31,7 +31,7 @@ function PdfButton({ projectId, toast }: { projectId: string; toast: ReturnType<
   return (
     <Button variant="accent" loading={busy} onClick={async () => {
       setBusy(true)
-      try { await downloadReport(projectId); toast.success('Report downloaded.') } catch (e) { toast.error(e instanceof Error ? e.message : 'Report failed') } finally { setBusy(false) }
+      try { const { downloaded } = await downloadReport(projectId); if (downloaded) toast.success('Report downloaded.'); else toast.error('The report was generated but failed to download. Open it from Reports to try again.') } catch (e) { toast.error(e instanceof Error ? e.message : 'Report failed') } finally { setBusy(false) }
     }}><Download className="h-4 w-4" /> Download PDF</Button>
   )
 }
