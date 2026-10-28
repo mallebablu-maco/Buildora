@@ -11,7 +11,8 @@ import { useAuth } from './useAuth'
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const RESEND_AFTER = 60 // seconds; Supabase refuses a new code sooner anyway
 
-/** Log in (or sign up) without a password: we email a one-time code; typing it, or clicking the link in the email, signs you in. */
+/** Log in (or sign up) without a password: we email a one-time sign-in link, plus a code once the email template shows one
+ *  (Supabase lets the template be edited only with custom SMTP). Clicking the link, or typing the code, signs you in. */
 export default function LoginCodePage() {
   const { session, sendLoginCode, verifyLoginCode } = useAuth()
   const [email, setEmail] = useState('')
@@ -43,18 +44,19 @@ export default function LoginCodePage() {
   }
 
   return (
-    <AuthShell title="Log in with a code" subtitle={sentTo ? undefined : 'No password needed. We email you a one-time code. New here? This also creates your account.'}>
+    <AuthShell title="Log in with email" subtitle={sentTo ? undefined : 'No password needed. We email you a one-time sign-in link. New here? This also creates your account.'}>
       {error && <Alert tone="error" className="mb-4">{error}</Alert>}
       {!sentTo ? (
         <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (email.trim() && !emailError) void send(email.trim()) }}>
           <Field label="Email" error={emailError ?? undefined}>
             {({ id, describedBy, invalid }) => <Input id={id} type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} aria-describedby={describedBy} invalid={invalid} />}
           </Field>
-          <Button type="submit" variant="accent" className="w-full" loading={busy} disabled={!email.trim() || !!emailError}>Email me a code</Button>
+          <Button type="submit" variant="accent" className="w-full" loading={busy} disabled={!email.trim() || !!emailError}>Email me a sign-in link</Button>
         </form>
       ) : (
         <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (code && !codeError) void verify() }}>
-          <Alert tone="success">We sent a code to <strong>{sentTo}</strong>. It can take a minute; check spam too. You can also just click the link in that email.</Alert>
+          <Alert tone="success">We sent an email to <strong>{sentTo}</strong>. Open it and click <strong>Sign in</strong>. It can take a minute; check spam too.</Alert>
+          <p className="text-sm text-slate-600">If the email shows a code instead, type it here:</p>
           <Field label="Code from the email" error={codeError ?? undefined}>
             {({ id, describedBy, invalid }) => (
               <Input id={id} inputMode="numeric" autoComplete="one-time-code" maxLength={10} placeholder="123456" value={code}
@@ -65,7 +67,7 @@ export default function LoginCodePage() {
           <div className="flex justify-between text-sm">
             <button type="button" className="cursor-pointer text-navy-700 underline underline-offset-2" onClick={() => { setSentTo(null); setError(null) }}>Use a different email</button>
             <button type="button" className="cursor-pointer text-navy-700 underline underline-offset-2 disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline" disabled={wait > 0 || busy} onClick={() => void send(sentTo)}>
-              {wait > 0 ? `Send again in ${wait}s` : 'Send a new code'}
+              {wait > 0 ? `Send again in ${wait}s` : 'Send a new email'}
             </button>
           </div>
         </form>

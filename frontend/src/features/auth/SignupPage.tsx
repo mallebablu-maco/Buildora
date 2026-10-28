@@ -53,7 +53,7 @@ export default function SignupPage() {
   return (
     <AuthShell title="Create your account" subtitle="Save projects, keep your own material rates and download reports." wide>
       <GoogleButton />
-      <Link to="/login/code" className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">Sign up with an email code (no password)</Link>
+      <Link to="/login/code" className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">Sign up with an email link (no password)</Link>
       <OrDivider />
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {error && <Alert tone="error">{error}</Alert>}

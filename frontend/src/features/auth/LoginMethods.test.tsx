@@ -35,7 +35,7 @@ describe('Continue with Google', () => {
 describe('Log in with an email code', () => {
   it('the password page links to it, and the password login still exists', () => {
     renderWithAuth(routes, authValue(), '/login')
-    expect(screen.getByRole('link', { name: 'Email me a login code' })).toHaveAttribute('href', '/login/code')
+    expect(screen.getByRole('link', { name: 'Email me a sign-in link' })).toHaveAttribute('href', '/login/code')
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
   })
   it('sends a code, then logs in with the typed code', async () => {
@@ -43,7 +43,7 @@ describe('Log in with an email code', () => {
     const value = authValue()
     renderWithAuth(routes, value, '/login/code')
     await user.type(screen.getByLabelText('Email'), 'asha@example.com')
-    await user.click(screen.getByRole('button', { name: 'Email me a code' }))
+    await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }))
     expect(value.sendLoginCode).toHaveBeenCalledWith('asha@example.com')
     expect(await screen.findByText('asha@example.com')).toBeInTheDocument()
     await user.type(screen.getByLabelText('Code from the email'), '12ab3456')  // letters are dropped as you type
@@ -55,7 +55,7 @@ describe('Log in with an email code', () => {
     const user = userEvent.setup()
     renderWithAuth(routes, authValue({ verifyLoginCode: vi.fn().mockRejectedValue(new Error('Token has expired or is invalid')) }), '/login/code')
     await user.type(screen.getByLabelText('Email'), 'asha@example.com')
-    await user.click(screen.getByRole('button', { name: 'Email me a code' }))
+    await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }))
     expect(await screen.findByRole('button', { name: /Send again in \d+s/ })).toBeDisabled()
     await user.type(screen.getByLabelText('Code from the email'), '000000')
     await user.click(screen.getByRole('button', { name: 'Log in' }))
@@ -66,7 +66,7 @@ describe('Log in with an email code', () => {
     renderWithAuth(routes, authValue(), '/login/code')
     await user.type(screen.getByLabelText('Email'), 'not-an-email')
     expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Email me a code' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Email me a sign-in link' })).toBeDisabled()
   })
   it('goes to the dashboard once signed in', async () => {
     renderWithAuth(routes, authValue({ session: fakeSession }), '/login/code')
