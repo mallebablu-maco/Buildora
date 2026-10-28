@@ -73,3 +73,25 @@ describe('Log in with an email code', () => {
     await waitFor(() => expect(screen.getByText('dashboard')).toBeInTheDocument())
   })
 })
+
+describe('coming back from Google or an email link', () => {
+  const at = (url: string) => window.history.replaceState(null, '', url)
+  it('shows "Signing you in…" instead of flashing the form while the login finishes', () => {
+    at('/login#access_token=abc&refresh_token=def&type=magiclink')
+    renderWithAuth(routes, authValue(), '/login')
+    expect(screen.getByText('Signing you in…')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
+    at('/')
+  })
+  it('shows "Signing you in…" while the saved session is still being read', () => {
+    renderWithAuth(routes, authValue({ loading: true }), '/login')
+    expect(screen.getByText('Signing you in…')).toBeInTheDocument()
+  })
+  it('explains an expired or already-used email link, and shows the form again', () => {
+    at('/login#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired')
+    renderWithAuth(routes, authValue(), '/login')
+    expect(screen.getByText(/sign-in link has expired or was already used/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    expect(window.location.hash).toBe('')  // the error is removed from the address bar
+  })
+})

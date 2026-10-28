@@ -5,14 +5,15 @@ import { Link, Navigate, useLocation } from 'react-router-dom'
 import { Alert } from '@/components/ui/feedback'
 import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/field'
-import { AuthShell } from './AuthShell'
+import { AuthShell, SigningIn, useAuthRedirect } from './AuthShell'
 import { authMessage } from './errors'
 import { GoogleButton, OrDivider } from './GoogleButton'
 import { loginSchema, type LoginValues } from './schemas'
 import { useAuth } from './useAuth'
 
 export default function LoginPage() {
-  const { session, signIn } = useAuth()
+  const { session, loading, signIn } = useAuth()
+  const redirect = useAuthRedirect(!!session)
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from ?? '/dashboard'
   const [error, setError] = useState<string | null>(null)
@@ -22,6 +23,7 @@ export default function LoginPage() {
   })
 
   if (session) return <Navigate to={from} replace />
+  if (loading || redirect.waiting) return <SigningIn />
 
   const onSubmit = handleSubmit(async ({ email, password, keep }) => {
     setError(null)
@@ -38,7 +40,7 @@ export default function LoginPage() {
       <Link to="/login/code" className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">Email me a sign-in link</Link>
       <OrDivider />
       <form onSubmit={onSubmit} noValidate className="space-y-4">
-        {error && <Alert tone="error">{error}</Alert>}
+        {(error ?? redirect.error) && <Alert tone="error">{error ?? redirect.error}</Alert>}
         <Field label="Email" error={errors.email?.message}>
           {({ id, describedBy, invalid }) => <Input id={id} type="email" autoComplete="email" placeholder="you@example.com" aria-describedby={describedBy} invalid={invalid} {...register('email')} />}
         </Field>

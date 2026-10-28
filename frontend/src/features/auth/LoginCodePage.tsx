@@ -3,7 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { Alert } from '@/components/ui/feedback'
 import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/field'
-import { AuthShell } from './AuthShell'
+import { AuthShell, SigningIn, useAuthRedirect } from './AuthShell'
 import { authMessage } from './errors'
 import { GoogleButton, OrDivider } from './GoogleButton'
 import { useAuth } from './useAuth'
@@ -14,7 +14,8 @@ const RESEND_AFTER = 60 // seconds; Supabase refuses a new code sooner anyway
 /** Log in (or sign up) without a password: we email a one-time sign-in link, plus a code once the email template shows one
  *  (Supabase lets the template be edited only with custom SMTP). Clicking the link, or typing the code, signs you in. */
 export default function LoginCodePage() {
-  const { session, sendLoginCode, verifyLoginCode } = useAuth()
+  const { session, loading, sendLoginCode, verifyLoginCode } = useAuth()
+  const redirect = useAuthRedirect(!!session)
   const [email, setEmail] = useState('')
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [code, setCode] = useState('')
@@ -29,6 +30,7 @@ export default function LoginCodePage() {
   }, [wait])
 
   if (session) return <Navigate to="/dashboard" replace />
+  if (loading || redirect.waiting) return <SigningIn />
 
   const emailError = email.trim() === '' ? null : EMAIL.test(email.trim()) ? null : 'Enter a valid email address.'
   const codeError = code === '' ? null : /^\d{6,10}$/.test(code) ? null : 'The code is 6 digits.'
@@ -45,7 +47,7 @@ export default function LoginCodePage() {
 
   return (
     <AuthShell title="Log in with email" subtitle={sentTo ? undefined : 'No password needed. We email you a one-time sign-in link. New here? This also creates your account.'}>
-      {error && <Alert tone="error" className="mb-4">{error}</Alert>}
+      {(error ?? redirect.error) && <Alert tone="error" className="mb-4">{error ?? redirect.error}</Alert>}
       {!sentTo ? (
         <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (email.trim() && !emailError) void send(email.trim()) }}>
           <Field label="Email" error={emailError ?? undefined}>

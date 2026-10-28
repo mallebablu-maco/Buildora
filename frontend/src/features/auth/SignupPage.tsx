@@ -7,14 +7,15 @@ import { Alert } from '@/components/ui/feedback'
 import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/field'
 import { cn } from '@/lib/utils'
-import { AuthShell } from './AuthShell'
+import { AuthShell, SigningIn, useAuthRedirect } from './AuthShell'
 import { GoogleButton, OrDivider } from './GoogleButton'
 import { authMessage } from './errors'
 import { PERSONAS, signupSchema, type SignupValues } from './schemas'
 import { useAuth } from './useAuth'
 
 export default function SignupPage() {
-  const { session, signUp } = useAuth()
+  const { session, loading, signUp } = useAuth()
+  const redirect = useAuthRedirect(!!session)
   const [error, setError] = useState<string | null>(null)
   const [confirmEmail, setConfirmEmail] = useState<string | null>(null)
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<SignupValues>({
@@ -25,6 +26,7 @@ export default function SignupPage() {
   const persona = watch('persona')
 
   if (session) return <Navigate to="/dashboard" replace />
+  if (loading || redirect.waiting) return <SigningIn />
 
   if (confirmEmail) {
     return (
@@ -56,7 +58,7 @@ export default function SignupPage() {
       <Link to="/login/code" className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">Sign up with an email link (no password)</Link>
       <OrDivider />
       <form onSubmit={onSubmit} noValidate className="space-y-4">
-        {error && <Alert tone="error">{error}</Alert>}
+        {(error ?? redirect.error) && <Alert tone="error">{error ?? redirect.error}</Alert>}
         <Field label="Full name" error={errors.fullName?.message}>
           {({ id, describedBy, invalid }) => <Input id={id} autoComplete="name" maxLength={60} placeholder="Your name" aria-describedby={describedBy} invalid={invalid} {...register('fullName')} />}
         </Field>
