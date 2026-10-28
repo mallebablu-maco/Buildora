@@ -13,6 +13,23 @@ Dashboard -> your `buildora` project.
 3. The email sender on Supabase's free plan is rate-limited (a few emails per hour). If sign-up or reset says "too many attempts",
    wait, or switch Confirm email off while developing.
 
+### Login methods
+The app offers three, all handled by Supabase Auth and stored in your Supabase project (Authentication → Users):
+email + password, **Continue with Google**, and **Email me a login code** (no password; also creates the account on first use).
+
+**Google** (one-time setup):
+1. Google Cloud Console → create a project → *APIs & Services → OAuth consent screen*: External, app name "Buildora", your email; add yourself as a test user.
+2. *Credentials → Create credentials → OAuth client ID* → type **Web application**.
+   - Authorised JavaScript origins: `http://localhost:5173` (later also your Render website URL).
+   - Authorised redirect URI: `https://<ref>.supabase.co/auth/v1/callback`.
+3. Copy the **Client ID** and **Client secret** into Supabase → *Authentication → Sign In / Providers → Google* → enable → Save.
+   The client secret is a secret: only in Supabase, never in this repo or in chat.
+4. Supabase → *Authentication → URL Configuration → Redirect URLs* must contain `http://localhost:5173/login`.
+
+**Email code**: works with the built-in sender for testing (a few emails per hour). To make the email show the 6-digit code,
+Supabase → *Authentication → Emails* → edit **Magic Link** and **Confirm signup** and add `{{ .Token }}` to the message
+(the link keeps working too). Before launch, connect your own SMTP (e.g. Brevo, Resend) under *Authentication → Emails → SMTP settings*.
+
 Keys used by the app (all public): **Project URL** (`https://<ref>.supabase.co`, without `/rest/v1`) and the **publishable key**.
 Never use the `service_role` / secret key in this project.
 

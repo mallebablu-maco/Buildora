@@ -20,6 +20,11 @@ export interface AuthContextValue {
   /** `needsEmailConfirmation` is true when the project requires the user to confirm their email before logging in */
   signUp: (input: SignUpInput) => Promise<{ needsEmailConfirmation: boolean }>
   signOut: () => Promise<void>
+  /** Leaves the page for Google's sign-in and comes back to /login, where the new session redirects into the app. */
+  signInWithGoogle: () => Promise<void>
+  /** Emails a one-time login code (and link). Creates the account on first use, so it also works as sign-up. */
+  sendLoginCode: (email: string) => Promise<void>
+  verifyLoginCode: (email: string, code: string) => Promise<void>
   requestPasswordReset: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
 }

@@ -50,6 +50,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { needsEmailConfirmation: !data.session }
   }, [])
 
+  const signInWithGoogle = useCallback(async () => {
+    setKeepSignedIn(true)
+    const { error } = await getSupabase().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/login` } })
+    if (error) throw error
+  }, [])
+
+  const sendLoginCode = useCallback(async (email: string) => {
+    setKeepSignedIn(true)
+    const { error } = await getSupabase().auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/login` } })
+    if (error) throw error
+  }, [])
+
+  const verifyLoginCode = useCallback(async (email: string, code: string) => {
+    const { error } = await getSupabase().auth.verifyOtp({ email, token: code, type: 'email' })
+    if (error) throw error
+  }, [])
+
   const signOut = useCallback(async () => {
     const { error } = await getSupabase().auth.signOut()
     if (error) throw error
@@ -67,8 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ session, user: session?.user ?? null, loading, recovery, signIn, signUp, signOut, requestPasswordReset, updatePassword }),
-    [session, loading, recovery, signIn, signUp, signOut, requestPasswordReset, updatePassword],
+    () => ({ session, user: session?.user ?? null, loading, recovery, signIn, signUp, signInWithGoogle, sendLoginCode, verifyLoginCode, signOut, requestPasswordReset, updatePassword }),
+    [session, loading, recovery, signIn, signUp, signInWithGoogle, sendLoginCode, verifyLoginCode, signOut, requestPasswordReset, updatePassword],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -9,6 +9,9 @@ export function authMessage(error: unknown): string {
   if (m.includes('already registered') || m.includes('already been registered')) return 'An account with this email already exists. Try logging in.'
   if (m.includes('password should be at least') || m.includes('weak password')) return 'That password is too weak. Use a longer one with a mix of characters.'
   if (m.includes('failed to fetch') || m.includes('networkerror') || m.includes('network request failed')) return 'Cannot reach the sign-in service. Check your connection and try again.'
+  if (m.includes('token has expired') || m.includes('otp has expired') || m.includes('invalid otp') || m.includes('token is invalid')) return 'That code is wrong or has expired. Request a new code and try again.'
+  if (m.includes('provider is not enabled') || m.includes('unsupported provider')) return 'Google sign-in is not switched on yet. Use email instead for now.'
+  if (m.includes('for security purposes') && m.includes('seconds')) return 'Please wait a minute before asking for another code.'
   if (m.includes('same password')) return 'Choose a password different from your current one.'
   if (m.includes('signups not allowed')) return 'Sign-ups are currently disabled.'
   return raw

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/field'
 import { AuthShell } from './AuthShell'
 import { authMessage } from './errors'
+import { GoogleButton, OrDivider } from './GoogleButton'
 import { loginSchema, type LoginValues } from './schemas'
 import { useAuth } from './useAuth'
 
@@ -33,6 +34,9 @@ export default function LoginPage() {
 
   return (
     <AuthShell title="Log in" subtitle="Continue with your saved projects and estimates.">
+      <GoogleButton />
+      <Link to="/login/code" className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">Email me a login code</Link>
+      <OrDivider />
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {error && <Alert tone="error">{error}</Alert>}
         <Field label="Email" error={errors.email?.message}>
