@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { ErrorState, Spinner } from '@/components/ui/feedback'
 import { Field, Input, Select } from '@/components/ui/form'
 import { PageHeader } from '@/components/ui/page'
-import { useAuth } from '@/features/auth/useAuth'
+import { LogoutConfirm } from '@/features/auth/LogoutConfirm'
 import { useAsync } from '@/hooks/useApi'
 import { api } from '@/lib/api'
 import { LIMITS as L } from '@/lib/limits'
@@ -20,7 +20,7 @@ const WASTAGE_FIELDS = [
 ] as const
 
 export default function SettingsPage() {
-  const { signOut } = useAuth()
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const toast = useToast()
   const units = useUnits()
   const navigate = useNavigate()
@@ -106,7 +106,7 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader title="Account" />
-          <CardBody><Button variant="danger-outline" onClick={() => void signOut()}>Log out</Button></CardBody>
+          <CardBody><Button variant="danger-outline" onClick={() => setConfirmLogout(true)}>Log out</Button><LogoutConfirm open={confirmLogout} onClose={() => setConfirmLogout(false)} /></CardBody>
         </Card>
       </div>
     </>

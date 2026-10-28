@@ -6,6 +6,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/feedback'
+import { LogoutConfirm } from '@/features/auth/LogoutConfirm'
 import { useAuth } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +27,8 @@ const NAV = [
 const COLLAPSE_KEY = 'buildora_sidebar_collapsed'
 
 export function AppLayout() {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem(COLLAPSE_KEY) === '1' } catch { return false } })
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -53,7 +55,7 @@ export function AppLayout() {
         ))}
       </ul>
       <div className="border-t border-white/10 p-3">
-        <button type="button" title={compact ? 'Log out' : undefined} onClick={() => void signOut()}
+        <button type="button" title={compact ? 'Log out' : undefined} onClick={() => setConfirmLogout(true)}
           className={cn('flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-white/10 hover:text-white', compact && 'justify-center px-0')}>
           <LogOut className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />{compact ? <span className="sr-only">Log out</span> : 'Log out'}
         </button>
@@ -91,6 +93,7 @@ export function AppLayout() {
           <div className="mx-auto w-full max-w-7xl p-4 sm:p-6"><Suspense fallback={<Spinner />}><Outlet /></Suspense></div>
         </main>
       </div>
+      <LogoutConfirm open={confirmLogout} onClose={() => setConfirmLogout(false)} />
     </div>
   )
 }
