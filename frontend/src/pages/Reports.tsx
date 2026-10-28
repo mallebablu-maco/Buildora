@@ -1,4 +1,4 @@
-import { CheckCircle2, Eye, FilePlus2, Trash2, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock, Eye, FilePlus2, Trash2, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -89,9 +89,9 @@ export default function Reports() {
   )
 }
 
-/** "Successfully downloaded" / "Failed to download", for reports downloaded in this browser. */
+/** "Successfully downloaded" / "Failed to download" / "Not downloaded yet", as recorded in this browser. */
 function DownloadNote({ status }: { status?: DownloadStatus }) {
   if (status === 'ok') return <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Successfully downloaded</span>
   if (status === 'failed') return <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600"><XCircle className="h-4 w-4" aria-hidden="true" />Failed to download</span>
-  return null
+  return <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500"><Clock className="h-4 w-4" aria-hidden="true" />Not downloaded yet</span>
 }

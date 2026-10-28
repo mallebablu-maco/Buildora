@@ -125,6 +125,7 @@ describe('Reports', () => {
     at('/reports', <Reports />, '/reports')
     expect(await screen.findByText('Report history')).toBeInTheDocument()
     expect(screen.getByText(F.reports[0].file_name)).toBeInTheDocument()
+    expect(screen.getAllByText('Not downloaded yet').length).toBeGreaterThan(0)  // every row says something, even before a download
     await user.click(screen.getByRole('button', { name: /generate/i }))
     await waitFor(() => expect(a.createReport).toHaveBeenCalledWith(pid))
     expect(await screen.findByText('Successfully downloaded')).toBeInTheDocument()
