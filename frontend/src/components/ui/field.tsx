@@ -1,5 +1,6 @@
 import { useId, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { withNumberGuard } from './form'
 
 export function Input({ className, invalid, ...props }: ComponentProps<'input'> & { invalid?: boolean }) {
   return (
@@ -9,7 +10,7 @@ export function Input({ className, invalid, ...props }: ComponentProps<'input'> 
         'h-9 w-full rounded-md border bg-white px-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:bg-slate-100',
         invalid ? 'border-red-500' : 'border-slate-300', className,
       )}
-      {...props}
+      {...withNumberGuard(props)}
     />
   )
 }

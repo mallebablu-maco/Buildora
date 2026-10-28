@@ -171,7 +171,7 @@ function EstimationBody({ projectId }: { projectId: string }) {
                   <TD className="text-right tabular-nums">{formatNumber(it.net_quantity)}</TD>
                   <TD className="text-right" onClick={(e) => e.stopPropagation()}><Input type="number" min={0} max={L.MAX_WASTAGE_PCT} step="any" aria-label={`Wastage for ${it.name}`} value={waste[it.key] ?? ''} onChange={(e) => setWaste((w) => ({ ...w, [it.key]: e.target.value }))} className="ml-auto h-8 w-24 text-right" invalid={!!wasteErr[it.key]} /><Under error={wasteErr[it.key]} hint={rangeHint(0, L.MAX_WASTAGE_PCT, '%')} className="w-28" /></TD>
                   <TD className="text-right font-medium tabular-nums">{formatNumber(it.gross_quantity)}</TD>
-                  <TD>{it.unit}</TD>
+                  <TD className="whitespace-nowrap">{it.unit}</TD>
                   <TD className="text-right tabular-nums">{it.unit_price != null ? <>{formatNumber(it.unit_price)}{it.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</> : it.counts_toward_cost ? <Badge tone="red">missing</Badge> : '—'}</TD>
                   <TD className="text-right font-medium tabular-nums">{!it.counts_toward_cost ? '—' : it.cost != null ? formatMoney(it.cost, project.currency) : '—'}</TD>
                 </TR>

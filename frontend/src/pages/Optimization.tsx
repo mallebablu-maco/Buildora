@@ -92,7 +92,7 @@ function Body({ projectId }: { projectId: string }) {
               const diff = planned !== null && Number.isFinite(planned) ? planned - it.gross_quantity : null
               return (
                 <TR key={it.key}>
-                  <TD className="font-medium">{it.name}</TD><TD className="text-right tabular-nums">{formatNumber(it.gross_quantity)}</TD><TD>{it.unit}</TD>
+                  <TD className="font-medium">{it.name}</TD><TD className="text-right tabular-nums">{formatNumber(it.gross_quantity)}</TD><TD className="whitespace-nowrap">{it.unit}</TD>
                   <TD className="text-right"><Input type="number" min={0} max={L.MAX_EXTRA} step="any" aria-label={`Planned ${it.name}`} className="h-8 text-right" value={plan[it.key] ?? ''} onChange={(e) => setPlan((p) => ({ ...p, [it.key]: e.target.value }))} invalid={!!planErr} /><Under error={planErr} /></TD>
                   <TD className={cn('text-right tabular-nums', diff != null && Math.abs(diff) / (it.gross_quantity || 1) >= 0.1 && 'font-semibold text-amber-700')}>{diff == null ? '—' : `${diff > 0 ? '+' : ''}${formatNumber(diff)}`}</TD>
                 </TR>

@@ -1,11 +1,24 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { numberKeyGuard } from '@/lib/numberInput'
 import { cn } from '@/lib/utils'
 
 const base = 'w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:bg-slate-100'
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }>(({ className, invalid, ...p }, ref) => (
-  <input ref={ref} aria-invalid={invalid || undefined} className={cn(base, 'h-9', invalid && 'border-red-400', className)} {...p} />
+  <input ref={ref} aria-invalid={invalid || undefined} className={cn(base, 'h-9', invalid && 'border-red-400', className)} {...withNumberGuard(p)} />
 ))
+
+/** Number boxes refuse letters such as "e" (see numberKeyGuard); the caller's own key/paste handlers still run. */
+function withNumberGuard<T extends InputHTMLAttributes<HTMLInputElement>>(p: T): T {
+  if (p.type !== 'number') return p
+  const g = numberKeyGuard(p.min)
+  return {
+    inputMode: 'decimal', ...p,
+    onKeyDown: (e) => { g.onKeyDown(e); if (!e.defaultPrevented) p.onKeyDown?.(e) },
+    onPaste: (e) => { g.onPaste(e); if (!e.defaultPrevented) p.onPaste?.(e) },
+  }
+}
+export { withNumberGuard }
 Input.displayName = 'Input'
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className, ...p }, ref) => (

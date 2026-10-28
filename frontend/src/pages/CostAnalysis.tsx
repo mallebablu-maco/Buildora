@@ -123,7 +123,7 @@ function Body({ projectId }: { projectId: string }) {
                   </Select>
                 </TD>
                 <TD className="text-right tabular-nums">{formatNumber(it.gross_quantity)}</TD>
-                <TD>{it.unit}</TD>
+                <TD className="whitespace-nowrap">{it.unit}</TD>
                 <TD className="text-right"><PriceCell key={`${it.material_id}-${it.unit_price}`} value={it.unit_price} sample={it.price_is_sample} onCommit={(v) => savePrice(it.name, it.material_id, v, it.unit_price)} /></TD>
                 <TD className="text-right font-medium tabular-nums">{it.cost != null ? formatMoney(it.cost, cur) : <Badge tone="red">no price</Badge>}</TD>
                 <TD className="text-right tabular-nums text-slate-500">{it.cost && s.material_total ? `${((it.cost / s.material_total) * 100).toFixed(1)} %` : '—'}</TD>
