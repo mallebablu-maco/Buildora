@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     db_max_overflow: int = 5
     db_pool_timeout: int = 10  # seconds to wait for a free connection before answering 503
     db_statement_timeout_ms: int = 15000
+    rate_limit_enabled: bool = True  # request limits per session and per address (app/core/ratelimit.py)
 
     @field_validator("supabase_url")
     @classmethod

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.api import admin, dashboard, floorplans, health, materials, me, profile, projects, reports
 from app.core.config import get_settings
 from app.core.db import get_engine
+from app.core.ratelimit import install_rate_limits
 from app.services.pricing.seed import seed_sample_catalogue
 
 log = logging.getLogger("buildora")
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
         openapi_url=None if settings.is_production else "/openapi.json",
     )
     install_error_handlers(app)
+    install_rate_limits(app, settings.rate_limit_enabled)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):
