@@ -59,6 +59,16 @@ describe('Admin website: who gets in', () => {
   })
 })
 
+describe('Admin website: phone menu', () => {
+  it('opens a slide-in menu from the ☰ button and closes it', async () => {
+    const user = show('/')
+    await user.click(await screen.findByRole('button', { name: 'Open menu' }))
+    expect(screen.getAllByRole('navigation', { name: 'Admin' })).toHaveLength(2)  // desktop sidebar + the phone menu
+    await user.click(screen.getByRole('button', { name: 'Close menu' }))
+    expect(screen.getAllByRole('navigation', { name: 'Admin' })).toHaveLength(1)
+  })
+})
+
 describe('Admin website: pages', () => {
   it('Users: lists everyone and filters by role and search', async () => {
     const user = show('/users')
