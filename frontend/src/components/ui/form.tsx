@@ -31,10 +31,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
 ))
 Select.displayName = 'Select'
 
-/** Message for under a plain box (table cells, inline editors): the problem in red, or the allowed range as a hint. */
+/**
+ * Message for under a plain box (table cells, inline editors): the problem in red, or the allowed range as a grey hint.
+ * The hint shows only while the person is typing in that box: put `group` on the element that holds both box and message.
+ */
 export function Under({ error, hint, className }: { error?: string | null; hint?: string; className?: string }) {
   if (error) return <p role="alert" className={cn('mt-1 text-xs text-red-600', className)}>{error}</p>
-  return hint ? <p className={cn('mt-1 text-xs text-slate-500', className)}>{hint}</p> : null
+  return hint ? <p className={cn('mt-1 hidden text-xs text-slate-500 group-focus-within:block', className)}>{hint}</p> : null
 }
 
 export function Field({ label, error, hint, children, className }: { label: string; error?: string | null; hint?: string; children: ReactNode; className?: string }) {

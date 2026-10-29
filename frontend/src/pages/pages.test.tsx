@@ -160,7 +160,10 @@ describe('Material Prices and Catalogue', () => {
     const user = userEvent.setup()
     at('/prices', <Prices />, '/prices')
     await screen.findByText('Material prices')
-    expect(screen.queryByText(/0 to 10,00,000/)).not.toBeInTheDocument()
+    // the limit is a hint that only appears while typing in that box (CSS: shown inside a focused group, hidden otherwise)
+    const hint = screen.getAllByText('0 to 10,00,000')[0]
+    expect(hint).toHaveClass('hidden', 'group-focus-within:block')
+    expect(hint.closest('.group')).not.toBeNull()
     const box = screen.getAllByLabelText(/^Unit price for /)[0]
     await user.clear(box)
     await user.type(box, '2000000')
