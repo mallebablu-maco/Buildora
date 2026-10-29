@@ -93,6 +93,9 @@ export interface Material {
   supplier: string
   location: string
   price_is_sample: boolean
+  /** own = the user's price, market = set by an Admin, sample = placeholder, none = no price */
+  price_source?: 'own' | 'market' | 'sample' | 'none'
+  is_hidden?: boolean
   price_id: string | null
   last_updated: string | null
   created_at: string

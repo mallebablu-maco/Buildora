@@ -20,7 +20,15 @@ def bearer(token: str) -> dict:
 def test_valid_token_returns_the_caller(client, signing_key):
     r = client.get("/api/me", headers=bearer(make_token(signing_key)))
     assert r.status_code == 200
-    assert r.json() == {"id": "user-123", "email": "asha@example.com", "full_name": "Asha Rao", "persona": "engineer"}
+    assert r.json() == {"id": "user-123", "email": "asha@example.com", "full_name": "Asha Rao", "persona": "engineer", "is_admin": False}
+
+
+def test_admin_comes_only_from_app_metadata_which_users_cannot_edit(client, signing_key):
+    assert client.get("/api/me", headers=bearer(make_token(signing_key, app_metadata={"role": "admin"}))).json()["is_admin"] is True
+    # user_metadata is editable by the user (supabase.auth.updateUser): claiming "admin" there must change nothing
+    for meta in ({"role": "admin"}, {"is_admin": True, "persona": "admin", "full_name": "x"}):
+        assert client.get("/api/me", headers=bearer(make_token(signing_key, user_metadata=meta))).json()["is_admin"] is False
+    assert client.get("/api/me", headers=bearer(make_token(signing_key, app_metadata={"role": "editor"}))).json()["is_admin"] is False
 
 
 def test_response_never_contains_the_token(client, signing_key):

@@ -73,3 +73,26 @@ File: [`supabase/migrations/20261027000000_layout_catalogue_estimates_reports.sq
 **Who can see what, again:** everything above belongs to its owner and nobody else can see or change it, enforced by the database. The one deliberate exception is the **shared sample catalogue**: everyone signed in can read it, nobody can change or delete it, and everyone can add their own price for a sample material without affecting anyone else.
 
 **Safe to run twice; it contains no DROP TABLE, DROP COLUMN, DELETE or TRUNCATE.** After running it, restart the backend: it fills in the shared sample catalogue (18 materials with clearly labelled *sample* prices) the first time it starts.
+
+## Migration 3: the Admin role (admin website)
+
+File: [`supabase/migrations/20261030000000_admin.sql`](../supabase/migrations/20261030000000_admin.sql). Run it **after** migrations 1 and 2, the same way.
+
+**What it adds**
+- `materials.is_hidden`: an Admin can hide a shared material. It is kept (old estimates refer to it) but no longer offered.
+- `material_price_records.updated_by`: which Admin last changed a shared market price.
+- A check `is_admin()` and rules that let **only Admins** add or change the **shared** catalogue and its market prices.
+  Users keep their own private prices exactly as before; nobody can delete shared materials (they are hidden instead).
+- Two read-only reports for the admin website: an overview (user counts, roles, sign-in methods, activity) and the user list.
+  They refuse anyone who is not an Admin. Passwords are never part of them.
+
+**Who is an Admin?** Someone whose account carries `"role": "admin"` in its *app metadata*. Users cannot change app metadata;
+only you can, in the SQL Editor:
+
+```sql
+update auth.users set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}' where email = 'you@example.com';
+```
+
+The person must **log out and log in again** afterwards. To remove the role: `raw_app_meta_data - 'role'` instead of `|| ...`.
+
+**Safe to run twice; it contains no DROP TABLE, DROP COLUMN, DELETE or TRUNCATE.**

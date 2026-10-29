@@ -16,7 +16,7 @@ from app.core.db import get_db
 from app.models import Material, PriceRecord, Project
 from app.schemas import MaterialCreate, MaterialOut, MaterialUpdate, PriceCreate, PriceOut, PriceUpdate
 from app.services.estimation import ITEM_ORDER
-from app.services.pricing.service import effective_price, visible_materials
+from app.services.pricing.service import effective_price, price_source, visible_materials
 
 router = APIRouter(tags=["materials"])
 
@@ -30,7 +30,7 @@ def material_out(m: Material, user_id: str) -> MaterialOut:
         "editable": m.owner_id == user_id,
         "unit_price": p.unit_price if p else None, "currency": p.currency if p else None,
         "supplier": p.supplier if p else "", "location": p.location if p else "",
-        "price_is_sample": bool(p and p.is_sample), "price_id": p.id if p else None,
+        "price_is_sample": bool(p and p.is_sample), "price_source": price_source(p, user_id), "price_id": p.id if p else None,
         "last_updated": p.updated_at if p else None,
     })
 

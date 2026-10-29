@@ -156,6 +156,21 @@ describe('Material Prices and Catalogue', () => {
     expect(screen.getAllByText('My local cement').length).toBeGreaterThan(0)
     expect(screen.getByText('Sample prices are placeholders')).toBeInTheDocument()
   })
+  it('prices page labels each price by where it comes from: yours, the market price, or a sample', async () => {
+    const base = F.materials[0] as unknown as Record<string, unknown>
+    a.materials.mockResolvedValue([
+      { ...base, id: 'x1', name: 'Own one', price_source: 'own', price_is_sample: false },
+      { ...base, id: 'x2', name: 'Market one', price_source: 'market', price_is_sample: false },
+      { ...base, id: 'x3', name: 'Sample one', price_source: 'sample', price_is_sample: true },
+    ] as never)
+    at('/prices', <Prices />, '/prices')
+    const row = async (name: string) => (await screen.findByText(name)).closest('tr')!
+    expect(within(await row('Own one')).getByText('Your price')).toBeInTheDocument()
+    expect(within(await row('Own one')).getByRole('button', { name: /Reset price/ })).toBeInTheDocument()
+    expect(within(await row('Market one')).getByText('Market price')).toBeInTheDocument()
+    expect(within(await row('Market one')).queryByRole('button', { name: /Reset price/ })).not.toBeInTheDocument()  // not the user's to remove
+    expect(within(await row('Sample one')).getByText('SAMPLE')).toBeInTheDocument()
+  })
   it('prices page shows no limit text under the boxes until a typed price exceeds the limit', async () => {
     const user = userEvent.setup()
     at('/prices', <Prices />, '/prices')

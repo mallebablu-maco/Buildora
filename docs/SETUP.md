@@ -59,6 +59,16 @@ Never use the `service_role` / secret key in this project.
    - `"not configured"`: the line is missing or the backend was not restarted.
    - `"unreachable"`: wrong password, wrong host, or a typo; the backend log (the terminal) has the reason.
 
+## Admin website
+
+A second website for the owner: Overview (users and activity), Users, and Materials & market prices.
+- Same code (`frontend/src/admin/`), built separately: `npm run dev:admin` (http://localhost:5174) and `npm run build:admin` (folder `dist-admin`).
+- Same Supabase login. Only accounts marked Admin get in (see "Migration 3" in DATABASE.md); the API and the database refuse
+  everyone else on their own, so the address being known is not a risk.
+- Supabase → *Authentication → URL Configuration → Redirect URLs*: add `http://localhost:5174/login` (and the admin website's Render
+  address + `/login`) so "Continue with Google" works there too.
+- Render: the `buildora-admin` static site in `render.yaml`; add its address to the API's `CORS_ORIGINS`.
+
 ## Local environment files (git-ignored)
 
 - `backend/.env` from `backend/.env.example`: `SUPABASE_URL`, `CORS_ORIGINS`, `DATABASE_URL`.

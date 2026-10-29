@@ -21,7 +21,7 @@ services:
         sync: false
       - key: DATABASE_URL # SECRET: the Supabase Session pooler connection string. Type it into Render yourself.
         sync: false
-      - key: CORS_ORIGINS # the website's URL, e.g. https://buildora-web.onrender.com
+      - key: CORS_ORIGINS # the website's AND the admin website's URLs, comma-separated, e.g. https://buildora-web.onrender.com,https://buildora-admin.onrender.com
         sync: false
 
   - type: web
@@ -41,6 +41,32 @@ services:
         sync: false
     routes:
       # single-page app: every path serves index.html so refreshes and deep links work
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # The admin website: same code base, built with `--mode admin`, its own address. Only Admins get past its login
+  # (and the API and database refuse everyone else on their own).
+  - type: web
+    name: buildora-admin
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build:admin
+    staticPublishPath: dist-admin
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: VITE_API_BASE_URL # the API's URL, no trailing slash
+        sync: false
+    headers:
+      - path: /*
+        name: X-Robots-Tag
+        value: noindex, nofollow
+    routes:
       - type: rewrite
         source: /*
         destination: /index.html

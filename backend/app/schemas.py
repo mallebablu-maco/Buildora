@@ -297,9 +297,48 @@ class MaterialOut(BaseModel):
     supplier: str = ""
     location: str = ""
     price_is_sample: bool = False
+    price_source: Literal["own", "market", "sample", "none"] = "none"
+    is_hidden: bool = False
     price_id: uuid.UUID | None = None
     last_updated: datetime | None = None
     created_at: datetime
+
+
+class AdminMaterialCreate(MaterialBase):
+    """A new shared material, with its market price (Admins only)."""
+
+    unit_price: float = Field(ge=0, le=L.MAX_UNIT_PRICE)
+    supplier: Title = Field(default="", max_length=L.SUPPLIER)
+    location: Place = Field(default="", max_length=L.PRICE_LOCATION)
+
+
+class AdminPriceIn(_In):
+    unit_price: float = Field(ge=0, le=L.MAX_UNIT_PRICE)
+    supplier: Title = Field(default="", max_length=L.SUPPLIER)
+    location: Place = Field(default="", max_length=L.PRICE_LOCATION)
+
+
+class AdminHideIn(_In):
+    hidden: bool
+
+
+class AdminMaterialOut(BaseModel):
+    id: uuid.UUID
+    estimate_key: str
+    name: str
+    category: str
+    brand: str
+    grade: str
+    specification: str
+    durability_notes: str
+    unit: str
+    is_hidden: bool
+    market_price: float | None
+    currency: str
+    supplier: str
+    location: str
+    price_is_sample: bool
+    price_updated_at: datetime | None
 
 
 class PriceCreate(_In):

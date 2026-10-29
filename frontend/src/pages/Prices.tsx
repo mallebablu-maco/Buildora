@@ -60,11 +60,14 @@ export default function Prices() {
 function PriceRow({ m, onChanged }: { m: Material; onChanged: () => Promise<void> }) {
   const toast = useToast()
   const [price, setPrice] = useState(m.unit_price != null ? String(m.unit_price) : '')
-  const [supplier, setSupplier] = useState(m.price_is_sample ? '' : m.supplier)
-  const [location, setLocation] = useState(m.price_is_sample ? '' : m.location)
+  // whose price is in use: the user's own, the Admin's market price, or a placeholder sample (older APIs: guess from is_sample)
+  const source = m.price_source ?? (m.price_is_sample ? 'sample' : m.unit_price == null ? 'none' : 'own')
+  const mine = source === 'own'
+  const [supplier, setSupplier] = useState(mine ? m.supplier : '')
+  const [location, setLocation] = useState(mine ? m.location : '')
   const [busy, setBusy] = useState(false)
-  const dirty = price !== (m.unit_price != null ? String(m.unit_price) : '') || supplier !== (m.price_is_sample ? '' : m.supplier) || location !== (m.price_is_sample ? '' : m.location)
-  const own = !m.price_is_sample && m.price_id
+  const dirty = price !== (m.unit_price != null ? String(m.unit_price) : '') || supplier !== (mine ? m.supplier : '') || location !== (mine ? m.location : '')
+  const own = mine && m.price_id
   const errs = {
     price: numberError(price, 0, L.MAX_UNIT_PRICE),
     supplier: textError('title', supplier, { max: L.SUPPLIER }),
@@ -86,7 +89,7 @@ function PriceRow({ m, onChanged }: { m: Material; onChanged: () => Promise<void
   }
   const reset = async () => {
     setBusy(true)
-    try { await api.deletePrice(m.price_id!); toast.success(m.editable ? 'Price removed.' : 'Reverted to the sample price.'); await onChanged() }
+    try { await api.deletePrice(m.price_id!); toast.success(m.editable ? 'Price removed.' : 'Back to the market price.'); await onChanged() }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Could not remove the price.') } finally { setBusy(false) }
   }
   return (
@@ -94,13 +97,13 @@ function PriceRow({ m, onChanged }: { m: Material; onChanged: () => Promise<void
       <TD className="min-w-48 font-medium">{m.name}<div className="text-xs font-normal text-slate-500">{[m.brand, m.grade].filter(Boolean).join(' · ')}</div></TD>
       <TD className="whitespace-nowrap">{m.unit}</TD>
       <TD className="group"><Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={price} aria-label={`Unit price for ${m.name}`} onChange={(e) => setPrice(e.target.value)} className="h-8 min-w-28" invalid={!!errs.price} /><Under error={errs.price} hint={rangeHint(0, L.MAX_UNIT_PRICE)} /></TD>
-      <TD><Input value={supplier} maxLength={L.SUPPLIER} onChange={(e) => setSupplier(e.target.value)} aria-label={`Supplier for ${m.name}`} placeholder={m.price_is_sample ? 'Your supplier' : ''} className="h-8" invalid={!!errs.supplier} /><Under error={errs.supplier} /></TD>
+      <TD><Input value={supplier} maxLength={L.SUPPLIER} onChange={(e) => setSupplier(e.target.value)} aria-label={`Supplier for ${m.name}`} placeholder={mine ? '' : 'Your supplier'} className="h-8" invalid={!!errs.supplier} /><Under error={errs.supplier} /></TD>
       <TD><Input value={location} maxLength={L.PRICE_LOCATION} onChange={(e) => setLocation(e.target.value)} aria-label={`Location for ${m.name}`} className="h-8" invalid={!!errs.location} /><Under error={errs.location} /></TD>
-      <TD>{m.price_is_sample ? <Badge tone="amber">SAMPLE</Badge> : m.unit_price == null ? <Badge tone="red">No price</Badge> : <Badge tone="green">Your price</Badge>}</TD>
+      <TD>{source === 'own' ? <Badge tone="green">Your price</Badge> : source === 'market' ? <Badge tone="navy">Market price</Badge> : source === 'sample' ? <Badge tone="amber">SAMPLE</Badge> : <Badge tone="red">No price</Badge>}</TD>
       <TD className="whitespace-nowrap">{formatDate(m.last_updated)}</TD>
       <TD className="whitespace-nowrap text-right">
         <Button size="sm" variant={dirty ? 'accent' : 'outline'} disabled={!dirty || hasErrors} loading={busy} onClick={save}><Save className="h-3.5 w-3.5" /> Save</Button>
-        {own && <Button size="icon" variant="ghost" aria-label={`Reset price for ${m.name}`} title={m.editable ? 'Remove price' : 'Revert to sample price'} onClick={reset}><Undo2 className="h-4 w-4" /></Button>}
+        {own && <Button size="icon" variant="ghost" aria-label={`Reset price for ${m.name}`} title={m.editable ? 'Remove price' : 'Go back to the market price'} onClick={reset}><Undo2 className="h-4 w-4" /></Button>}
       </TD>
     </TR>
   )

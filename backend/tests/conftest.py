@@ -146,14 +146,15 @@ def superuser(pg_uri):
 
 
 @contextmanager
-def as_user(pg_uri, user_id, role="authenticated"):
+def as_user(pg_uri, user_id, role="authenticated", admin=False):
     """A transaction that behaves exactly like one of the API's: role switched, JWT claims set, rolled back at the end."""
     with psycopg.connect(pg_uri, autocommit=False) as c:
         c.execute(f"set local role {role}")
         if user_id:
+            claims = {"sub": str(user_id), "role": role} | ({"app_metadata": {"role": "admin"}} if admin else {})
             c.execute(
                 "select set_config('request.jwt.claim.sub', %s, true), set_config('request.jwt.claims', %s, true)",
-                (str(user_id), json.dumps({"sub": str(user_id), "role": role})),
+                (str(user_id), json.dumps(claims)),
             )
         try:
             yield c
@@ -162,21 +163,31 @@ def as_user(pg_uri, user_id, role="authenticated"):
 
 
 class User:
-    def __init__(self, pg_uri, signing_key, email, name):
+    def __init__(self, pg_uri, signing_key, email, name, persona="", admin=False, provider="email"):
         self.id = str(uuid.uuid4())
-        self.email, self.name = email, name
+        self.email, self.name, self.admin = email, name, admin
+        meta = {"full_name": name} | ({"persona": persona} if persona else {})
+        app_meta = {"provider": provider} | ({"role": "admin"} if admin else {})
         with superuser(pg_uri) as c:
-            c.execute("insert into auth.users (id, email) values (%s, %s)", (self.id, email))
-        token = make_token(signing_key, sub=self.id, email=email, user_metadata={"full_name": name})
+            c.execute("insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data, last_sign_in_at, email_confirmed_at) "
+                      "values (%s, %s, %s, %s, now(), now())", (self.id, email, json.dumps(meta), json.dumps(app_meta)))
+            c.execute("insert into auth.identities (user_id, provider) values (%s, %s)", (self.id, provider))
+        # app_metadata travels in the token exactly as Supabase puts it there; the user cannot change it
+        token = make_token(signing_key, sub=self.id, email=email, user_metadata=meta, app_metadata=app_meta)
         self.headers = {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
 def make_user(pg_uri, signing_key):
-    def _make(email="alice@example.com", name="Alice Rao"):
-        return User(pg_uri, signing_key, email, name)
+    def _make(email="alice@example.com", name="Alice Rao", **kw):
+        return User(pg_uri, signing_key, email, name, **kw)
 
     return _make
+
+
+@pytest.fixture
+def admin(db_env, make_user):
+    return make_user("owner@example.com", "Site Owner", admin=True)
 
 
 @pytest.fixture

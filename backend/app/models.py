@@ -116,7 +116,7 @@ class FloorPlan(Base):
 
 
 class Material(Base):
-    """Catalogue entry. owner_id NULL = shared sample material (read-only)."""
+    """Catalogue entry. owner_id NULL = shared catalogue (read-only for users, maintained by Admins)."""
 
     __tablename__ = "materials"
 
@@ -131,6 +131,7 @@ class Material(Base):
     durability_notes: Mapped[str] = mapped_column(String, default="")
     unit: Mapped[str] = mapped_column(String)
     is_sample: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_hidden: Mapped[bool] = mapped_column(Boolean, default=False)  # no longer offered; kept for old estimates
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     prices: Mapped[list[PriceRecord]] = relationship(back_populates="material", cascade="all, delete-orphan", order_by="PriceRecord.updated_at.desc()")
@@ -148,6 +149,7 @@ class PriceRecord(Base):
     location: Mapped[str] = mapped_column(String, default="")
     is_sample: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_by: Mapped[str | None] = mapped_column(UUIDStr, nullable=True)  # the Admin who last set a shared market price
 
     material: Mapped[Material] = relationship(back_populates="prices")
 

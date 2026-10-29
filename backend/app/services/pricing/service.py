@@ -9,16 +9,25 @@ from app.services.pricing.costing import PriceInfo
 
 
 def visible_materials(db: Session, user_id: str) -> list[Material]:
-    """Shared sample materials plus the user's own (Row Level Security enforces the same rule in the database)."""
+    """Shared materials that are not hidden, plus the user's own (Row Level Security enforces who may read what)."""
     return list(db.scalars(
         select(Material).options(selectinload(Material.prices))
-        .where(or_(Material.owner_id.is_(None), Material.owner_id == user_id))
+        .where(or_(Material.owner_id.is_(None) & Material.is_hidden.is_(False), Material.owner_id == user_id))
         .order_by(Material.created_at, Material.name)
     ))
 
 
+def price_source(record: PriceRecord | None, user_id: str) -> str:
+    """Where the price in use comes from: the user's own, the Admin-maintained market price, a placeholder sample, or none."""
+    if record is None:
+        return "none"
+    if record.owner_id == user_id:
+        return "own"
+    return "sample" if record.is_sample else "market"
+
+
 def effective_price(material: Material, user_id: str) -> PriceRecord | None:
-    """The user's own newest price wins over the shared sample price."""
+    """The user's own newest price wins over the shared (market or sample) price."""
     own = [p for p in material.prices if p.owner_id == user_id]
     if own:
         return max(own, key=lambda p: p.updated_at)

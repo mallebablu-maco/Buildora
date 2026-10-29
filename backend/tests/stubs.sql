@@ -30,3 +30,18 @@ declare parts text[]; begin parts := string_to_array(name, '/'); return parts[1:
 alter table storage.objects enable row level security;
 grant usage on schema storage to authenticated;
 grant select, insert, update, delete on storage.objects to authenticated;
+
+-- Supabase's auth.users has more columns, auth.identities (one row per sign-in method) and auth.jwt(); minimal versions for tests.
+alter table auth.users add column if not exists raw_app_meta_data jsonb not null default '{}';
+alter table auth.users add column if not exists created_at timestamptz not null default now();
+alter table auth.users add column if not exists last_sign_in_at timestamptz;
+alter table auth.users add column if not exists email_confirmed_at timestamptz;
+create table if not exists auth.identities (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  provider text not null
+);
+create or replace function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb, '{}'::jsonb)
+$$;
+grant execute on function auth.jwt() to authenticated, anon;

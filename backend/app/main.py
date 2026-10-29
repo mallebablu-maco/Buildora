@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import DBAPIError, TimeoutError as PoolTimeout
 from sqlalchemy.orm import Session
 
-from app.api import dashboard, floorplans, health, materials, me, profile, projects, reports
+from app.api import admin, dashboard, floorplans, health, materials, me, profile, projects, reports
 from app.core.config import get_settings
 from app.core.db import get_engine
 from app.services.pricing.seed import seed_sample_catalogue
@@ -83,7 +83,7 @@ def create_app() -> FastAPI:
         max_age=600,
     )
 
-    for router in (health.router, me.router, profile.router, projects.router, floorplans.router, materials.router, reports.router, dashboard.router):
+    for router in (health.router, me.router, profile.router, projects.router, floorplans.router, materials.router, reports.router, dashboard.router, admin.router):
         app.include_router(router, prefix="/api")
     return app
 

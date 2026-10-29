@@ -65,7 +65,10 @@ def _run_as_signed_in_user(session: Session, transaction, connection) -> None:
 
 
 def rls_claims(identity: Identity) -> dict:
-    return {"sub": identity.id, "role": "authenticated", "email": identity.email}
+    claims = {"sub": identity.id, "role": "authenticated", "email": identity.email}
+    if identity.is_admin:  # the database's own is_admin() reads this; it came from the verified token's app_metadata
+        claims["app_metadata"] = {"role": "admin"}
+    return claims
 
 
 def get_db(identity: Identity = Depends(current_identity)) -> Iterator[Session]:

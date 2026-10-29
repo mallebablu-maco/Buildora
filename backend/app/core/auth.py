@@ -35,10 +35,12 @@ class Identity:
     # user_metadata is editable by the user, so these two are for display only and must never decide access.
     full_name: str = ""
     persona: str = ""
+    # app_metadata can only be set by the project owner (never by the user), so this one MAY decide access.
+    is_admin: bool = False
     token: str = field(default="", repr=False)
 
     def public(self) -> dict:
-        return {"id": self.id, "email": self.email, "full_name": self.full_name, "persona": self.persona}
+        return {"id": self.id, "email": self.email, "full_name": self.full_name, "persona": self.persona, "is_admin": self.is_admin}
 
 
 @lru_cache
@@ -86,11 +88,13 @@ def verify_access_token(token: str) -> Identity | None:
     if data.get("role") != "authenticated":  # the public anon key is a valid JWT too; it is not a signed-in user
         return None
     meta = data.get("user_metadata") or {}
+    app_meta = data.get("app_metadata") or {}
     return Identity(
         id=str(data["sub"]),
         email=str(data.get("email", "")),
         full_name=str(meta.get("full_name", "")),
         persona=str(meta.get("persona", "")),
+        is_admin=app_meta.get("role") == "admin",
         token=token,
     )
 
