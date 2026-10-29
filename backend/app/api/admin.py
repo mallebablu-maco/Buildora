@@ -70,12 +70,12 @@ def admin_me(identity: Identity = Depends(require_admin)):
 
 @router.get("/overview")
 def overview(db: Session = Depends(get_db), identity: Identity = Depends(require_admin)):
-    return db.execute(text("select public.admin_overview()")).scalar_one()
+    return db.execute(text("select private.admin_overview()")).scalar_one()
 
 
 @router.get("/users")
 def users(db: Session = Depends(get_db), identity: Identity = Depends(require_admin)):
-    rows = db.execute(text("select * from public.admin_users()")).mappings().all()
+    rows = db.execute(text("select * from private.admin_users()")).mappings().all()
     return [dict(r) for r in rows]
 
 

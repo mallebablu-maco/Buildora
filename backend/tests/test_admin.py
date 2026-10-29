@@ -32,12 +32,21 @@ def test_ordinary_users_cannot_change_the_shared_catalogue_through_the_admin_api
     assert shared(db_client, admin)[0]["market_price"] == m["market_price"]
 
 
+def test_admin_reports_are_not_reachable_through_the_public_schema(db_env, alice):
+    """They live in "private", which Supabase's API does not expose; nothing named admin_* is left in "public"."""
+    with superuser(db_env) as c:
+        assert c.execute("select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace "
+                         "where n.nspname = 'public' and p.proname like 'admin_%'").fetchone()[0] == 0
+        assert c.execute("select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace "
+                         "where n.nspname = 'private' and p.proname in ('admin_overview', 'admin_users')").fetchone()[0] == 2
+
+
 def test_the_database_itself_refuses_non_admins_even_without_the_api(db_env, alice, admin):
     """Second lock: the report functions and the shared-catalogue policies check is_admin() inside PostgreSQL."""
     with as_user(db_env, alice.id) as c:
         for fn in ("admin_overview()", "admin_users()"):
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                c.execute(f"select * from public.{fn}")
+                c.execute(f"select * from private.{fn}")
             c.rollback()
             c.execute("set local role authenticated")
             c.execute("select set_config('request.jwt.claims', %s, true)", (f'{{"sub": "{alice.id}", "role": "authenticated"}}',))
@@ -48,7 +57,7 @@ def test_the_database_itself_refuses_non_admins_even_without_the_api(db_env, ali
         n = c.execute("update public.material_price_records set unit_price = 1 where owner_id is null").rowcount
         assert n == 0
     with as_user(db_env, admin.id, admin=True) as c:
-        assert c.execute("select public.admin_overview() ->> 'users_total'").fetchone()[0] == "2"
+        assert c.execute("select private.admin_overview() ->> 'users_total'").fetchone()[0] == "2"
         c.execute("insert into public.materials (owner_id, estimate_key, name, category, unit) values (null, 'cement', 'Admin cement', 'C', 'bag')")
         assert c.execute("update public.material_price_records set unit_price = unit_price where owner_id is null").rowcount > 0
     with as_user(db_env, admin.id, admin=True) as c:  # nobody, not even an Admin, deletes shared materials (they are hidden instead)

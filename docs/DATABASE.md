@@ -96,3 +96,12 @@ update auth.users set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}
 The person must **log out and log in again** afterwards. To remove the role: `raw_app_meta_data - 'role'` instead of `|| ...`.
 
 **Safe to run twice; it contains no DROP TABLE, DROP COLUMN, DELETE or TRUNCATE.**
+
+## Migration 4: admin reports moved to a private area
+
+File: [`supabase/migrations/20261031000000_admin_private.sql`](../supabase/migrations/20261031000000_admin_private.sql). Run it **after** migration 3.
+
+The two admin reports (overview, user list) move from the `public` schema, which Supabase's API offers to every signed-in user,
+to a `private` schema the API does not expose. Only Buildora's backend calls them. They still refuse anyone who is not an Admin.
+This clears Supabase's "Signed-in users can execute SECURITY DEFINER function" warnings. No data is changed.
+**Run it before deploying the backend version that uses it.**
