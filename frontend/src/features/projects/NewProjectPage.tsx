@@ -124,7 +124,7 @@ export default function NewProjectPage() {
                 </Field>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Currency" hint="Prices are in Indian rupees for now.">
+                <Field label="Currency" hint="Prices are in Indian rupees for now." hintAlways>
                   {({ id }) => <Input id={id} value="INR (₹)" disabled readOnly />}
                 </Field>
                 <Field label="Budget (optional)" error={errors.budget?.message} hint={`Optional, up to ${L.MAX_BUDGET.toLocaleString('en-IN')}. Used to show over / under against the estimate.`}>

@@ -40,14 +40,15 @@ export function Under({ error, hint, className }: { error?: string | null; hint?
   return hint ? <p className={cn('mt-1 hidden text-xs text-slate-500 group-focus-within:block', className)}>{hint}</p> : null
 }
 
-export function Field({ label, error, hint, children, className }: { label: string; error?: string | null; hint?: string; children: ReactNode; className?: string }) {
+/** Label + box + message. The grey hint shows only while typing in the box (`hintAlways` keeps it visible); the red error always. */
+export function Field({ label, error, hint, hintAlways = false, children, className }: { label: string; error?: string | null; hint?: string; hintAlways?: boolean; children: ReactNode; className?: string }) {
   return (
-    <div className={cn('block', className)}>
+    <div className={cn('group block', className)}>
       <label className="block">
         <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
         {children}
       </label>
-      {hint && !error && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {hint && !error && <p className={cn('mt-1 text-xs text-slate-500', !hintAlways && 'hidden group-focus-within:block')}>{hint}</p>}
       {error && <p role="alert" className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   )

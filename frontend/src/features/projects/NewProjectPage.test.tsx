@@ -52,7 +52,8 @@ describe('New project wizard', () => {
 
   it('shows the limit and any problem under the boxes while typing, before Next is pressed', async () => {
     const user = setup()
-    expect(screen.getByText('Up to 60 characters')).toBeInTheDocument()
+    expect(screen.getByText('Up to 60 characters')).toHaveClass('hidden', 'group-focus-within:block')  // only while typing in that box
+    expect(screen.getByText('Prices are in Indian rupees for now.')).not.toHaveClass('hidden')  // under a disabled box: always shown
     expect(screen.getByText('1 to 30 (1 = ground floor only)')).toBeInTheDocument()
     await type(user, 'Project name', 'House @ 1')
     expect(await screen.findByText(/Use letters, numbers, spaces and/)).toBeInTheDocument()

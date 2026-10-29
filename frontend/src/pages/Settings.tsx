@@ -80,7 +80,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader title="Currency & units" description="Quantities and costs use these throughout. Data is always stored in metres and square metres." />
           <CardBody className="grid gap-4 sm:grid-cols-2">
-            <Field label="Currency" hint="Prices are in Indian rupees for now."><Input value="INR (₹) · Indian numbering 1,00,000" disabled readOnly /></Field>
+            <Field label="Currency" hint="Prices are in Indian rupees for now." hintAlways><Input value="INR (₹) · Indian numbering 1,00,000" disabled readOnly /></Field>
             <Field label="Display units"><Select value={units.system} onChange={(e) => units.setSystem(e.target.value as UnitSystem)}>
               <option value="metric">Metric (m, m²)</option><option value="imperial">Imperial (ft, sq ft)</option></Select></Field>
           </CardBody>

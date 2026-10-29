@@ -41,27 +41,32 @@ export function Textarea({ className, invalid, ...props }: ComponentProps<'texta
   )
 }
 
-/** Label + control + error/hint, wired together for screen readers. `children` receives the ids to put on the input. */
+/**
+ * Label + control + error/hint, wired together for screen readers. `children` receives the ids to put on the input.
+ * The grey hint shows only while the person is typing in the box (`hintAlways` keeps it visible, e.g. under a disabled box);
+ * the red error shows whenever there is one.
+ */
 export function Field({
-  label, error, hint, action, children,
+  label, error, hint, hintAlways = false, action, children,
 }: {
   label: string
   error?: string
   hint?: string
+  hintAlways?: boolean
   action?: ReactNode
   children: (ids: { id: string; describedBy?: string; invalid: boolean }) => ReactNode
 }) {
   const id = useId()
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined
   return (
-    <div className="space-y-1.5">
+    <div className="group space-y-1.5">
       <div className="flex items-center justify-between">
         <label htmlFor={id} className="text-sm font-medium text-slate-700">{label}</label>
         {action}
       </div>
       {children({ id, describedBy, invalid: !!error })}
       {error ? <p id={`${id}-error`} role="alert" className="text-sm text-red-700">{error}</p>
-        : hint ? <p id={`${id}-hint`} className="text-sm text-slate-500">{hint}</p> : null}
+        : hint ? <p id={`${id}-hint`} className={cn('text-sm text-slate-500', !hintAlways && 'hidden group-focus-within:block')}>{hint}</p> : null}
     </div>
   )
 }
