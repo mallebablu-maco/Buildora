@@ -24,7 +24,7 @@ $$;
 revoke all on function public.is_admin() from public, anon;
 grant execute on function public.is_admin() to authenticated;
 
--- ============================================================================ shared catalogue: Admins may maintain it
+-- ==========================================DONE================================== shared catalogue: Admins may maintain it
 -- (Ordinary users keep the policies from migration 2: they read shared rows and write only their own.)
 drop policy if exists materials_admin_insert on public.materials;
 create policy materials_admin_insert on public.materials for insert to authenticated
