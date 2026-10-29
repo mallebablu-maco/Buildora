@@ -51,7 +51,20 @@ export const wizardSchema = detailsSchema
     v.rooms.forEach((r, i) => {
       if (r.floor_number > v.floors) ctx.addIssue({ code: 'custom', path: ['rooms', i, 'floor_number'], message: `The project has ${v.floors} floor(s).` })
     })
+    const footprint = v.length * v.width
+    for (const [floor, area] of roomAreaByFloor(v.rooms)) {
+      if (Number.isFinite(footprint) && area > footprint + 1e-6) {
+        ctx.addIssue({ code: 'custom', path: ['rooms'], message: `The rooms on floor ${floor} add up to ${area.toFixed(1)} m², but one floor of the building is only ${footprint.toFixed(1)} m². Make the rooms smaller, move some to another floor, or make the building bigger.` })
+      }
+    }
   })
+
+/** Total room area on each floor (the same rule the API checks). */
+export function roomAreaByFloor(rooms: { floor_number: number; length: number; width: number }[]): [number, number][] {
+  const m = new Map<number, number>()
+  for (const r of rooms) if (Number.isFinite(r.length * r.width)) m.set(r.floor_number, (m.get(r.floor_number) ?? 0) + r.length * r.width)
+  return [...m.entries()].sort((a, b) => a[0] - b[0])
+}
 
 export type WizardValues = z.infer<typeof wizardSchema>
 

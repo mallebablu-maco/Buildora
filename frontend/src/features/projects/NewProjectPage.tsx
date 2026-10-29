@@ -16,7 +16,7 @@ import { rangeHint } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import { useCreateProject } from './hooks'
-import { DEFAULT_ROOM, defaultWizardValues, STEP_FIELDS, toPayload, wizardSchema, type WizardValues } from './schemas'
+import { DEFAULT_ROOM, defaultWizardValues, roomAreaByFloor, STEP_FIELDS, toPayload, wizardSchema, type WizardValues } from './schemas'
 import { BUILDING_TYPES, buildingTypeLabel, ROOM_TYPES, roomTypeLabel } from './types'
 
 const STEPS = [
@@ -41,7 +41,7 @@ export default function NewProjectPage() {
   const [step, setStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
-  const { register, control, handleSubmit, trigger, getValues, formState: { errors } } = useForm<WizardValues>({
+  const { register, control, handleSubmit, trigger, getValues, watch, formState: { errors } } = useForm<WizardValues>({
     resolver: zodResolver(wizardSchema),
     mode: 'onChange',
     defaultValues: defaultWizardValues((user?.user_metadata?.full_name as string | undefined) ?? ''),
@@ -183,7 +183,8 @@ export default function NewProjectPage() {
                   )
                 })}
               </div>
-              {typeof errors.rooms?.message === 'string' && <p role="alert" className="text-sm text-red-700">{errors.rooms.message}</p>}
+              {rooms.fields.length > 0 && <FloorUsage rooms={watch('rooms')} footprint={Number(watch('length')) * Number(watch('width'))} />}
+              {(errors.rooms?.message ?? errors.rooms?.root?.message) && <p role="alert" className="text-sm text-red-700">{errors.rooms?.message ?? errors.rooms?.root?.message}</p>}
               <Button variant="outline" onClick={() => rooms.append({ ...DEFAULT_ROOM, name: `Room ${rooms.fields.length + 1}` })}><Plus className="h-4 w-4" aria-hidden="true" /> Add room</Button>
             </section>
           )}
@@ -217,5 +218,21 @@ export default function NewProjectPage() {
         </div>
       </form>
     </div>
+  )
+}
+
+/** "Floor 1: 73.5 of 80 m² used", red when the rooms of a floor do not fit inside the building. Updates as you type. */
+function FloorUsage({ rooms, footprint }: { rooms: WizardValues['rooms']; footprint: number }) {
+  const rows = roomAreaByFloor(rooms.map((r) => ({ floor_number: Number(r.floor_number), length: Number(r.length), width: Number(r.width) })))
+  if (!Number.isFinite(footprint) || footprint <= 0 || rows.length === 0) return null
+  return (
+    <ul className="flex flex-wrap gap-2 text-sm" aria-label="Room area per floor">
+      {rows.map(([floor, area]) => {
+        const over = area > footprint + 1e-6
+        return <li key={floor} className={over ? 'rounded-md bg-red-50 px-2 py-1 font-medium text-red-700' : 'rounded-md bg-slate-100 px-2 py-1 text-slate-700'}>
+          Floor {floor}: {area.toFixed(1)} of {footprint.toFixed(1)} m² used{over ? ' (does not fit)' : ''}
+        </li>
+      })}
+    </ul>
   )
 }

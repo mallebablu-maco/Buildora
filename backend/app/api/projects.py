@@ -12,7 +12,7 @@ from app.core.db import get_db
 from app.models import Estimate, Profile, Project, Report, Room
 from app.schemas import (
     EstimateRequest, LayoutIn, ProjectConfigUpdate, ProjectCreate, ProjectDetail, ProjectOut, ProjectUpdate, RoomIn, RoomOut,
-    RoomsReplace, check_floors,
+    RoomsReplace, check_floors, check_rooms_fit, floor_room_area,
 )
 from app.services.estimate_service import compute_estimate, estimate_to_payload, refresh_estimates, save_estimate
 from app.services.estimation import EstimationError
@@ -63,6 +63,18 @@ def _require_floors_fit(rooms, floors: int) -> None:
     try:
         check_floors(rooms, floors)
     except ValueError as e:
+        raise HTTPException(422, str(e)) from None
+
+
+def _require_rooms_fit(p: Project, rooms, before=None) -> None:
+    """Refuse room changes that overfill a floor. A floor that is ALREADY overfull (older data) may still shrink."""
+    try:
+        check_rooms_fit(rooms, p.built_up_area or p.length * p.width)
+    except ValueError as e:
+        if before is not None:
+            old, new = floor_room_area(before), floor_room_area(rooms)
+            if all(new.get(f, 0) <= old.get(f, 0) + 1e-6 for f in new):
+                return  # not making anything worse
         raise HTTPException(422, str(e)) from None
 
 
@@ -152,6 +164,7 @@ def list_rooms(project_id: uuid.UUID, db: Session = Depends(get_db), identity: I
 def add_room(project_id: uuid.UUID, body: RoomIn, db: Session = Depends(get_db), identity: Identity = Depends(current_identity)):
     p = owned_project(db, identity, project_id)
     _require_floors_fit([body], p.floors)
+    _require_rooms_fit(p, [*p.rooms, body])
     room = _new_room(p.owner_id, body)
     p.rooms.append(room)
     touch(p)
@@ -165,6 +178,7 @@ def update_room(project_id: uuid.UUID, room_id: uuid.UUID, body: RoomIn, db: Ses
     p = owned_project(db, identity, project_id)
     _require_floors_fit([body], p.floors)
     room = _owned_room(p, room_id)
+    _require_rooms_fit(p, [r for r in p.rooms if r.id != room.id] + [body], before=p.rooms)
     for k, v in body.model_dump().items():
         setattr(room, k, v)
     touch(p)
@@ -187,6 +201,7 @@ def replace_rooms(project_id: uuid.UUID, body: RoomsReplace, db: Session = Depen
     """Atomically replace every room (used by the layout generator and by confirmed floor-plan imports): all or nothing."""
     p = owned_project(db, identity, project_id)
     _require_floors_fit(body.rooms, p.floors)
+    _require_rooms_fit(p, body.rooms)
     p.rooms = [_new_room(p.owner_id, r) for r in body.rooms]
     p.layout = None  # door/window positions and furniture of the old rooms no longer apply
     touch(p)

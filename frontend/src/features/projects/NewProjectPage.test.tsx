@@ -67,6 +67,22 @@ describe('New project wizard', () => {
     await waitFor(() => expect(screen.queryByText('Include at least one letter.')).not.toBeInTheDocument())
   })
 
+  it('shows how much of each floor the rooms use, and refuses rooms that do not fit inside the building', async () => {
+    const user = setup()
+    await type(user, 'Project name', 'My House')
+    await next(user)
+    await type(user, 'Length (m)', '6'); await type(user, 'Width (m)', '5')  // a 30 m² floor
+    await next(user)
+    await user.click(screen.getByRole('button', { name: 'Add room' }))  // 3.5 x 3.5 = 12.25 m²
+    expect(screen.getByText('Floor 1: 12.3 of 30.0 m² used')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Add room' }))
+    await user.click(screen.getByRole('button', { name: 'Add room' }))  // 36.75 m² on a 30 m² floor
+    expect(screen.getByText('Floor 1: 36.8 of 30.0 m² used (does not fit)')).toBeInTheDocument()
+    await next(user)
+    expect(await screen.findByText(/The rooms on floor 1 add up to 36.8 m², but one floor of the building is only 30.0 m²/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Review' })).not.toBeInTheDocument()
+  })
+
   it('refuses a room on a floor the project does not have', async () => {
     const user = setup()
     await type(user, 'Project name', 'My House')

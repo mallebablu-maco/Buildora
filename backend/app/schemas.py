@@ -103,6 +103,7 @@ class ProjectCreate(ProjectIn):
     @model_validator(mode="after")
     def _rooms_fit_the_floors(self):
         check_floors(self.rooms, self.floors)
+        check_rooms_fit(self.rooms, self.built_up_area or self.length * self.width)
         return self
 
 
@@ -236,6 +237,21 @@ def check_floors(rooms, floors: int) -> None:
     for r in rooms:
         if r.floor_number > floors:
             raise ValueError(f"Room '{r.name}' is on floor {r.floor_number}, but the project has {floors} floor(s).")
+
+
+def floor_room_area(rooms) -> dict[int, float]:
+    out: dict[int, float] = {}
+    for r in rooms:
+        out[r.floor_number] = out.get(r.floor_number, 0.0) + (r.area_override or r.length * r.width)
+    return out
+
+
+def check_rooms_fit(rooms, footprint: float) -> None:
+    """The rooms of one floor cannot cover more than the building's floor (rooms are measured inside, so this is lenient)."""
+    for floor, area in sorted(floor_room_area(rooms).items()):
+        if area > footprint + 1e-6:
+            raise ValueError(f"The rooms on floor {floor} add up to {area:.1f} m², but one floor of the building is only {footprint:.1f} m². "
+                             "Make the rooms smaller, move some to another floor, or make the building bigger.")
 
 
 # ---------------------------------------------------------------------------------------------------- floor plans
