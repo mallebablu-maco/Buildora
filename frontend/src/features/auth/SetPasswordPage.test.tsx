@@ -49,6 +49,20 @@ describe('Choose your password (after clicking "Confirm your email")', () => {
     await user.click(screen.getByRole('button', { name: 'Save password and continue' }))
     expect(value.updatePassword).not.toHaveBeenCalled()
   })
+  it('Confirm password must be typed: pasting is refused with a message, and the password cannot be copied out', async () => {
+    const { user } = show('/set-password')
+    await user.type(screen.getByLabelText('Password'), 'longenough1')
+    const confirm = screen.getByLabelText('Confirm password')
+    confirm.focus()
+    await user.paste('longenough1')
+    expect(confirm).toHaveValue('')
+    expect(await screen.findByText(/Pasting is turned off here/)).toBeInTheDocument()
+    await user.type(confirm, 'l')  // typing clears the message
+    expect(screen.queryByText(/Pasting is turned off here/)).not.toBeInTheDocument()
+    const copy = new Event('copy', { bubbles: true, cancelable: true })
+    screen.getByLabelText('Password').dispatchEvent(copy)
+    expect(copy.defaultPrevented).toBe(true)
+  })
   it('saves the password and opens the dashboard', async () => {
     const { user, value } = show('/set-password')
     await user.type(screen.getByLabelText('Password'), 'longenough1')

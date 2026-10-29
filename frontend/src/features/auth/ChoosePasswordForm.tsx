@@ -13,6 +13,7 @@ import { useAuth } from './useAuth'
 export function ChoosePasswordForm({ submitLabel, onSaved }: { submitLabel: string; onSaved: () => void }) {
   const { updatePassword } = useAuth()
   const [error, setError] = useState<string | null>(null)
+  const [pasteTried, setPasteTried] = useState(false)
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ResetValues>({
     mode: 'onChange', resolver: zodResolver(resetSchema), defaultValues: { password: '', confirm: '' },
   })
@@ -24,10 +25,10 @@ export function ChoosePasswordForm({ submitLabel, onSaved }: { submitLabel: stri
     <form onSubmit={onSubmit} noValidate className="space-y-4">
       {error && <Alert tone="error">{error}</Alert>}
       <Field label="Password" error={errors.password?.message} hint="Use 8 or more characters.">
-        {({ id, describedBy, invalid }) => <PasswordInput id={id} autoComplete="new-password" aria-describedby={describedBy} invalid={invalid} {...register('password', { deps: ['confirm'] })} />}
+        {({ id, describedBy, invalid }) => <PasswordInput id={id} autoComplete="new-password" noCopy aria-describedby={describedBy} invalid={invalid} {...register('password', { deps: ['confirm'] })} />}
       </Field>
-      <Field label="Confirm password" error={errors.confirm?.message} hint="Type the same password again.">
-        {({ id, describedBy, invalid }) => <PasswordInput id={id} autoComplete="new-password" aria-describedby={describedBy} invalid={invalid} {...register('confirm')} />}
+      <Field label="Confirm password" error={pasteTried ? 'Pasting is turned off here: please type the password again.' : errors.confirm?.message} hint="Type the same password again (pasting is turned off).">
+        {({ id, describedBy, invalid }) => <PasswordInput id={id} autoComplete="new-password" aria-describedby={describedBy} invalid={invalid} onBlockedPaste={() => setPasteTried(true)} {...register('confirm', { onChange: () => setPasteTried(false) })} />}
       </Field>
       <Button type="submit" variant="accent" className="w-full" loading={isSubmitting}>{submitLabel}</Button>
     </form>
