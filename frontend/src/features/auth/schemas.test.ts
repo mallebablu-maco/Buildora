@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { forgotSchema, loginSchema, resetSchema, signupSchema } from './schemas'
 
-const validSignup = { fullName: 'Asha Rao', email: 'asha@example.com', persona: 'engineer', acceptDisclaimer: true }
+const validSignup = { fullName: 'Asha Rao', email: 'asha@example.com', persona: 'contractor', acceptDisclaimer: true }
 
 describe('signupSchema', () => {
   it('accepts a complete form', () => {
@@ -20,9 +20,9 @@ describe('signupSchema', () => {
     expect(signupSchema.safeParse({ ...validSignup, email: 'nope' }).success).toBe(false)
     expect(signupSchema.safeParse({ ...validSignup, fullName: '   ' }).success).toBe(false)
   })
-  it('only allows the four personas from the design', () => {
-    for (const persona of ['homeowner', 'contractor', 'engineer', 'student']) expect(signupSchema.safeParse({ ...validSignup, persona }).success).toBe(true)
-    expect(signupSchema.safeParse({ ...validSignup, persona: 'admin' }).success).toBe(false)
+  it('only allows homeowner and contractor (engineer, student and admin cannot be chosen)', () => {
+    for (const persona of ['homeowner', 'contractor']) expect(signupSchema.safeParse({ ...validSignup, persona }).success).toBe(true)
+    for (const persona of ['engineer', 'student', 'admin']) expect(signupSchema.safeParse({ ...validSignup, persona }).success).toBe(false)
   })
 })
 

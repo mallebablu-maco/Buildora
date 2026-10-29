@@ -15,13 +15,17 @@ const page = (
 async function fill(user: ReturnType<typeof userEvent.setup>, { disclaimer = true } = {}) {
   await user.type(screen.getByLabelText('Full name'), 'Asha Rao')
   await user.type(screen.getByLabelText('Email'), 'asha@example.com')
-  await user.click(screen.getByText('Engineer'))
+  await user.click(screen.getByText('Contractor'))
   if (disclaimer) await user.click(screen.getByLabelText(/I understand estimates/))
 }
 
 describe('SignupPage', () => {
   it('asks for name, email, role and the disclaimer, but no password', () => {
     renderWithAuth(page, authValue(), '/signup')
+    expect(screen.getByText('Homeowner')).toBeInTheDocument()
+    expect(screen.getByText('Contractor')).toBeInTheDocument()
+    expect(screen.queryByText('Engineer')).not.toBeInTheDocument()
+    expect(screen.queryByText('Student')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Full name')).toBeInTheDocument()
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
@@ -54,7 +58,7 @@ describe('SignupPage', () => {
     renderWithAuth(page, value, '/signup')
     await fill(user)
     await user.click(screen.getByRole('button', { name: 'Create account' }))
-    await waitFor(() => expect(value.signUp).toHaveBeenCalledWith({ fullName: 'Asha Rao', email: 'asha@example.com', persona: 'engineer' }))
+    await waitFor(() => expect(value.signUp).toHaveBeenCalledWith({ fullName: 'Asha Rao', email: 'asha@example.com', persona: 'contractor' }))
     expect(await screen.findByText('Check your email')).toBeInTheDocument()
     expect(screen.getByText('asha@example.com')).toBeInTheDocument()
     expect(screen.getByText(/then choose your password/)).toBeInTheDocument()

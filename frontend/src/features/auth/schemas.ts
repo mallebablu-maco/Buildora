@@ -5,8 +5,6 @@ import { textError } from '@/lib/validate'
 export const PERSONAS = [
   { value: 'homeowner', title: 'Homeowner', description: 'Planning my own build' },
   { value: 'contractor', title: 'Contractor', description: 'Quoting and buying for sites' },
-  { value: 'engineer', title: 'Engineer', description: 'Checking and reviewing' },
-  { value: 'student', title: 'Student', description: 'Learning estimation' },
 ] as const
 
 export type Persona = (typeof PERSONAS)[number]['value']
@@ -25,7 +23,7 @@ export type LoginValues = z.infer<typeof loginSchema>
 export const signupSchema = z.object({
   fullName: z.string().trim().superRefine((v, ctx) => { const m = textError('person', v, { max: LIMITS.PERSON_NAME, required: 'Enter your name.' }); if (m) ctx.addIssue({ code: 'custom', message: m }) }),
   email,
-  persona: z.enum(['homeowner', 'contractor', 'engineer', 'student']),
+  persona: z.enum(['homeowner', 'contractor']),
   acceptDisclaimer: z.boolean().refine((v) => v, 'Please confirm that you understand this.'),
 })
 export type SignupValues = z.infer<typeof signupSchema>
