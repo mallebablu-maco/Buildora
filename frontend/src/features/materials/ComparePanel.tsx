@@ -1,68 +1,18 @@
-import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardBody, CardHeader } from '@/components/ui/card'
-import { ConfirmDialog } from '@/components/ui/dialog'
-import { Alert, Badge, EmptyState, ErrorState, Spinner } from '@/components/ui/feedback'
-import { Input, Select } from '@/components/ui/form'
-import { PageHeader, ProjectPicker } from '@/components/ui/page'
+import { Alert, Badge, EmptyState } from '@/components/ui/feedback'
+import { Select } from '@/components/ui/form'
+import { ProjectPicker } from '@/components/ui/page'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
-import { MaterialDialog } from '@/features/materials/MaterialDialog'
-import { useAsync } from '@/hooks/useApi'
 import { api } from '@/lib/api'
 import { useToast } from '@/lib/toast'
-import { cn, formatDate, formatMoney, formatNumber, KEY_LABEL, PRICED_KEYS } from '@/lib/utils'
+import { cn, formatMoney, formatNumber, KEY_LABEL, PRICED_KEYS } from '@/lib/utils'
 import type { Estimate, Material, Project } from '@/types'
 
-export default function Catalogue() {
-  const toast = useToast()
-  const mats = useAsync(() => api.materials(), [])
-  const projects = useAsync(() => api.projects(), [])
-  const [q, setQ] = useState('')
-  const [key, setKey] = useState('all')
-  const [edit, setEdit] = useState<{ m: Material | null } | null>(null)
-  const [del, setDel] = useState<Material | null>(null)
-
-  const list = (mats.data ?? []).filter((m) => (key === 'all' || m.estimate_key === key) && `${m.name} ${m.brand} ${m.grade} ${m.supplier} ${m.category}`.toLowerCase().includes(q.toLowerCase()))
-  return (
-    <>
-      <PageHeader title="Material catalogue" description="Browse materials, compare alternatives and select the ones used by a project."
-        actions={<Button variant="accent" onClick={() => setEdit({ m: null })}><Plus className="h-4 w-4" /> Add material</Button>} />
-      <Alert tone="warning" title="Sample prices">Built-in materials carry placeholder SAMPLE prices for demonstration, not current market rates. Enter your locally verified rates on <Link className="underline" to="/prices">Material Prices</Link>.</Alert>
-      <div className="my-4 flex flex-wrap gap-2">
-        <Input placeholder="Search materials, brands, suppliers…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" aria-label="Search materials" />
-        <Select value={key} onChange={(e) => setKey(e.target.value)} className="w-48" aria-label="Filter by material type"><option value="all">All material types</option>{PRICED_KEYS.map((k) => <option key={k} value={k}>{KEY_LABEL[k]}</option>)}</Select>
-      </div>
-
-      {mats.loading && <Spinner />}
-      {mats.error && <ErrorState message={mats.error} onRetry={mats.reload} />}
-      {mats.data && (list.length === 0 ? <EmptyState title="No materials match" description="Adjust the filters or add a custom material." /> : (
-        <Card className="mb-8"><Table className="min-w-[64rem]">
-          <THead><TR><TH className="w-64">Material</TH><TH>Category</TH><TH>Brand</TH><TH>Grade / spec</TH><TH>Unit</TH><TH className="text-right">Unit price</TH><TH>Supplier</TH><TH>Location</TH><TH>Updated</TH><TH /></TR></THead>
-          <TBody>{list.map((m) => (
-            <TR key={m.id}>
-              <TD className="break-words font-medium">{m.name}<div className="line-clamp-2 break-words text-xs font-normal text-slate-500">{m.specification}</div></TD>
-              <TD className="break-words">{m.category}</TD><TD className="break-words">{m.brand || '—'}</TD><TD className="break-words">{m.grade || '—'}</TD><TD className="whitespace-nowrap">{m.unit}</TD>
-              <TD className="whitespace-nowrap text-right tabular-nums">{m.unit_price != null ? formatMoney(m.unit_price, m.currency ?? 'INR', 2) : '—'}{m.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</TD>
-              <TD className="break-words">{m.supplier || '—'}</TD><TD className="break-words">{m.location || '—'}</TD><TD className="whitespace-nowrap">{formatDate(m.last_updated)}</TD>
-              <TD className="whitespace-nowrap text-right">{m.editable ? <>
-                <Button size="icon" variant="ghost" aria-label={`Edit ${m.name}`} onClick={() => setEdit({ m })}><Pencil className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" aria-label={`Delete ${m.name}`} onClick={() => setDel(m)}><Trash2 className="h-4 w-4 text-red-500" /></Button></> : <Badge>Built-in</Badge>}</TD>
-            </TR>))}</TBody>
-        </Table></Card>
-      ))}
-
-      {mats.data && projects.data && <ComparePanel materials={mats.data} projects={projects.data} />}
-
-      <MaterialDialog open={!!edit} onClose={() => setEdit(null)} material={edit?.m} onSaved={() => { toast.success('Material saved.'); void mats.reload() }} />
-      <ConfirmDialog open={!!del} onClose={() => setDel(null)} title="Delete material?" message={`“${del?.name}” and its price records will be deleted. Projects using it fall back to the default material.`}
-        onConfirm={async () => { try { await api.deleteMaterial(del!.id); toast.success('Material deleted.'); await mats.reload() } catch (e) { toast.error(e instanceof Error ? e.message : 'Delete failed') } setDel(null) }} />
-    </>
-  )
-}
-
-function ComparePanel({ materials, projects }: { materials: Material[]; projects: Project[] }) {
+/** Compare the options for one material type against a project's quantity, and pick the one the project uses. */
+export function ComparePanel({ materials, projects }: { materials: Material[]; projects: Project[] }) {
   const toast = useToast()
   const [key, setKey] = useState<string>('cement')
   const [pid, setPid] = useState<string | undefined>(projects[0]?.id)

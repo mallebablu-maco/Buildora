@@ -1,5 +1,5 @@
 import {
-  BarChart3, BookOpen, Box, Calculator, ChevronsLeft, ChevronsRight, FileText, FolderOpen, LayoutDashboard, LogOut, Menu, PlusSquare, Settings, Tag, TrendingDown,
+  BarChart3, Box, Calculator, ChevronsLeft, ChevronsRight, FileText, FolderOpen, LayoutDashboard, LogOut, Menu, PlusSquare, Settings, Tag, TrendingDown,
 } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -16,8 +16,7 @@ const NAV = [
   { label: 'New Project', icon: PlusSquare, to: '/projects/new' },
   { label: '3D Building Studio', icon: Box, to: '/studio' },
   { label: 'Material Estimation', icon: Calculator, to: '/estimation' },
-  { label: 'Material Catalogue', icon: BookOpen, to: '/catalogue' },
-  { label: 'Material Prices', icon: Tag, to: '/prices' },
+  { label: 'Materials & Prices', icon: Tag, to: '/materials' },
   { label: 'Cost Analysis', icon: BarChart3, to: '/cost-analysis' },
   { label: 'Waste Optimization', icon: TrendingDown, to: '/optimization' },
   { label: 'Reports', icon: FileText, to: '/reports' },

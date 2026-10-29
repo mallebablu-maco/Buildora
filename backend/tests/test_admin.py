@@ -92,6 +92,7 @@ def test_a_market_price_reaches_every_user_but_each_users_own_price_still_wins(d
     assert (seen["unit_price"], seen["price_source"], seen["price_is_sample"]) == (455, "market", False)
     bobs = {m["id"]: m for m in db_client.get("/api/materials", headers=bob.headers).json()}[cement["id"]]
     assert (bobs["unit_price"], bobs["price_source"]) == (399, "own")  # Bob's dealer price is untouched
+    assert (bobs["market_price"], bobs["market_price_is_sample"]) == (455, False)  # ...and he still sees the market price next to it
 
 
 def test_hiding_a_material_takes_it_out_of_the_catalogue_and_estimates_but_never_the_last_of_its_kind(db_client, alice, admin):

@@ -82,7 +82,7 @@ function Body({ projectId }: { projectId: string }) {
         <Stat label="Material cost / sq ft" value={formatMoney(s.cost_per_sqft, cur)} />
       </div>
 
-      {!s.complete && <Alert tone="error" title="Missing prices">Add prices for: {estimate.items.filter((i) => s.missing_price_keys.includes(i.key)).map((i) => i.name).join(', ')}. <Link className="underline" to="/prices">Open Material Prices</Link></Alert>}
+      {!s.complete && <Alert tone="error" title="Missing prices">Add prices for: {estimate.items.filter((i) => s.missing_price_keys.includes(i.key)).map((i) => i.name).join(', ')}. <Link className="underline" to="/materials">Open Materials & Prices</Link></Alert>}
       {estimate.items.some((i) => i.price_is_sample && i.counts_toward_cost) && <Alert tone="warning" title="Sample prices in use">Lines marked SAMPLE use placeholder rates, not market prices. Edit a unit price below to enter your locally verified rate.</Alert>}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">

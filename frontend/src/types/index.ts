@@ -96,6 +96,10 @@ export interface Material {
   /** own = the user's price, market = set by an Admin, sample = placeholder, none = no price */
   price_source?: 'own' | 'market' | 'sample' | 'none'
   is_hidden?: boolean
+  /** the shared price everyone sees (set by the Buildora team, or a placeholder sample) */
+  market_price?: number | null
+  market_price_is_sample?: boolean
+  market_updated_at?: string | null
   price_id: string | null
   last_updated: string | null
   created_at: string

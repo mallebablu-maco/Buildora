@@ -298,6 +298,10 @@ class MaterialOut(BaseModel):
     location: str = ""
     price_is_sample: bool = False
     price_source: Literal["own", "market", "sample", "none"] = "none"
+    # the shared price everyone sees, shown next to the user's own price
+    market_price: float | None = None
+    market_price_is_sample: bool = False
+    market_updated_at: datetime | None = None
     is_hidden: bool = False
     price_id: uuid.UUID | None = None
     last_updated: datetime | None = None

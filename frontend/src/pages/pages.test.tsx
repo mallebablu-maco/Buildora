@@ -6,18 +6,17 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '@/lib/api'
 import { formatMoney } from '@/lib/utils'
 import F from '@/test/fixtures/api_responses.json'
 import { renderApp } from '@/test/render'
-import Catalogue from './Catalogue'
 import CostAnalysis from './CostAnalysis'
 import Dashboard from './Dashboard'
 import Estimation from './Estimation'
 import Optimization from './Optimization'
-import Prices from './Prices'
+import MaterialsPage from './Materials'
 import Reports from './Reports'
 import SettingsPage from './Settings'
 import Studio from './Studio'
@@ -149,50 +148,60 @@ describe('Reports', () => {
   })
 })
 
-describe('Material Prices and Catalogue', () => {
-  it('prices page shows the user’s own material with its price', async () => {
-    at('/prices', <Prices />, '/prices')
-    expect(await screen.findByText('Material prices')).toBeInTheDocument()
+describe('Materials & Prices (one page instead of Catalogue + Prices)', () => {
+  const base = F.materials.find((m) => m.is_sample) as unknown as Record<string, unknown>
+  const mat = (o: Record<string, unknown>) => ({ ...base, editable: false, owner_id: null, ...o })
+
+  it('lists the shared materials and the user’s own, with no way to add new materials', async () => {
+    at('/materials', <MaterialsPage />, '/materials')
+    expect(await screen.findByText('Materials & Prices')).toBeInTheDocument()
+    expect(screen.getAllByText(F.materials.find((m) => m.is_sample)!.name).length).toBeGreaterThan(0)
     expect(screen.getAllByText('My local cement').length).toBeGreaterThan(0)
-    expect(screen.getByText('Sample prices are placeholders')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /add material/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /import csv/i })).not.toBeInTheDocument()
   })
-  it('prices page labels each price by where it comes from: yours, the market price, or a sample', async () => {
-    const base = F.materials[0] as unknown as Record<string, unknown>
+
+  it('shows the market price next to the user’s own price, and labels which one is used', async () => {
     a.materials.mockResolvedValue([
-      { ...base, id: 'x1', name: 'Own one', price_source: 'own', price_is_sample: false },
-      { ...base, id: 'x2', name: 'Market one', price_source: 'market', price_is_sample: false },
-      { ...base, id: 'x3', name: 'Sample one', price_source: 'sample', price_is_sample: true },
+      mat({ id: 'x1', name: 'Own one', price_source: 'own', unit_price: 399, price_id: 'p1', market_price: 455, market_price_is_sample: false, market_updated_at: '2026-10-29T10:00:00Z' }),
+      mat({ id: 'x2', name: 'Market one', price_source: 'market', unit_price: 455, market_price: 455, market_price_is_sample: false, market_updated_at: '2026-10-29T10:00:00Z' }),
+      mat({ id: 'x3', name: 'Sample one', price_source: 'sample', price_is_sample: true, unit_price: 62, market_price: 62, market_price_is_sample: true }),
     ] as never)
-    at('/prices', <Prices />, '/prices')
-    const row = async (name: string) => (await screen.findByText(name)).closest('tr')!
-    expect(within(await row('Own one')).getByText('Your price')).toBeInTheDocument()
-    expect(within(await row('Own one')).getByRole('button', { name: /Reset price/ })).toBeInTheDocument()
-    expect(within(await row('Market one')).getByText('Market price')).toBeInTheDocument()
-    expect(within(await row('Market one')).queryByRole('button', { name: /Reset price/ })).not.toBeInTheDocument()  // not the user's to remove
-    expect(within(await row('Sample one')).getByText('SAMPLE')).toBeInTheDocument()
+    at('/materials', <MaterialsPage />, '/materials')
+    // (names also appear in the compare panel below, so find each row through its own price box)
+    const row = async (name: string) => (await screen.findByLabelText(`My price for ${name}`)).closest('tr')!
+    const own = await row('Own one')
+    expect(within(own).getByText('₹455.00')).toBeInTheDocument()  // market price, shown for comparison
+    expect(within(own).getByLabelText('My price for Own one')).toHaveValue('399')
+    expect(within(own).getByText('My price')).toBeInTheDocument()
+    expect(within(own).getByRole('button', { name: 'Use the market price for Own one' })).toBeInTheDocument()
+    const market = await row('Market one')
+    expect(within(market).getByLabelText('My price for Market one')).toHaveValue('')  // empty = the market price is used
+    expect(within(market).getByText('Market price')).toBeInTheDocument()
+    expect(within(market).queryByRole('button', { name: /Use the market price/ })).not.toBeInTheDocument()
+    expect(within(await row('Sample one')).getAllByText('SAMPLE').length).toBeGreaterThan(0)
   })
-  it('prices page shows no limit text under the boxes until a typed price exceeds the limit', async () => {
+
+  it('saves the user’s own price, and shows the limit only when it is exceeded', async () => {
     const user = userEvent.setup()
-    at('/prices', <Prices />, '/prices')
-    await screen.findByText('Material prices')
-    // the limit is a hint that only appears while typing in that box (CSS: shown inside a focused group, hidden otherwise)
-    const hint = screen.getAllByText('0 to 10,00,000')[0]
-    expect(hint).toHaveClass('hidden', 'group-focus-within:block')
-    expect(hint.closest('.group')).not.toBeNull()
-    const box = screen.getAllByLabelText(/^Unit price for /)[0]
-    await user.clear(box)
+    a.materials.mockResolvedValue([mat({ id: 'x2', name: 'Market one', price_source: 'market', unit_price: 455, market_price: 455 })] as never)
+    a.createPrice.mockResolvedValue({} as never)
+    at('/materials', <MaterialsPage />, '/materials')
+    const box = await screen.findByLabelText('My price for Market one')
+    expect(screen.getByText('0 to 10,00,000')).toHaveClass('hidden', 'group-focus-within:block')
     await user.type(box, '2000000')
     expect(await screen.findByText('Must be between 0 and 10,00,000.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
     await user.clear(box)
-    await user.type(box, '500')
-    expect(screen.queryByText(/Must be between/)).not.toBeInTheDocument()
+    await user.type(box, '41000')
+    expect(box).toHaveValue('41,000')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(a.createPrice).toHaveBeenCalledWith({ material_id: 'x2', unit_price: 41000, supplier: '' }))
   })
-  it('catalogue lists the shared samples and the user’s own materials, with the samples labelled', async () => {
-    at('/catalogue', <Catalogue />, '/catalogue')
-    expect(await screen.findByText('Material catalogue')).toBeInTheDocument()
-    expect(screen.getAllByText('My local cement').length).toBeGreaterThan(0)
-    expect(screen.getAllByText(F.materials.find((m) => m.is_sample)!.name).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/sample/i).length).toBeGreaterThan(0)
+
+  it('the old Catalogue and Prices addresses open the new page', async () => {
+    renderApp(<Routes><Route path="/materials" element={<p>materials page</p>} /><Route path="/catalogue" element={<Navigate to="/materials" replace />} /><Route path="/prices" element={<Navigate to="/materials" replace />} /></Routes>, '/prices')
+    expect(await screen.findByText('materials page')).toBeInTheDocument()
   })
 })
 

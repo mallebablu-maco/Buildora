@@ -155,7 +155,7 @@ function EstimationBody({ projectId }: { projectId: string }) {
       </div>
 
       {estimate.warnings.length > 0 && <Alert tone="warning" title="Input checks"><ul className="ml-4 list-disc">{estimate.warnings.map((w) => <li key={w}>{w}</li>)}</ul></Alert>}
-      {!estimate.summary.complete && <Alert tone="error" title="Missing prices">Some materials have no price, so costs are incomplete. Add prices in <Link className="underline" to="/prices">Material Prices</Link>.</Alert>}
+      {!estimate.summary.complete && <Alert tone="error" title="Missing prices">Some materials have no price, so costs are incomplete. Add prices in <Link className="underline" to="/materials">Materials & Prices</Link>.</Alert>}
 
       <Card>
         <CardHeader title="Quantities" description="Net = exact requirement; quantity including wastage is what you should plan to procure. Click a row for the formula and assumptions."
@@ -227,7 +227,7 @@ function ExtraNotes({ estimate, project }: { estimate: Estimate; project: Projec
     <p className="text-xs text-slate-500">
       Last calculated {estimate.created_at ? new Date(estimate.created_at).toLocaleString() : 'just now'} for “{project.name}”.
       Openings deducted from walls: {estimate.geometry.door_count ?? 0} door(s) and {estimate.geometry.window_count ?? 0} window(s), {estimate.geometry.openings_source ?? 'estimated from room counts'} (open the 3D Studio and save the layout to use its exact doors and windows). Estimates are rule-based calculations, not machine-learning predictions.
-      Prices come from your <Link className="underline" to="/prices">price list</Link> (sample prices are placeholders).
+      Prices come from <Link className="underline" to="/materials">Materials & Prices</Link> (sample prices are placeholders).
     </p>
   )
 }

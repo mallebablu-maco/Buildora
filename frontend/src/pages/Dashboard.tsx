@@ -42,7 +42,7 @@ export default function Dashboard() {
         <Link to="/projects/new"><Button variant="primary"><Plus className="h-4 w-4" /> Create project</Button></Link>
         <Link to={withProject('/estimation')}><Button variant="outline"><Calculator className="h-4 w-4" /> Continue estimation</Button></Link>
         <Link to={withProject('/studio')}><Button variant="outline"><Box className="h-4 w-4" /> Open 3D Studio</Button></Link>
-        <Link to="/prices"><Button variant="outline"><Tags className="h-4 w-4" /> Manage prices</Button></Link>
+        <Link to="/materials"><Button variant="outline"><Tags className="h-4 w-4" /> Materials & prices</Button></Link>
         <Link to="/reports"><Button variant="outline"><FileDown className="h-4 w-4" /> Download report</Button></Link>
       </div>
 

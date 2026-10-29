@@ -26,6 +26,12 @@ def price_source(record: PriceRecord | None, user_id: str) -> str:
     return "sample" if record.is_sample else "market"
 
 
+def market_price(material: Material) -> PriceRecord | None:
+    """The shared price everyone sees (set by an Admin, or a placeholder sample)."""
+    shared = [p for p in material.prices if p.owner_id is None]
+    return max(shared, key=lambda p: p.updated_at) if shared else None
+
+
 def effective_price(material: Material, user_id: str) -> PriceRecord | None:
     """The user's own newest price wins over the shared (market or sample) price."""
     own = [p for p in material.prices if p.owner_id == user_id]
