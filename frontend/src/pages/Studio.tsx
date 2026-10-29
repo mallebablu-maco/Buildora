@@ -1,4 +1,4 @@
-import { Box as BoxIcon, Scissors, DoorClosed, DoorOpen, Eye, EyeOff, FilePlus2, Home, LayoutGrid, Lock, Map as MapIcon, PanelTop, Pencil, RotateCcw, Ruler, Save, Sofa, Square, Tag, Undo2, Upload, Wand2, Blocks, AppWindow } from 'lucide-react'
+import { Box as BoxIcon, DoorClosed, DoorOpen, Eye, EyeOff, FilePlus2, Home, LayoutGrid, Lock, Map as MapIcon, PanelTop, Pencil, RotateCcw, Ruler, Save, Sofa, Square, Tag, Undo2, Upload, Wand2, Blocks, AppWindow } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -61,7 +61,6 @@ function StudioBody({ projectId }: { projectId: string }) {
   const [floor, setFloor] = useState<'all' | number>('all')
   const [showLabels, setShowLabels] = useState(true)
   const [showRoof, setShowRoof] = useState(false) // roofless dollhouse by default
-  const [cutaway, setCutaway] = useState(true) // walls facing you are lowered to show the rooms; off = full building
   const [showFurniture, setShowFurniture] = useState(true)
   const [showWalls, setShowWalls] = useState(true)
   const [showOpenings, setShowOpenings] = useState(true)
@@ -176,7 +175,6 @@ function StudioBody({ projectId }: { projectId: string }) {
             {Array.from({ length: p.floors }, (_, i) => <option key={i} value={i + 1}>Floor {i + 1}</option>)}
           </Select>
           <ToggleBtn on={showLabels} onClick={() => setShowLabels((v) => !v)} icon={<Tag className="h-3.5 w-3.5" />}>Labels</ToggleBtn>
-          {view === 'exterior' && !showRoof && <ToggleBtn on={cutaway} onClick={() => setCutaway((v) => !v)} title={cutaway ? 'Show the complete building from every side' : 'Open the walls facing you to see inside'} icon={<Scissors className="h-3.5 w-3.5" />}>Cut-away</ToggleBtn>}
           <ToggleBtn on={showRoof} onClick={() => setShowRoof((v) => !v)} icon={showRoof ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}>Roof</ToggleBtn>
           <ToggleBtn on={showWalls} onClick={() => setShowWalls((v) => !v)} icon={<Blocks className="h-3.5 w-3.5" />}>Walls</ToggleBtn>
           <ToggleBtn on={showOpenings} onClick={() => setShowOpenings((v) => !v)} icon={<AppWindow className="h-3.5 w-3.5" />}>Doors & windows</ToggleBtn>
@@ -199,7 +197,7 @@ function StudioBody({ projectId }: { projectId: string }) {
             ) : (
               <ErrorBoundary label="The 3D viewer" resetKey={model.length + model.width}>
                 <BuildingViewer model={model} selectedId={selected} selectedFurnitureId={selFurn} selectedOpeningId={selOpen} onSelect={(id) => { setSelected(id); if (id) { setSelFurn(null); setSelOpen(null) } }}
-                  opts={{ view: view as ViewMode, floor, showLabels, showRoof, cutaway, showFurniture, showWalls, showOpenings, doorsOpen, wireframe, resetNonce: nonce }} />
+                  opts={{ view: view as ViewMode, floor, showLabels, showRoof, showFurniture, showWalls, showOpenings, doorsOpen, wireframe, resetNonce: nonce }} />
               </ErrorBoundary>
             )}
             {model.ok && !hasRooms && (
@@ -219,7 +217,7 @@ function StudioBody({ projectId }: { projectId: string }) {
             <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-white/85 px-2 py-1 text-[11px] text-slate-600">
               {view === 'plan'
                 ? mode === 'select' ? 'Click a room · drag furniture and doors/windows · use “Add door / window” on the right' : `Click a wall to place a ${mode === 'add-door' ? 'door' : 'window'}`
-                : <>Drag to rotate · scroll to zoom · right-drag to pan · click a room to select{view === 'exterior' && !showRoof && cutaway ? ' · turn off Cut-away to see the whole building' : ''}{view === 'top' && floor === 'all' ? ' · plan shows floor 1 (choose a floor above to change)' : ''}</>}
+                : <>Drag to rotate · scroll to zoom · right-drag to pan · click a room to select{view === 'top' && floor === 'all' ? ' · plan shows floor 1 (choose a floor above to change)' : ''}</>}
             </div>
             {model.schematic && <div className="pointer-events-none absolute right-2 top-2"><Badge tone="amber">Schematic room layout</Badge></div>}
           </div>

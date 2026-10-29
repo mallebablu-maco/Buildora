@@ -14,8 +14,6 @@ export interface ViewerOptions {
   floor: 'all' | number
   showLabels: boolean
   showRoof: boolean
-  /** lower the walls facing the camera so the rooms inside stay visible (off = the complete building from every side) */
-  cutaway?: boolean
   showFurniture: boolean
   showWalls: boolean
   showOpenings: boolean
@@ -323,7 +321,8 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
     return model.floors.filter((f) => f.index === opts.floor)
   }, [model.floors, opts.floor, opts.view])
   const roofVisible = opts.showRoof && opts.view !== 'top' && (opts.floor === 'all' || opts.floor === topIndex)
-  const cutaway = opts.view === 'exterior' && !roofVisible && opts.cutaway !== false
+  // The complete building is always shown, so it can be rotated and seen from every side (no walls are lowered).
+  const cutaway = false
   const labelFloor = Math.max(...visible.map((f) => f.index))
   const size = Math.max(model.length, model.width, model.totalHeight)
   const shadowR = Math.hypot(model.length, model.width) * 0.75 + 2
