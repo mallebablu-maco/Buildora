@@ -156,6 +156,19 @@ describe('Material Prices and Catalogue', () => {
     expect(screen.getAllByText('My local cement').length).toBeGreaterThan(0)
     expect(screen.getByText('Sample prices are placeholders')).toBeInTheDocument()
   })
+  it('prices page shows no limit text under the boxes until a typed price exceeds the limit', async () => {
+    const user = userEvent.setup()
+    at('/prices', <Prices />, '/prices')
+    await screen.findByText('Material prices')
+    expect(screen.queryByText(/0 to 10,00,000/)).not.toBeInTheDocument()
+    const box = screen.getAllByLabelText(/^Unit price for /)[0]
+    await user.clear(box)
+    await user.type(box, '2000000')
+    expect(await screen.findByText('Must be between 0 and 10,00,000.')).toBeInTheDocument()
+    await user.clear(box)
+    await user.type(box, '500')
+    expect(screen.queryByText(/Must be between/)).not.toBeInTheDocument()
+  })
   it('catalogue lists the shared samples and the user’s own materials, with the samples labelled', async () => {
     at('/catalogue', <Catalogue />, '/catalogue')
     expect(await screen.findByText('Material catalogue')).toBeInTheDocument()

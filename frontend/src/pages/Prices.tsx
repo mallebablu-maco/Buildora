@@ -9,7 +9,7 @@ import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 import { useAsync } from '@/hooks/useApi'
 import { api, saveBlob } from '@/lib/api'
 import { LIMITS as L } from '@/lib/limits'
-import { numberError, rangeHint, textError } from '@/lib/validate'
+import { numberError, textError } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
 import { formatDate } from '@/lib/utils'
 import type { Material } from '@/types'
@@ -93,7 +93,7 @@ function PriceRow({ m, onChanged }: { m: Material; onChanged: () => Promise<void
     <TR>
       <TD className="min-w-48 font-medium">{m.name}<div className="text-xs font-normal text-slate-500">{[m.brand, m.grade].filter(Boolean).join(' · ')}</div></TD>
       <TD className="whitespace-nowrap">{m.unit}</TD>
-      <TD><Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={price} aria-label={`Unit price for ${m.name}`} onChange={(e) => setPrice(e.target.value)} className="h-8 min-w-28" invalid={!!errs.price} /><Under error={errs.price} hint={rangeHint(0, L.MAX_UNIT_PRICE)} /></TD>
+      <TD><Input type="number" min={0} max={L.MAX_UNIT_PRICE} step="any" value={price} aria-label={`Unit price for ${m.name}`} onChange={(e) => setPrice(e.target.value)} className="h-8 min-w-28" invalid={!!errs.price} /><Under error={errs.price} /></TD>
       <TD><Input value={supplier} maxLength={L.SUPPLIER} onChange={(e) => setSupplier(e.target.value)} aria-label={`Supplier for ${m.name}`} placeholder={m.price_is_sample ? 'Your supplier' : ''} className="h-8" invalid={!!errs.supplier} /><Under error={errs.supplier} /></TD>
       <TD><Input value={location} maxLength={L.PRICE_LOCATION} onChange={(e) => setLocation(e.target.value)} aria-label={`Location for ${m.name}`} className="h-8" invalid={!!errs.location} /><Under error={errs.location} /></TD>
       <TD>{m.price_is_sample ? <Badge tone="amber">SAMPLE</Badge> : m.unit_price == null ? <Badge tone="red">No price</Badge> : <Badge tone="green">Your price</Badge>}</TD>
