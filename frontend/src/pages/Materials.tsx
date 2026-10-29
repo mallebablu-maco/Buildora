@@ -1,4 +1,4 @@
-import { Save, Trash2, Undo2 } from 'lucide-react'
+import { RotateCw, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -106,7 +106,7 @@ function Row({ m, onChanged, onDelete }: { m: Material; onChanged: () => Promise
       <TD className="whitespace-nowrap">{source === 'own' ? <Badge tone="green">My price</Badge> : source === 'market' ? <Badge tone="navy">Market price</Badge> : source === 'sample' ? <Badge tone="amber">SAMPLE</Badge> : <Badge tone="red">No price</Badge>}</TD>
       <TD className="whitespace-nowrap text-right">
         <Button size="sm" variant={canSave ? 'accent' : 'outline'} disabled={!canSave} loading={busy} onClick={save}><Save className="h-3.5 w-3.5" /> Save</Button>
-        {mine && m.price_id && <Button size="icon" variant="ghost" aria-label={`Use the market price for ${m.name}`} title="Remove my price and use the market price" onClick={backToMarket}><Undo2 className="h-4 w-4" /></Button>}
+        {mine && m.price_id && <Button size="icon" variant="ghost" aria-label={`Use the market price for ${m.name}`} title="Go back to the market price" onClick={backToMarket}><RotateCw className="h-4 w-4" /></Button>}
         {m.editable && <Button size="icon" variant="ghost" aria-label={`Delete ${m.name}`} onClick={onDelete}><Trash2 className="h-4 w-4 text-red-500" /></Button>}
       </TD>
     </TR>

@@ -55,7 +55,7 @@ export function ComparePanel({ materials, projects }: { materials: Material[]; p
           <>
             <p className="mb-3 text-sm text-slate-600">Project requirement: <strong>{qty != null ? `${formatNumber(qty)} ${item?.unit}` : '—'}</strong> (incl. wastage). The lowest price is highlighted for convenience only — it is <strong>not</strong> a recommendation on quality.</p>
             {alts.length === 0 ? <EmptyState title="No alternatives" description="Add materials of this type to compare." /> : (
-              <Table className="min-w-[60rem]">
+              <Table className="min-w-[68rem]">
                 <THead><TR><TH>Option</TH><TH>Brand</TH><TH>Grade</TH><TH>Specification</TH><TH>Durability notes</TH><TH>Supplier</TH><TH className="text-right">Price / unit</TH><TH className="text-right">Cost for this project</TH><TH /></TR></THead>
                 <TBody>{alts.map((m) => {
                   const cost = m.unit_price != null && qty != null ? m.unit_price * qty : null
@@ -67,7 +67,7 @@ export function ComparePanel({ materials, projects }: { materials: Material[]; p
                       <TD>{m.supplier || '—'}</TD>
                       <TD className="whitespace-nowrap text-right tabular-nums">{m.unit_price != null ? formatMoney(m.unit_price, cur, 2) : <Badge tone="red">no price</Badge>}{m.price_is_sample && <Badge tone="amber" className="ml-1">SAMPLE</Badge>}</TD>
                       <TD className="text-right font-medium tabular-nums">{cost != null ? formatMoney(cost, cur) : '—'}</TD>
-                      <TD><Button size="sm" variant={m.id === currentId ? 'outline' : 'primary'} disabled={m.id === currentId} onClick={() => choose(m)}>{m.id === currentId ? 'In use' : 'Use in project'}</Button></TD>
+                      <TD className="whitespace-nowrap"><Button size="sm" variant={m.id === currentId ? 'outline' : 'primary'} disabled={m.id === currentId} onClick={() => choose(m)}>{m.id === currentId ? 'In use' : 'Use in project'}</Button></TD>
                     </TR>)
                 })}</TBody>
               </Table>
