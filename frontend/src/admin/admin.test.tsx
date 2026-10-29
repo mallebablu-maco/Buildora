@@ -54,6 +54,7 @@ describe('Admin website: who gets in', () => {
     show('/')
     expect(await screen.findByRole('heading', { name: 'Overview' })).toBeInTheDocument()
     expect(screen.getByText('7 homeowners · 4 contractors')).toBeInTheDocument()
+    expect(screen.getByText('18 estimates · 6 reports')).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Admin' })).toBeInTheDocument()
   })
 })

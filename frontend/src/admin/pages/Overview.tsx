@@ -9,6 +9,7 @@ import { formatNumber } from '@/lib/utils'
 import { adminApi } from '../adminApi'
 
 const PROVIDER_LABEL: Record<string, string> = { email: 'Email', google: 'Google' }
+const count = (n: number, one: string, many: string) => `${formatNumber(n, 0)} ${n === 1 ? one : many}`
 
 export default function Overview() {
   const { data, loading, error, reload } = useAsync(() => adminApi.overview(), [])
@@ -22,10 +23,10 @@ export default function Overview() {
     <>
       <PageHeader title="Overview" description="Who uses Buildora and how much. Numbers are live from the database." />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Total users" value={formatNumber(data.users_total, 0)} hint={`${data.homeowners} homeowners · ${data.contractors} contractors`} icon={<Users className="h-4 w-4" />} />
+        <Stat label="Total users" value={formatNumber(data.users_total, 0)} hint={`${count(data.homeowners, 'homeowner', 'homeowners')} · ${count(data.contractors, 'contractor', 'contractors')}`} icon={<Users className="h-4 w-4" />} />
         <Stat label="New sign-ups" value={formatNumber(data.new_7d, 0)} hint={`last 7 days · ${data.new_30d} in 30 days`} icon={<UserPlus className="h-4 w-4" />} />
         <Stat label="Active users" value={formatNumber(data.active_7d, 0)} hint={`logged in, last 7 days · ${data.active_30d} in 30 days`} icon={<Users className="h-4 w-4" />} />
-        <Stat label="Projects" value={formatNumber(data.projects, 0)} hint={`${data.estimates} estimates · ${data.reports} reports`} icon={<FolderKanban className="h-4 w-4" />} />
+        <Stat label="Projects" value={formatNumber(data.projects, 0)} hint={`${count(data.estimates, 'estimate', 'estimates')} · ${count(data.reports, 'report', 'reports')}`} icon={<FolderKanban className="h-4 w-4" />} />
       </div>
       <div className="mt-6 grid gap-4 lg:grid-cols-[2fr_1fr]">
         <Card>
@@ -38,7 +39,7 @@ export default function Overview() {
                   <XAxis dataKey="day" tick={{ fontSize: 11 }} interval={4} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={30} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Sign-ups" fill="#f97316" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="count" name="Sign-ups" fill="#f97316" radius={[3, 3, 0, 0]} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -51,7 +52,7 @@ export default function Overview() {
               <div className="h-64" role="img" aria-label="Users by role">
                 <ResponsiveContainer>
                   <PieChart>
-                    <Pie data={roles} dataKey="value" nameKey="name" innerRadius={50} outerRadius={85} paddingAngle={2}>
+                    <Pie data={roles} dataKey="value" nameKey="name" innerRadius={50} outerRadius={85} paddingAngle={2} isAnimationActive={false}>
                       {roles.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
                     </Pie>
                     <Tooltip /><Legend />
