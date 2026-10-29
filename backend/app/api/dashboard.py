@@ -9,7 +9,7 @@ from app.core.auth import Identity, current_identity
 from app.core.db import get_db
 from app.models import Estimate, Project, Report, Room
 from app.schemas import ProjectDetail, ProjectOut, ReportOut
-from app.services.estimate_service import compute_estimate, save_estimate
+from app.services.estimate_service import compute_estimate, refresh_estimates, save_estimate
 
 router = APIRouter(tags=["dashboard"])
 
@@ -42,10 +42,12 @@ def seed_demo(db: Session = Depends(get_db), identity: Identity = Depends(curren
 @router.get("/dashboard")
 def dashboard(db: Session = Depends(get_db), identity: Identity = Depends(current_identity)):
     me = uid(identity)
-    projects = list(db.scalars(
-        select(Project).options(selectinload(Project.rooms), selectinload(Project.estimates).selectinload(Estimate.items))
-        .where(Project.owner_id == me).order_by(Project.created_at.desc())
-    ))
+    load = (select(Project).options(selectinload(Project.rooms), selectinload(Project.estimates).selectinload(Estimate.items))
+            .where(Project.owner_id == me).order_by(Project.created_at.desc()))
+    projects = list(db.scalars(load))
+    if refresh_estimates(db, me, projects):  # totals always reflect today's prices and project details
+        db.expire_all()
+        projects = list(db.scalars(load))
     latest = {p.id: (p.estimates[0] if p.estimates else None) for p in projects}
     ests = [(p, latest[p.id]) for p in projects if latest[p.id]]
     cat: dict[str, float] = {}

@@ -14,7 +14,7 @@ from app.schemas import (
     EstimateRequest, LayoutIn, ProjectConfigUpdate, ProjectCreate, ProjectDetail, ProjectOut, ProjectUpdate, RoomIn, RoomOut,
     RoomsReplace, check_floors,
 )
-from app.services.estimate_service import compute_estimate, estimate_to_payload, save_estimate
+from app.services.estimate_service import compute_estimate, estimate_to_payload, refresh_estimates, save_estimate
 from app.services.estimation import EstimationError
 from app.services.storage import storage_for
 
@@ -76,7 +76,12 @@ def touch(p: Project) -> None:
 
 # ---------------------------------------------------------------------------------------------------- projects
 @router.get("/projects", response_model=list[ProjectOut])
-def list_projects(db: Session = Depends(get_db)):
+def list_projects(db: Session = Depends(get_db), identity: Identity = Depends(current_identity)):
+    me = uid(identity)
+    mine = list(db.scalars(select(Project).options(selectinload(Project.rooms), selectinload(Project.estimates).selectinload(Estimate.items))
+                           .where(Project.owner_id == me)))
+    if refresh_estimates(db, me, mine):  # the cost shown for each project is never out of date
+        db.expire_all()
     counts = select(Room.project_id, func.count(Room.id).label("n")).group_by(Room.project_id).subquery()
     latest = (select(Estimate.project_id, Estimate.total_material_cost.label("cost")).ext(distinct_on(Estimate.project_id))
               .order_by(Estimate.project_id, Estimate.created_at.desc()).subquery())

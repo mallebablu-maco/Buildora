@@ -48,7 +48,8 @@ def test_estimate_computes_quantities_and_costs_from_the_sample_catalogue(db_cli
 def test_the_estimate_is_stored_and_listed_with_the_project(db_client, alice):
     p = make(db_client, alice)
     assert db_client.get(f"/api/projects/{p['id']}/estimate", headers=alice.headers).status_code == 404
-    assert db_client.get("/api/projects", headers=alice.headers).json()[0]["has_estimate"] is False
+    # opening the project list gives a new project its estimate straight away
+    assert db_client.get("/api/projects", headers=alice.headers).json()[0]["has_estimate"] is True
     total = db_client.post(f"/api/projects/{p['id']}/estimate", headers=alice.headers).json()["summary"]["material_total"]
     got = db_client.get(f"/api/projects/{p['id']}/estimate", headers=alice.headers).json()
     assert got["summary"]["material_total"] == pytest.approx(total) and got["stale"] is False
@@ -207,3 +208,36 @@ def test_new_projects_start_from_the_default_wastage_in_settings(db_client, alic
 def test_invalid_default_wastage_is_rejected(db_client, alice):
     for bad in ({"tiles": 150}, {"gold": 5}, {"tiles": -1}):
         assert db_client.put("/api/profile", json={"full_name": "A", "default_wastage": bad}, headers=alice.headers).status_code == 422, bad
+
+
+def test_dashboard_and_list_never_show_an_out_of_date_total(db_client, alice, pg_uri):
+    """A saved estimate is a snapshot. After a price change, the dashboard and the project list show the new total
+    without anyone re-opening Material Estimation, and a new project counts at once."""
+    from tests.conftest import superuser
+
+    h = alice.headers
+    p = make(db_client, alice)
+    before = db_client.get("/api/dashboard", headers=h).json()
+    assert before["total_projects"] == 1 and before["saved_estimates"] == 1 and before["total_estimated_cost"] > 0
+
+    cement = next(m for m in db_client.get("/api/materials?estimate_key=cement", headers=h).json()
+                  if m["id"] == db_client.get(f"/api/projects/{p['id']}/estimate", headers=h).json()["items"][0]["material_id"])
+    price = db_client.post("/api/prices", json={"material_id": cement["id"], "unit_price": cement["unit_price"] * 2}, headers=h).json()
+    after = db_client.get("/api/dashboard", headers=h).json()
+    assert after["total_estimated_cost"] > before["total_estimated_cost"]  # the new price is used
+    assert db_client.get("/api/projects", headers=h).json()[0]["latest_total_cost"] == pytest.approx(after["total_estimated_cost"])
+
+    db_client.delete(f"/api/prices/{price['id']}", headers=h)  # back to the sample price: the total goes back too
+    assert db_client.get("/api/dashboard", headers=h).json()["total_estimated_cost"] == pytest.approx(before["total_estimated_cost"])
+
+    make(db_client, alice, name="Second house")  # a brand-new project counts immediately
+    now = db_client.get("/api/dashboard", headers=h).json()
+    assert now["total_projects"] == 2 and now["saved_estimates"] == 2
+
+    with superuser(pg_uri) as c:  # nothing changed -> nothing re-saved (no needless writes on every page view)
+        stamp = c.execute("select max(created_at) from project_estimates").fetchone()[0]
+    db_client.get("/api/dashboard", headers=h)
+    db_client.get("/api/projects", headers=h)
+    with superuser(pg_uri) as c:
+        assert c.execute("select max(created_at) from project_estimates").fetchone()[0] == stamp
+        assert c.execute("select count(*) from project_estimates").fetchone()[0] == 2  # still one per project

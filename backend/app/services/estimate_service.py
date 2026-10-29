@@ -8,7 +8,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.models import Estimate, EstimateItemRow, Project, Recommendation
-from app.services.estimation import Assumptions, BuildingInput, RoomInput, compute_quantities
+from app.services.estimation import Assumptions, BuildingInput, EstimationError, RoomInput, compute_quantities
 from app.services.estimation.layout import openings_from_layout
 from app.services.optimization.engine import OptimizationContext, generate_recommendations
 from app.services.pricing.costing import apply_prices, summarize
@@ -87,6 +87,33 @@ def save_estimate(db: Session, user_id: str, p: Project, payload: dict) -> Estim
     db.commit()
     db.refresh(est)
     return est
+
+
+def _fingerprint(items: list[dict], summary: dict) -> tuple:
+    """What a saved estimate says that matters to a reader: quantities, chosen materials, prices, costs and totals."""
+    rows = tuple((i["key"], round(i["gross_quantity"], 6), i.get("material_id"), i.get("unit_price"), i.get("cost")) for i in items)
+    return rows, round(summary.get("material_total") or 0, 2), round(summary.get("project_total") or 0, 2)
+
+
+def refresh_estimates(db: Session, user_id: str, projects: list[Project]) -> int:
+    """Bring each project's saved estimate up to date, so totals on the dashboard and project list are never out of date.
+
+    A saved estimate is a snapshot; prices, materials or project details may have changed since. Each project is recalculated
+    (pure Python, milliseconds) and saved again only when the result differs, or when it has no estimate yet (a new project).
+    `projects` must have rooms, estimates and estimate items loaded. Returns how many were saved.
+    """
+    saved = 0
+    for p in projects:
+        try:
+            payload = compute_estimate(db, user_id, p)
+        except EstimationError:
+            continue  # inputs the calculator cannot use; the Estimation page explains why
+        current = p.estimates[0] if p.estimates else None
+        if current is not None and _fingerprint([r.data for r in current.items], current.summary) == _fingerprint(payload["items"], payload["summary"]):
+            continue
+        save_estimate(db, user_id, p, payload)
+        saved += 1
+    return saved
 
 
 def estimate_to_payload(est: Estimate, p: Project) -> dict:
