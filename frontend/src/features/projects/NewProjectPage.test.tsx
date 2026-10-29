@@ -85,6 +85,7 @@ describe('New project wizard', () => {
     await type(user, 'Location (city)', 'Pune')
     await type(user, 'Floors', '2')
     await type(user, 'Budget (optional)', '1500000')
+    expect(screen.getByLabelText('Budget (optional)')).toHaveValue('15,00,000')  // Indian commas while typing; the plain number is saved
     await next(user)
     await type(user, 'Length (m)', '12'); await type(user, 'Width (m)', '9'); await type(user, 'Floor height (m)', '3.2')
     await next(user)

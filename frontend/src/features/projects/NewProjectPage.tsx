@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, ArrowRight, Check, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -10,6 +10,7 @@ import { Alert } from '@/components/ui/feedback'
 import { PageHeader } from '@/components/ui/page'
 import { useAuth } from '@/features/auth/useAuth'
 import { formatArea, formatLength, formatMoney } from '@/lib/format'
+import { MoneyInput } from '@/components/ui/money'
 import { LIMITS as L } from '@/lib/limits'
 import { rangeHint } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
@@ -129,8 +130,11 @@ export default function NewProjectPage() {
                 </Field>
                 <Field label="Budget (optional)" error={errors.budget?.message} hint={`Optional, up to ${L.MAX_BUDGET.toLocaleString('en-IN')}. Used to show over / under against the estimate.`}>
                   {({ id, describedBy, invalid }) => (
-                    <Input id={id} type="number" min={0} max={L.MAX_BUDGET} step="any" aria-describedby={describedBy} invalid={invalid}
-                      {...register('budget', { setValueAs: (x) => (x === '' || x == null ? null : Number(x)) })} />
+                    <Controller control={control} name="budget" render={({ field }) => (
+                      <MoneyInput id={id} aria-describedby={describedBy} invalid={invalid} placeholder="e.g. 20,00,000"
+                        value={field.value == null || Number.isNaN(field.value) ? '' : String(field.value)}
+                        onValueChange={(raw) => field.onChange(raw === '' ? null : Number(raw))} onBlur={field.onBlur} />
+                    )} />
                   )}
                 </Field>
               </div>

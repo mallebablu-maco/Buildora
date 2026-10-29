@@ -11,6 +11,7 @@ import { useEstimate } from '@/features/estimation/useEstimate'
 import { CostBars, CostPie } from '@/features/pricing/charts'
 import { downloadReport } from '@/features/reports/download'
 import { api } from '@/lib/api'
+import { MoneyInput } from '@/components/ui/money'
 import { LIMITS as L } from '@/lib/limits'
 import { numberError, rangeHint } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
@@ -88,7 +89,7 @@ function Body({ projectId }: { projectId: string }) {
         <Card>
           <CardHeader title="Budget" description="Compared with the total including enabled extras." />
           <CardBody className="space-y-3">
-            <div className="group"><div className="flex gap-2"><Input type="number" min={0} max={L.MAX_BUDGET} step="any" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="No budget" aria-label="Project budget" invalid={!!budgetErr} /><Button variant="outline" disabled={!!budgetErr} onClick={saveBudget}>Save</Button></div><Under error={budgetErr} hint={`Optional, ${rangeHint(1, L.MAX_BUDGET)}`} /></div>
+            <div className="group"><div className="flex gap-2"><MoneyInput value={budget} onValueChange={setBudget} placeholder="No budget" aria-label="Project budget" invalid={!!budgetErr} /><Button variant="outline" disabled={!!budgetErr} onClick={saveBudget}>Save</Button></div><Under error={budgetErr} hint={`Optional, ${rangeHint(1, L.MAX_BUDGET)}`} /></div>
             {s.budget ? (
               <div className={cn('rounded-lg p-3 text-sm', (s.budget_variance ?? 0) >= 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800')}>
                 <p className="font-semibold">{(s.budget_variance ?? 0) >= 0 ? 'Under budget' : 'Over budget'} by {formatMoney(Math.abs(s.budget_variance ?? 0), cur)}</p>

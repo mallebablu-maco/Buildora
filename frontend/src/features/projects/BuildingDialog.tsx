@@ -1,12 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Alert } from '@/components/ui/feedback'
 import { Field, Input, Select, Textarea } from '@/components/ui/form'
 import { api } from '@/lib/api'
 import { formatArea } from '@/lib/format'
+import { MoneyInput } from '@/components/ui/money'
 import { LIMITS as L } from '@/lib/limits'
 import { rangeHint } from '@/lib/validate'
 import { useToast } from '@/lib/toast'
@@ -30,7 +31,7 @@ export function BuildingDialog({ open, onClose, project, onSaved, dimensionsOnly
 }) {
   const toast = useToast()
   const [error, setError] = useState<string | null>(null)
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<Values>({
+  const { register, control, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<Values>({
     resolver: zodResolver(dimensionsOnly ? (dimsSchema as unknown as typeof fullSchema) : fullSchema),
     mode: 'onChange',
   })
@@ -81,7 +82,11 @@ export function BuildingDialog({ open, onClose, project, onSaved, dimensionsOnly
               <Select {...register('building_type')}>{BUILDING_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</Select>
             </Field>
             <Field label="Location" error={errors.location?.message} hint={`Up to ${L.LOCATION} characters`}><Input maxLength={L.LOCATION} {...register('location')} placeholder="City / region" /></Field>
-            <Field label="Budget (optional)" error={errors.budget?.message} hint={`Optional, up to ${L.MAX_BUDGET.toLocaleString('en-IN')}. Used for budget variance on Cost Analysis.`}><Input type="number" min={0} max={L.MAX_BUDGET} step="any" {...register('budget', optional)} /></Field>
+            <Field label="Budget (optional)" error={errors.budget?.message} hint={`Optional, up to ${L.MAX_BUDGET.toLocaleString('en-IN')}. Used for budget variance on Cost Analysis.`}><Controller control={control} name="budget" render={({ field }) => (
+                      <MoneyInput aria-label="Budget" placeholder="e.g. 20,00,000"
+                        value={field.value == null || Number.isNaN(field.value) ? '' : String(field.value)}
+                        onValueChange={(raw) => field.onChange(raw === '' ? null : Number(raw))} onBlur={field.onBlur} />
+                    )} /></Field>
           </div>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
