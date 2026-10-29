@@ -31,8 +31,13 @@ email + password, **Continue with Google**, and **Email me a login code** (no pa
 - Brevo → Settings → *Senders* (verified sender) and *SMTP & API* → SMTP key. Supabase → *Authentication → Emails → SMTP Settings*:
   host `smtp-relay.brevo.com`, port `587`, username = the Brevo SMTP login, password = the SMTP key (a secret: only in Supabase).
   Do not turn on Brevo's "block unauthorized IPs" for SMTP keys: Supabase sends from changing addresses.
-- Templates (*Authentication → Emails → Templates*): **Magic link or OTP** and **Confirm sign up** contain `{{ .Token }}` (the code) and the link;
-  **Reset password** contains the link.
+- Templates (*Authentication → Emails → Templates*):
+  - **Confirm sign up**: one "Confirm your email" button (`{{ .ConfirmationURL }}`), nothing else. Sign-up asks for no password: the button
+    signs the person in and opens `/set-password`, where they choose it (typed twice, with show/hide eyes).
+  - **Magic link or OTP**: the code (`{{ .Token }}`) and the link, for "Email me a sign-in link".
+  - **Reset password**: the link.
+- *Authentication → URL Configuration → Redirect URLs* must contain `http://localhost:5173/login`, `/reset-password` and `/set-password`
+  (and the same on the Render website address).
 - The sender is currently a Gmail address, so some emails may land in Spam (Google/Yahoo/Microsoft rules). Before launch, use an address on your own
   domain and authenticate that domain in Brevo (DKIM/DMARC).
 

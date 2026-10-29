@@ -5,7 +5,6 @@ import type { Persona } from './schemas'
 export interface SignUpInput {
   fullName: string
   email: string
-  password: string
   persona: Persona
 }
 
@@ -17,8 +16,9 @@ export interface AuthContextValue {
   /** true when the user arrived through a password-reset link */
   recovery: boolean
   signIn: (email: string, password: string, keep: boolean) => Promise<void>
-  /** `needsEmailConfirmation` is true when the project requires the user to confirm their email before logging in */
-  signUp: (input: SignUpInput) => Promise<{ needsEmailConfirmation: boolean }>
+  /** Emails a "Confirm your email" button. It signs the person in and opens /set-password, where they choose their password.
+   *  Calling it again re-sends the email. */
+  signUp: (input: SignUpInput) => Promise<void>
   signOut: () => Promise<void>
   /** Leaves the page for Google's sign-in and comes back to /login, where the new session redirects into the app. */
   signInWithGoogle: () => Promise<void>

@@ -25,7 +25,6 @@ export type LoginValues = z.infer<typeof loginSchema>
 export const signupSchema = z.object({
   fullName: z.string().trim().superRefine((v, ctx) => { const m = textError('person', v, { max: LIMITS.PERSON_NAME, required: 'Enter your name.' }); if (m) ctx.addIssue({ code: 'custom', message: m }) }),
   email,
-  password: newPassword,
   persona: z.enum(['homeowner', 'contractor', 'engineer', 'student']),
   acceptDisclaimer: z.boolean().refine((v) => v, 'Please confirm that you understand this.'),
 })
@@ -34,6 +33,7 @@ export type SignupValues = z.infer<typeof signupSchema>
 export const forgotSchema = z.object({ email })
 export type ForgotValues = z.infer<typeof forgotSchema>
 
+/** Choosing a password (after sign-up, or after "Forgot password"): typed twice so a typo cannot lock anyone out. */
 export const resetSchema = z
   .object({ password: newPassword, confirm: z.string() })
   .refine((v) => v.password === v.confirm, { message: 'The passwords do not match.', path: ['confirm'] })

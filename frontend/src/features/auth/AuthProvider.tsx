@@ -35,19 +35,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }, [])
 
-  const signUp = useCallback<AuthContextValue['signUp']>(async ({ fullName, email, password, persona }) => {
+  const signUp = useCallback<AuthContextValue['signUp']>(async ({ fullName, email, persona }) => {
     setKeepSignedIn(true)
-    const { data, error } = await getSupabase().auth.signUp({
+    // No password yet: the emailed button proves the address, signs the person in and opens /set-password.
+    const { error } = await getSupabase().auth.signInWithOtp({
       email,
-      password,
       options: {
+        shouldCreateUser: true,
         // user_metadata is editable by the user: it is for display and the profile only, never for access decisions.
         data: { full_name: fullName, persona, disclaimer_accepted_at: new Date().toISOString() },
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: `${window.location.origin}/set-password`,
       },
     })
     if (error) throw error
-    return { needsEmailConfirmation: !data.session }
   }, [])
 
   const signInWithGoogle = useCallback(async () => {

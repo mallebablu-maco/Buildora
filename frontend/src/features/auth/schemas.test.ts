@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { forgotSchema, loginSchema, resetSchema, signupSchema } from './schemas'
 
-const validSignup = { fullName: 'Asha Rao', email: 'asha@example.com', password: 'longenough', persona: 'engineer', acceptDisclaimer: true }
+const validSignup = { fullName: 'Asha Rao', email: 'asha@example.com', persona: 'engineer', acceptDisclaimer: true }
 
 describe('signupSchema', () => {
   it('accepts a complete form', () => {
@@ -12,9 +12,9 @@ describe('signupSchema', () => {
     expect(r.success).toBe(false)
     expect(r.error?.issues[0].path).toEqual(['acceptDisclaimer'])
   })
-  it('requires 8 or more characters in the password', () => {
-    expect(signupSchema.safeParse({ ...validSignup, password: '1234567' }).success).toBe(false)
-    expect(signupSchema.safeParse({ ...validSignup, password: '12345678' }).success).toBe(true)
+  it('sign-up asks for no password (it is chosen after the email is confirmed)', () => {
+    expect(signupSchema.safeParse(validSignup).success).toBe(true)
+    expect('password' in signupSchema.shape).toBe(false)
   })
   it('rejects a bad email and an empty name', () => {
     expect(signupSchema.safeParse({ ...validSignup, email: 'nope' }).success).toBe(false)

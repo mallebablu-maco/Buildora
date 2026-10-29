@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import ForgotPasswordPage from '@/features/auth/ForgotPasswordPage'
 import LoginCodePage from '@/features/auth/LoginCodePage'
 import LoginPage from '@/features/auth/LoginPage'
+import SetPasswordPage from '@/features/auth/SetPasswordPage'
 import ResetPasswordPage from '@/features/auth/ResetPasswordPage'
 import SignupPage from '@/features/auth/SignupPage'
 import MyProjectsPage from '@/features/projects/MyProjectsPage'
@@ -33,6 +34,7 @@ export default function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/set-password" element={<SetPasswordPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />

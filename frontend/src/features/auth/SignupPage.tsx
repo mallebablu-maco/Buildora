@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { MailCheck } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, Navigate } from 'react-router-dom'
 import { Alert } from '@/components/ui/feedback'
@@ -13,47 +13,65 @@ import { authMessage } from './errors'
 import { PERSONAS, signupSchema, type SignupValues } from './schemas'
 import { useAuth } from './useAuth'
 
+const RESEND_AFTER = 60 // seconds; Supabase refuses another email sooner anyway
+
 export default function SignupPage() {
   const { session, loading, signUp } = useAuth()
   const redirect = useAuthRedirect(!!session)
   const [error, setError] = useState<string | null>(null)
   const [confirmEmail, setConfirmEmail] = useState<string | null>(null)
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<SignupValues>({
+  const [wait, setWait] = useState(0)
+  const [resending, setResending] = useState(false)
+  const { register, handleSubmit, watch, getValues, formState: { errors, isSubmitting } } = useForm<SignupValues>({
     mode: 'onChange',
     resolver: zodResolver(signupSchema),
-    defaultValues: { fullName: '', email: '', password: '', persona: 'homeowner', acceptDisclaimer: false },
+    defaultValues: { fullName: '', email: '', persona: 'homeowner', acceptDisclaimer: false },
   })
   const persona = watch('persona')
+
+  useEffect(() => {
+    if (wait <= 0) return
+    const t = setTimeout(() => setWait((w) => w - 1), 1000)
+    return () => clearTimeout(t)
+  }, [wait])
 
   if (session) return <Navigate to="/dashboard" replace />
   if (loading || redirect.waiting) return <SigningIn />
 
   if (confirmEmail) {
+    const resend = async () => {
+      setError(null); setResending(true)
+      try { const v = getValues(); await signUp({ fullName: v.fullName, email: confirmEmail, persona: v.persona }); setWait(RESEND_AFTER) } catch (e) { setError(authMessage(e)) } finally { setResending(false) }
+    }
     return (
       <AuthShell title="Check your email">
         <div className="space-y-4 text-sm text-slate-700">
           <MailCheck className="h-8 w-8 text-brand-600" aria-hidden="true" />
-          <p>We sent a confirmation link to <strong>{confirmEmail}</strong>. Open it, then come back and log in.</p>
-          <p className="text-slate-500">Nothing arrived? Check your spam folder. If this address was already registered, you can log in or reset the password.</p>
-          <Link to="/login" className="inline-block font-medium text-navy-700 underline underline-offset-2">Go to log in</Link>
+          {error && <Alert tone="error">{error}</Alert>}
+          <p>We sent an email to <strong>{confirmEmail}</strong>. Click <strong>Confirm your email</strong> in it, then choose your password.</p>
+          <p className="text-slate-500">It can take a minute. Nothing arrived? Check your spam folder, or send it again.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" loading={resending} disabled={wait > 0} onClick={() => void resend()}>{wait > 0 ? `Send again in ${wait}s` : 'Send the email again'}</Button>
+            <button type="button" className="cursor-pointer text-navy-700 underline underline-offset-2" onClick={() => { setConfirmEmail(null); setError(null) }}>Use a different email</button>
+          </div>
         </div>
       </AuthShell>
     )
   }
 
-  const onSubmit = handleSubmit(async ({ fullName, email, password, persona }) => {
+  const onSubmit = handleSubmit(async ({ fullName, email, persona }) => {
     setError(null)
     try {
-      const { needsEmailConfirmation } = await signUp({ fullName, email, password, persona })
-      if (needsEmailConfirmation) setConfirmEmail(email)
-      // otherwise a session now exists and the redirect above takes over
+      await signUp({ fullName, email, persona })
+      setConfirmEmail(email)
+      setWait(RESEND_AFTER)
     } catch (e) {
       setError(authMessage(e))
     }
   })
 
   return (
-    <AuthShell title="Create your account" subtitle="Save projects, keep your own material rates and download reports." wide>
+    <AuthShell title="Create your account" subtitle="Save projects, keep your own material rates and download reports. You choose your password after confirming your email." wide>
       <GoogleButton />
       <Link to="/login/code" className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">Sign up with an email link (no password)</Link>
       <OrDivider />
@@ -64,9 +82,6 @@ export default function SignupPage() {
         </Field>
         <Field label="Email" error={errors.email?.message}>
           {({ id, describedBy, invalid }) => <Input id={id} type="email" autoComplete="email" placeholder="you@example.com" aria-describedby={describedBy} invalid={invalid} {...register('email')} />}
-        </Field>
-        <Field label="Password" error={errors.password?.message} hint="Use 8 or more characters.">
-          {({ id, describedBy, invalid }) => <Input id={id} type="password" autoComplete="new-password" placeholder="At least 8 characters" aria-describedby={describedBy} invalid={invalid} {...register('password')} />}
         </Field>
 
         <fieldset className="space-y-1.5">

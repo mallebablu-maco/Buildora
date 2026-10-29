@@ -8,6 +8,7 @@ import { Field, Input } from '@/components/ui/field'
 import { AuthShell, SigningIn, useAuthRedirect } from './AuthShell'
 import { authMessage } from './errors'
 import { GoogleButton, OrDivider } from './GoogleButton'
+import { PasswordInput } from './PasswordInput'
 import { loginSchema, type LoginValues } from './schemas'
 import { useAuth } from './useAuth'
 
@@ -45,7 +46,7 @@ export default function LoginPage() {
           {({ id, describedBy, invalid }) => <Input id={id} type="email" autoComplete="email" placeholder="you@example.com" aria-describedby={describedBy} invalid={invalid} {...register('email')} />}
         </Field>
         <Field label="Password" error={errors.password?.message} action={<Link to="/forgot-password" className="text-sm text-navy-700 underline underline-offset-2">Forgot password?</Link>}>
-          {({ id, describedBy, invalid }) => <Input id={id} type="password" autoComplete="current-password" placeholder="Your password" aria-describedby={describedBy} invalid={invalid} {...register('password')} />}
+          {({ id, describedBy, invalid }) => <PasswordInput id={id} autoComplete="current-password" placeholder="Your password" aria-describedby={describedBy} invalid={invalid} {...register('password')} />}
         </Field>
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" className="h-4 w-4 accent-brand-500" {...register('keep')} /> Keep me logged in
