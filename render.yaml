@@ -1,9 +1,12 @@
-# Render blueprint: the API (FastAPI) and the website (static React build).
+# Render blueprint: the API (FastAPI), the website and the admin website (static React builds).
 # NOT YET TESTED on Render. If the blueprint is rejected, create the two services by hand with the same settings (docs/SETUP.md).
 # Variables marked `sync: false` are asked for when the blueprint is created; type secret values into Render yourself.
 services:
   - type: web
-    name: buildora-api
+    # In Singapore, the Render region closest to the Supabase database (Mumbai): every database question is a short trip.
+    # (The first API service was created in Oregon by default; a service cannot change region, so this is a new one.)
+    name: buildora-api-sg
+    region: singapore
     runtime: python
     plan: free
     rootDir: backend
