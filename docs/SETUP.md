@@ -81,6 +81,17 @@ A second website for the owner: Overview (users and activity), Users, and Materi
 3. The Dashboard shows a **Connection check**. Green means: Supabase signed you in **and** the API verified your token.
    If it is red, the message says what the API answered (401 = token rejected, 503 = API cannot reach Supabase's keys, "Cannot reach" = API not running).
 
+## Live addresses (Render)
+
+| Part | Address | Region |
+|---|---|---|
+| Website | https://buildora-web-lm2n.onrender.com | global CDN |
+| Admin website | https://buildora-admin.onrender.com | global CDN |
+| API | https://buildora-api-sg.onrender.com | Singapore (closest to the Supabase database in Mumbai) |
+
+Both websites have `VITE_API_BASE_URL` = the API address; the API has `CORS_ORIGINS` = both website addresses.
+Supabase *URL Configuration* and Google *Authorised JavaScript origins* list the two website addresses.
+
 ## Render
 
 Two services from the same GitHub repo. `render.yaml` describes both (untested); doing it by hand works the same.
