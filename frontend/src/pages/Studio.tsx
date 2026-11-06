@@ -165,7 +165,8 @@ function StudioBody({ projectId }: { projectId: string }) {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_23rem]">
-      <div className="space-y-3">
+      {/* wide screens: the toolbar and 3D view stay in place while the right-hand panel scrolls */}
+      <div className="space-y-3 xl:sticky xl:top-4 xl:self-start">
         <div className="flex flex-wrap items-center gap-2">
           <ToggleBtn on={view === 'exterior'} onClick={() => { setView('exterior'); setNonce((n) => n + 1) }} icon={<Home className="h-3.5 w-3.5" />}>Exterior</ToggleBtn>
           <ToggleBtn on={view === 'top'} onClick={() => { setView('top'); setNonce((n) => n + 1) }} icon={<Square className="h-3.5 w-3.5" />}>Top-down plan</ToggleBtn>
@@ -185,7 +186,7 @@ function StudioBody({ projectId }: { projectId: string }) {
         </div>
 
         <Card className="overflow-hidden">
-          <div className="relative h-[28rem] sm:h-[34rem] xl:h-[38rem]" data-testid="viewer">
+          <div className="relative h-[28rem] sm:h-[34rem] xl:h-[min(38rem,calc(100vh-13rem))] xl:min-h-[22rem]" data-testid="viewer">
             {!model.ok ? (
               <div className="flex h-full items-center justify-center p-6"><Alert tone="error" title="The building cannot be generated">{model.errors.join(' ')} <button className="underline" onClick={() => setEditBuilding(true)}>Fix dimensions</button></Alert></div>
             ) : view === 'plan' ? (
@@ -230,13 +231,6 @@ function StudioBody({ projectId }: { projectId: string }) {
           </div>
         )}
 
-        {fpImage && (
-          <Card>
-            <CardHeader title="Uploaded floor plan" description="Reference image alongside the model. Room dimensions come from the confirmed values, not the image."
-              action={<Button size="sm" variant="ghost" onClick={() => setShowPlan((v) => !v)}>{showPlan ? 'Hide' : 'Show'}</Button>} />
-            {showPlan && <CardBody>{fpUrl ? <img src={fpUrl} alt="Uploaded floor plan" className="max-h-80 w-full rounded border border-slate-200 object-contain" /> : <Spinner className="py-4" />}</CardBody>}
-          </Card>
-        )}
       </div>
 
       <div className="space-y-4">
@@ -262,6 +256,14 @@ function StudioBody({ projectId }: { projectId: string }) {
 
         <IssuesPanel issues={model.issues.filter((i) => i.code !== 'schematic')} onSelectRoom={selectRoom} onFit={fitToFootprint} busy={busy} />
         {errors.length > 0 && <p className="text-xs text-red-700">Fix the errors above, then generate / save again. The model still shows the plan exactly as saved.</p>}
+
+        {fpImage && (
+          <Card>
+            <CardHeader title="Uploaded floor plan" description="Reference image alongside the model. Room dimensions come from the confirmed values, not the image."
+              action={<Button size="sm" variant="ghost" onClick={() => setShowPlan((v) => !v)}>{showPlan ? 'Hide' : 'Show'}</Button>} />
+            {showPlan && <CardBody>{fpUrl ? <img src={fpUrl} alt="Uploaded floor plan" className="max-h-80 w-full rounded border border-slate-200 object-contain" /> : <Spinner className="py-4" />}</CardBody>}
+          </Card>
+        )}
 
         <LookPanel look={S.look} onChange={S.setLook} />
 
