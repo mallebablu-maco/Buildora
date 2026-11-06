@@ -15,6 +15,7 @@ import { DEFAULT_CONFIG, generateLayout, type GeneratorConfig } from '@/features
 import { PlanView, type PlanMode } from '@/features/studio/PlanView'
 import { FurniturePanel, IssuesPanel, OpeningPanel } from '@/features/studio/StudioPanels'
 import { LookPanel } from '@/features/studio/LookPanel'
+import { FloorsPanel } from '@/features/studio/FloorsPanel'
 import { useHistory, type HistoryApi } from '@/features/studio/history'
 import { useStudioLayout } from '@/features/studio/useStudioLayout'
 import { BuildingDialog } from '@/features/projects/BuildingDialog'
@@ -361,6 +362,12 @@ function StudioBody({ projectId }: { projectId: string }) {
           onDelete={() => { if (selFurnItem) { S.deleteFurniture(selFurnItem.id); setSelFurn(null) } }}
           onAdd={(t) => { if (selected) { const id = S.addFurniture(selected, t); if (id) setSelFurn(id) } }}
           onRegenerateRoom={() => selected && S.regenerateRoom(selected)} onRegenerateAll={S.regenerateAll} onRestoreAuto={S.restoreAutomatic} />
+
+        <FloorsPanel rooms={p.rooms} floors={p.floors} area={units.area} onShowFloor={(fl) => { setFloor(fl); setSelected(null) }}
+          onReplace={async (rooms, message) => {
+            try { await api.replaceRooms(p.id, rooms); await reload(); H.clear(); setSelected(null); setSelFurn(null); setSelOpen(null); toast.success(message) }
+            catch (e) { toast.error(e instanceof Error ? e.message : 'Could not change the floors.') }
+          }} />
 
         <Card>
           <CardHeader title={`Rooms (${p.rooms.length})`} />

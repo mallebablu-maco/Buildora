@@ -284,6 +284,22 @@ describe('3D Building Studio', () => {
     expect(a.updateRoom.mock.calls[1][2]).toMatchObject({ length: 5 })
   })
 
+  it('Floors card: copy a floor onto another after confirming', async () => {
+    const user = await open()
+    a.replaceRooms.mockResolvedValue(F.project as never)
+    const f1 = F.project.rooms.filter((r) => r.floor_number === 1).length, f2 = F.project.rooms.filter((r) => r.floor_number === 2).length
+    await user.click(screen.getByRole('button', { name: 'Copy floor 1' }))
+    await user.click(screen.getByRole('checkbox', { name: /Floor 2/ }))
+    await user.click(screen.getByRole('button', { name: 'Copy to 1 floor' }))
+    const dialog = await screen.findByRole('alertdialog')
+    expect(within(dialog).getByText(new RegExp(`${f2} rooms? already there will be replaced`))).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'Copy' }))
+    await waitFor(() => expect(a.replaceRooms).toHaveBeenCalledTimes(1))
+    const sent = a.replaceRooms.mock.calls[0][1] as { floor_number: number }[]
+    expect(sent.filter((r) => r.floor_number === 1)).toHaveLength(f1)
+    expect(sent.filter((r) => r.floor_number === 2)).toHaveLength(f1)
+  })
+
   it('switches to the 2D plan of the same geometry', async () => {
     const user = await open()
     await user.click(screen.getByRole('button', { name: '2D plan' }))
