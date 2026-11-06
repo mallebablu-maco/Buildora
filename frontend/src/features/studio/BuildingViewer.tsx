@@ -7,7 +7,6 @@ import { Label } from './Label'
 import { floorKind, getExtraTextures, getTextures, PALETTE, WALL_TEXTURE_SIZE } from './materials'
 import { DEFAULT_LOOK, floorFinishFor, type Look } from './look'
 import { entranceParts, GARDEN_MARGIN, gardenParts, sunshades } from './exterior'
-import { EYE, obstacles, startPose, step, type WalkInput } from './walk'
 import { itemRect } from './furniture'
 import type { Box, FloorModel, Model3D, Opening, RoomBox, Side } from './model'
 import { subtractRects, type Rect, type Segment, type Stair, type StairHole } from './stairs'
@@ -26,8 +25,6 @@ export interface ViewerOptions {
   resetNonce: number
   /** colours and finishes (default: the original look) */
   look?: Look
-  /** hide the overall length / width labels (walk-through) */
-  hideDimensions?: boolean
 }
 
 /** Merge axis-aligned boxes into one geometry (one draw call, no per-box overhead). */
@@ -158,77 +155,6 @@ function CutawayTracker({ onChange }: { onChange: (sides: Side[]) => void }) {
     if (Math.abs(camera.position.z) > 0.5) state.current.z = Math.sign(camera.position.z)
     const key = `${state.current.x > 0 ? 'E' : 'W'}${state.current.z > 0 ? 'S' : 'N'}`
     if (key !== last.current) { last.current = key; onChange([key[0] as Side, key[1] as Side]) }
-  })
-  return null
-}
-
-// ---------------------------------------------------------------------------------------------------------------
-// walk-through
-
-/** First-person camera at eye height: keys / on-screen arrows to move, drag to look, walls block. */
-function WalkControls({ model, floor, look, input }: { model: Model3D; floor: number; look?: Look; input: WalkInput }) {
-  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
-  const dom = useThree((s) => s.gl.domElement)
-  const obs = useMemo(() => obstacles(model, floor, look), [model, floor, look])
-  const f = model.floors.find((x) => x.index === floor) ?? model.floors[0]
-  const st = useRef({ x: 0, z: 0, yaw: 0, pitch: 0 })
-  const keys = useRef(new Set<string>())
-  const limit = Math.max(model.length, model.width) / 2 + 15
-
-  // start position (again whenever the floor or the building changes)
-  useEffect(() => {
-    const p = startPose(model, floor)
-    st.current = { x: p.x, z: p.z, yaw: p.yaw, pitch: 0 }
-  }, [model, floor])
-
-  // wider lens while walking, the normal one back afterwards
-  useEffect(() => {
-    const fov = camera.fov
-    camera.fov = 65; camera.near = 0.05; camera.updateProjectionMatrix()
-    return () => { camera.fov = fov; camera.near = 0.1; camera.rotation.order = 'XYZ'; camera.updateProjectionMatrix() }
-  }, [camera])
-
-  useEffect(() => {
-    const typing = (e: KeyboardEvent) => { const t = e.target as HTMLElement | null; return !!t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)) }
-    const MOVE = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'shift']
-    const down = (e: KeyboardEvent) => { const k = e.key.toLowerCase(); if (typing(e) || e.metaKey || e.ctrlKey || !MOVE.includes(k)) return; e.preventDefault(); keys.current.add(k) }
-    const up = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase())
-    const clear = () => keys.current.clear()
-    let drag: { x: number; y: number } | null = null
-    const pd = (e: PointerEvent) => { drag = { x: e.clientX, y: e.clientY } }
-    const pm = (e: PointerEvent) => {
-      if (!drag) return
-      st.current.yaw += (e.clientX - drag.x) * 0.005
-      st.current.pitch = Math.max(-1.2, Math.min(1.2, st.current.pitch + (e.clientY - drag.y) * 0.004))
-      drag = { x: e.clientX, y: e.clientY }
-    }
-    const pu = () => { drag = null }
-    window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', clear)
-    dom.addEventListener('pointerdown', pd); window.addEventListener('pointermove', pm); window.addEventListener('pointerup', pu)
-    return () => {
-      window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', clear)
-      dom.removeEventListener('pointerdown', pd); window.removeEventListener('pointermove', pm); window.removeEventListener('pointerup', pu)
-    }
-  }, [dom])
-
-  useFrame((_, dtRaw) => {
-    const dt = Math.min(dtRaw, 0.1)
-    const k = keys.current, s = st.current
-    const fwd = (k.has('w') || k.has('arrowup') || input.forward ? 1 : 0) - (k.has('s') || k.has('arrowdown') || input.back ? 1 : 0)
-    const side = (k.has('d') || input.right ? 1 : 0) - (k.has('a') || input.left ? 1 : 0)
-    const turn = (k.has('arrowleft') || input.turnLeft ? 1 : 0) - (k.has('arrowright') || input.turnRight ? 1 : 0)
-    s.yaw += turn * 1.8 * dt
-    const speed = (k.has('shift') ? 3 : 1.4) * dt
-    if (fwd || side) {
-      const len = Math.hypot(fwd, side)
-      const sx = -Math.sin(s.yaw), sz = -Math.cos(s.yaw) // forward
-      const rx = Math.cos(s.yaw), rz = -Math.sin(s.yaw) // right
-      const dx = ((fwd * sx + side * rx) / len) * speed, dz = ((fwd * sz + side * rz) / len) * speed
-      const p = step(s, dx, dz, obs, limit)
-      s.x = p.x; s.z = p.z
-    }
-    camera.position.set(s.x, (f?.y ?? 0) + EYE, s.z)
-    camera.rotation.set(-s.pitch, s.yaw, 0, 'YXZ')
   })
   return null
 }
@@ -450,7 +376,7 @@ function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, select
           </group>
         )
       })}
-      {f.index === 1 && !opts.hideDimensions && <Dimensions L={L} W={W} size={model.labelSize * 0.75} />}
+      {f.index === 1 && <Dimensions L={L} W={W} size={model.labelSize * 0.75} />}
     </group>
   )
 }
@@ -656,10 +582,8 @@ function GableRoof({ model, wireframe, roofColor = PALETTE.roof }: { model: Mode
 
 // ---------------------------------------------------------------------------------------------------------------
 
-export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = null, selectedOpeningId = null, onSelect, walk = null }: {
+export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = null, selectedOpeningId = null, onSelect }: {
   model: Model3D; opts: ViewerOptions; selectedId: string | null; selectedFurnitureId?: string | null; selectedOpeningId?: string | null; onSelect: (id: string | null) => void
-  /** walk-through on this floor (null = the normal orbit view) */
-  walk?: { floor: number; input: WalkInput } | null
 }) {
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [cutSides, setCutSides] = useState<Side[]>(['E', 'S'])
@@ -702,12 +626,8 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
       )}
       {roofVisible && <Roof model={model} wireframe={opts.wireframe} roofColor={opts.look?.roof} look={opts.look} />}
 
-      {walk ? <WalkControls model={model} floor={walk.floor} look={opts.look} input={walk.input} /> : (
-        <>
-          <OrbitControls makeDefault enableDamping dampingFactor={0.1} minDistance={2} maxDistance={size * 10} maxPolarAngle={Math.PI / 2 - 0.02} />
-          <CameraRig model={model} view={opts.view} nonce={opts.resetNonce} pad={opts.look?.garden ? GARDEN_MARGIN + 0.5 : 0.5} />
-        </>
-      )}
+      <OrbitControls makeDefault enableDamping dampingFactor={0.1} minDistance={2} maxDistance={size * 10} maxPolarAngle={Math.PI / 2 - 0.02} />
+      <CameraRig model={model} view={opts.view} nonce={opts.resetNonce} pad={opts.look?.garden ? GARDEN_MARGIN + 0.5 : 0.5} />
       <CutawayTracker onChange={setCutSides} />
     </Canvas>
   )
