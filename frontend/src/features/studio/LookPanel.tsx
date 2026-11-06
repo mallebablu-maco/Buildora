@@ -72,7 +72,28 @@ export function LookPanel({ look, onChange }: { look: Look; onChange: (l: Look) 
             ? <p className="text-xs text-slate-500">A flat RCC terrace with a 1 m parapet in the outside-wall finish.</p>
             : <Swatches label="Roof colour" value={look.roof} options={ROOF_COLOURS} onChange={(roof) => set({ roof })} />}
         </div>
+        <div className="space-y-1.5">
+          <div className="font-medium text-slate-700">Exterior details</div>
+          <Toggle label="Sunshades (chajjas)" hint="Over outside windows and doors" on={look.sunshades} onChange={(sunshades) => set({ sunshades })} />
+          <Toggle label="Entrance porch" hint="Canopy over the main door and a step" on={look.entrance} onChange={(entrance) => set({ entrance })} />
+          <Toggle label="Garden & compound wall" hint="Lawn, boundary wall with a gate, path to the door" on={look.garden} onChange={(garden) => set({ garden })} />
+        </div>
       </CardBody>
     </Card>
+  )
+}
+
+function Toggle({ label, hint, on, onChange }: { label: string; hint: string; on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)}
+      className="flex w-full items-center justify-between gap-3 rounded-md px-1 py-1 text-left hover:bg-slate-50">
+      <span>
+        <span className="block text-sm text-slate-700">{label}</span>
+        <span className="block text-xs text-slate-500">{hint}</span>
+      </span>
+      <span className={cn('relative h-5 w-9 shrink-0 rounded-full transition-colors', on ? 'bg-orange-500' : 'bg-slate-300')}>
+        <span className={cn('absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all', on ? 'left-[18px]' : 'left-0.5')} />
+      </span>
+    </button>
   )
 }

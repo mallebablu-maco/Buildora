@@ -13,12 +13,12 @@ describe('look settings', () => {
     expect(isDefaultLook(readLook({}))).toBe(true)
   })
   it('round-trips through the saved settings', () => {
-    const l = { wallOut: '#c8794f', wallIn: '#f4ead2', exterior: 'brick' as const, floor: 'marble' as const, roof: '#a4472f', roofStyle: 'hip' as const }
+    const l = { wallOut: '#c8794f', wallIn: '#f4ead2', exterior: 'brick' as const, floor: 'marble' as const, roof: '#a4472f', roofStyle: 'hip' as const, sunshades: true, entrance: false, garden: true }
     expect(readLook(lookSettings(l))).toEqual(l)
     expect(isDefaultLook(l)).toBe(false)
   })
   it('ignores anything invalid (bad colours, unknown finishes, scripts)', () => {
-    const l = readLook({ lookWallOut: 'red', lookWallIn: '#12345', lookExterior: 'gold', lookFloor: '<script>', lookRoof: 42, lookRoofStyle: 'dome' })
+    const l = readLook({ lookWallOut: 'red', lookWallIn: '#12345', lookExterior: 'gold', lookFloor: '<script>', lookRoof: 42, lookRoofStyle: 'dome', lookSunshades: 'yes', lookGarden: 1 })
     expect(l).toEqual(DEFAULT_LOOK)
   })
   it('chosen floor finish applies to dry rooms; wet rooms keep their tiles', () => {
@@ -44,6 +44,8 @@ describe('Colours & finishes panel', () => {
     expect(screen.getByText(/keep their tiles/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('radio', { name: 'Hip' }))
     expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_LOOK, floor: 'marble', roofStyle: 'hip' })
+    fireEvent.click(screen.getByRole('switch', { name: /Sunshades/ }))
+    expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_LOOK, floor: 'marble', sunshades: true })
     fireEvent.click(screen.getByText(/Default look/))
     expect(onChange).toHaveBeenLastCalledWith(DEFAULT_LOOK)
   })

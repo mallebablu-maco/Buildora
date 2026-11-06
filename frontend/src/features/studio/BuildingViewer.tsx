@@ -6,6 +6,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { Label } from './Label'
 import { floorKind, getExtraTextures, getTextures, PALETTE, WALL_TEXTURE_SIZE } from './materials'
 import { DEFAULT_LOOK, floorFinishFor, type Look } from './look'
+import { entranceParts, GARDEN_MARGIN, gardenParts, sunshades } from './exterior'
 import { itemRect } from './furniture'
 import type { Box, FloorModel, Model3D, Opening, RoomBox, Side } from './model'
 import { subtractRects, type Rect, type Segment, type Stair, type StairHole } from './stairs'
@@ -113,7 +114,7 @@ const AZIMUTH = (40 * Math.PI) / 180
 const ELEVATION = (36 * Math.PI) / 180
 
 /** Frames the whole building: isometric architectural view, or straight-down plan view. Never crops walls. */
-function CameraRig({ model, view, nonce }: { model: Model3D; view: ViewMode; nonce: number }) {
+function CameraRig({ model, view, nonce, pad = 0.5 }: { model: Model3D; view: ViewMode; nonce: number; pad?: number }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
   const size = useThree((s) => s.size)
   const controls = useThree((s) => s.controls) as unknown as { target: THREE.Vector3; update: () => void } | null
@@ -126,7 +127,6 @@ function CameraRig({ model, view, nonce }: { model: Model3D; view: ViewMode; non
     const dir = top
       ? new THREE.Vector3(0, 1, 0.0001).normalize()
       : new THREE.Vector3(Math.sin(AZIMUTH) * Math.cos(ELEVATION), Math.sin(ELEVATION), Math.cos(AZIMUTH) * Math.cos(ELEVATION))
-    const pad = 0.5
     const corners: THREE.Vector3[] = []
     for (const x of [-L / 2 - pad, L / 2 + pad]) for (const y of [-slab, top ? 0.2 : Ht + 0.2]) for (const z of [-W / 2 - pad, W / 2 + pad]) corners.push(new THREE.Vector3(x, y, z))
     camera.aspect = size.width / size.height
@@ -142,7 +142,7 @@ function CameraRig({ model, view, nonce }: { model: Model3D; view: ViewMode; non
     }
     controls?.target.copy(target)
     controls?.update()
-  }, [camera, controls, size.width, size.height, model.length, model.width, model.totalHeight, model.slab, view, nonce]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [camera, controls, size.width, size.height, model.length, model.width, model.totalHeight, model.slab, view, nonce, pad]) // eslint-disable-line react-hooks/exhaustive-deps
   return null
 }
 
@@ -275,6 +275,7 @@ function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, select
   useEffect(() => () => furnitureGeos.forEach((g) => g.geo?.dispose()), [furnitureGeos])
 
   const look = opts.look ?? DEFAULT_LOOK
+  const sunshadeBoxes = useMemo(() => (look.sunshades ? sunshades(f, look.entrance) : []), [f, look.sunshades, look.entrance])
   const finish = (type: string) => floorFinishFor(type, floorKind(type), look.floor)
   const UNIT = { tile: 0.6, wood: 1.0, concrete: 1.2, marble: 0.8, granite: 0.6 }
   const floorGeos = useMemo(() => f.rooms.flatMap((r) => {
@@ -315,6 +316,7 @@ function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, select
       )}
 
       {f.rooms.map((r) => floorGeos.filter((x) => x.id === r.id).map((g) => <RoomFloor key={g.key} r={r} at={g.at} mat={mats[finish(r.type)] ?? mats[floorKind(r.type)]} geo={g.geo} />))}
+      {look.sunshades && opts.showWalls && <BoxesMesh boxes={sunshadeBoxes} color={PALETTE.slab} wireframe={wf} />}
       <Stairs stairs={f.stairs} holes={f.holes} wireframe={wf} clipTop={aboveShown ? null : f.y + model.height} />
       {!belowShown && f.index > 1 && <Stairs stairs={model.floors[f.index - 2]?.stairs ?? []} wireframe={wf} clipBottom={f.y - 1.4} />}
 
@@ -413,6 +415,41 @@ function Dimensions({ L, W, size }: { L: number; W: number; size: number }) {
 }
 
 /** Gable roof (flat ceiling slab + pitched roof). Optional: hidden in the dollhouse / plan views. */
+function BoxesMesh({ boxes, color, wireframe, roughness = 0.9 }: { boxes: Box[]; color: string; wireframe: boolean; roughness?: number }) {
+  const geo = useBoxesGeometry(boxes)
+  return geo ? <mesh geometry={geo} castShadow receiveShadow><meshStandardMaterial color={color} roughness={roughness} wireframe={wireframe} /></mesh> : null
+}
+
+/** Entrance canopy + step, and the garden with its compound wall and path (each only when switched on). */
+function Surroundings({ model, look, wireframe, showEntrance }: { model: Model3D; look: Look; wireframe: boolean; showEntrance: boolean }) {
+  const ent = useMemo(() => (look.entrance ? entranceParts(model) : null), [model, look.entrance])
+  const garden = useMemo(() => (look.garden ? gardenParts(model) : null), [model, look.garden])
+  const big = 1e6
+  const wallGeos = useMemo(() => (garden ? wallFaceGeometries(garden.walls, big, big, look.exterior === 'paint' ? PAINT_TILE : WALL_TEXTURE_SIZE[look.exterior]) : null), [garden, look.exterior])
+  useEffect(() => () => { wallGeos?.inner?.dispose(); wallGeos?.outer?.dispose() }, [wallGeos])
+  const map = look.exterior === 'paint' ? null : getExtraTextures()[look.exterior]
+  const g = -model.slab - 0.03
+  const plane = (r: { x0: number; x1: number; z0: number; z1: number }, y: number, color: string, key: string) => (
+    <mesh key={key} position={[(r.x0 + r.x1) / 2, y, (r.z0 + r.z1) / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <planeGeometry args={[r.x1 - r.x0, r.z1 - r.z0]} />
+      <meshStandardMaterial color={color} roughness={1} polygonOffset polygonOffsetFactor={key === 'path' ? -2 : -1} wireframe={wireframe} />
+    </mesh>
+  )
+  return (
+    <>
+      {ent && showEntrance && <BoxesMesh boxes={ent.canopy} color={PALETTE.slab} wireframe={wireframe} />}
+      {ent && showEntrance && <BoxesMesh boxes={ent.step} color={PALETTE.stair} wireframe={wireframe} />}
+      {garden && plane(garden.lawn, g + 0.012, PALETTE.lawn, 'lawn')}
+      {garden?.path && plane(garden.path, g + 0.018, PALETTE.path, 'path')}
+      {wallGeos?.inner && (
+        <mesh geometry={wallGeos.inner} castShadow receiveShadow>
+          {map ? <meshStandardMaterial key={look.exterior} map={map} roughness={0.95} wireframe={wireframe} /> : <meshStandardMaterial key="paint" color={look.wallOut} roughness={0.92} wireframe={wireframe} />}
+        </mesh>
+      )}
+    </>
+  )
+}
+
 /** Triangles -> geometry; each triangle is turned to face `hint` (so lighting is right on both sloped and vertical faces). */
 function trianglesGeometry(tris: { p: [number, number, number][]; hint: [number, number, number] }[]) {
   const pos: number[] = []
@@ -584,10 +621,13 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
         <Floor key={f.index} f={f} model={model} opts={opts} cut={cutaway ? cutSides : null} aboveShown={visible.some((v) => v.index === f.index + 1)} belowShown={visible.some((v) => v.index === f.index - 1)} selectedId={selectedId} selectedFurnitureId={selectedFurnitureId} selectedOpeningId={selectedOpeningId} hoverId={hoverId}
           onSelect={onSelect} onHover={setHoverId} labelsOn={opts.showLabels && !roofVisible && f.index === labelFloor} />
       ))}
+      {opts.look && (opts.look.entrance || opts.look.garden) && (
+        <Surroundings model={model} look={opts.look} wireframe={opts.wireframe} showEntrance={visible.some((f) => f.index === 1)} />
+      )}
       {roofVisible && <Roof model={model} wireframe={opts.wireframe} roofColor={opts.look?.roof} look={opts.look} />}
 
       <OrbitControls makeDefault enableDamping dampingFactor={0.1} minDistance={2} maxDistance={size * 10} maxPolarAngle={Math.PI / 2 - 0.02} />
-      <CameraRig model={model} view={opts.view} nonce={opts.resetNonce} />
+      <CameraRig model={model} view={opts.view} nonce={opts.resetNonce} pad={opts.look?.garden ? GARDEN_MARGIN + 0.5 : 0.5} />
       <CutawayTracker onChange={setCutSides} />
     </Canvas>
   )

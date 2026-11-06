@@ -15,9 +15,13 @@ export interface Look {
   floor: FloorFinish
   roof: string
   roofStyle: RoofStyle
+  /** exterior details (all off by default) */
+  sunshades: boolean
+  entrance: boolean
+  garden: boolean
 }
 
-export const DEFAULT_LOOK: Look = { wallOut: PALETTE.wall, wallIn: PALETTE.wall, exterior: 'paint', floor: 'auto', roof: PALETTE.roof, roofStyle: 'gable' }
+export const DEFAULT_LOOK: Look = { wallOut: PALETTE.wall, wallIn: PALETTE.wall, exterior: 'paint', floor: 'auto', roof: PALETTE.roof, roofStyle: 'gable', sunshades: false, entrance: false, garden: false }
 
 export const WALL_COLOURS: { name: string; hex: string }[] = [
   { name: 'Off-white', hex: PALETTE.wall },
@@ -76,15 +80,21 @@ export function readLook(settings: Record<string, unknown> | null | undefined): 
     floor: oneOf(s.lookFloor, FLOOR_FINISHES, DEFAULT_LOOK.floor),
     roof: colour(s.lookRoof, DEFAULT_LOOK.roof),
     roofStyle: oneOf(s.lookRoofStyle, ROOF_STYLES, DEFAULT_LOOK.roofStyle),
+    sunshades: s.lookSunshades === true,
+    entrance: s.lookEntrance === true,
+    garden: s.lookGarden === true,
   }
 }
 
-export function lookSettings(l: Look): Record<string, string> {
-  return { lookWallOut: l.wallOut, lookWallIn: l.wallIn, lookExterior: l.exterior, lookFloor: l.floor, lookRoof: l.roof, lookRoofStyle: l.roofStyle }
+export function lookSettings(l: Look): Record<string, string | boolean> {
+  return {
+    lookWallOut: l.wallOut, lookWallIn: l.wallIn, lookExterior: l.exterior, lookFloor: l.floor, lookRoof: l.roof, lookRoofStyle: l.roofStyle,
+    lookSunshades: l.sunshades, lookEntrance: l.entrance, lookGarden: l.garden,
+  }
 }
 
 export const isDefaultLook = (l: Look) =>
-  l.wallOut === DEFAULT_LOOK.wallOut && l.wallIn === DEFAULT_LOOK.wallIn && l.exterior === DEFAULT_LOOK.exterior && l.floor === DEFAULT_LOOK.floor && l.roof === DEFAULT_LOOK.roof && l.roofStyle === DEFAULT_LOOK.roofStyle
+  l.wallOut === DEFAULT_LOOK.wallOut && l.wallIn === DEFAULT_LOOK.wallIn && l.exterior === DEFAULT_LOOK.exterior && l.floor === DEFAULT_LOOK.floor && l.roof === DEFAULT_LOOK.roof && l.roofStyle === DEFAULT_LOOK.roofStyle && !l.sunshades && !l.entrance && !l.garden
 
 const WET = new Set(['bathroom', 'kitchen', 'balcony'])
 export type FloorKind = 'wood' | 'tile' | 'concrete' | 'marble' | 'granite'

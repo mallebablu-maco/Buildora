@@ -50,6 +50,8 @@ export const PALETTE = {
   glass: '#a9d0e8',
   stair: '#d9d4cb',
   rail: '#3f4650',
+  lawn: '#9fc38a',
+  path: '#d8d1c4',
   roof: '#4f5a66',
   ground: '#e6eaef',
   highlight: '#f97316',
