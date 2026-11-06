@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { Label } from './Label'
-import { floorKind, getTextures, PALETTE } from './materials'
+import { floorKind, getExtraTextures, getTextures, PALETTE, WALL_TEXTURE_SIZE } from './materials'
+import { DEFAULT_LOOK, floorFinishFor, type Look } from './look'
 import { itemRect } from './furniture'
 import type { Box, FloorModel, Model3D, Opening, RoomBox, Side } from './model'
 import { subtractRects, type Rect, type Segment, type Stair, type StairHole } from './stairs'
@@ -21,6 +22,8 @@ export interface ViewerOptions {
   doorsOpen: boolean
   wireframe: boolean
   resetNonce: number
+  /** colours and finishes (default: the original look) */
+  look?: Look
 }
 
 /** Merge axis-aligned boxes into one geometry (one draw call, no per-box overhead). */
@@ -56,6 +59,45 @@ function useRailsGeometry(segs: Segment[]) {
   const geo = useMemo(() => railsGeometry(segs), [segs])
   useEffect(() => () => { geo?.dispose() }, [geo])
   return geo
+}
+
+/**
+ * Walls split into the faces on the outside of the building (on the outer wall planes) and all other faces,
+ * so the outside can have its own colour or texture. UVs are in texture tiles (`tile` metres per tile).
+ */
+const PAINT_TILE = [1, 1] as const
+
+function wallFaceGeometries(boxes: Box[], outerX: number, outerZ: number, tile: readonly [number, number]) {
+  const out = { outer: [] as number[], inner: [] as number[], outerN: [] as number[], innerN: [] as number[], outerUv: [] as number[], innerUv: [] as number[] }
+  // normal axis, sign, tangent axes (t1 x t2 = normal)
+  const FACES: [number, number, number, number][] = [[0, 1, 1, 2], [0, -1, 2, 1], [1, 1, 2, 0], [1, -1, 0, 2], [2, 1, 0, 1], [2, -1, 1, 0]]
+  for (const b of boxes) {
+    const c = [b.cx, b.cy, b.cz], h = [b.sx / 2, b.sy / 2, b.sz / 2]
+    for (const [a, sg, t1, t2] of FACES) {
+      const plane = c[a] + sg * h[a]
+      const isOuter = (a === 0 && sg * plane >= outerX - 0.01) || (a === 2 && sg * plane >= outerZ - 0.01)
+      const pos = isOuter ? out.outer : out.inner, nor = isOuter ? out.outerN : out.innerN, uv = isOuter ? out.outerUv : out.innerUv
+      const corner = (s1: number, s2: number) => { const v = [...c]; v[a] = plane; v[t1] += s1 * h[t1]; v[t2] += s2 * h[t2]; return v }
+      const quad = [corner(-1, -1), corner(1, -1), corner(1, 1), corner(-1, 1)]
+      for (const k of [0, 1, 2, 0, 2, 3]) {
+        const v = quad[k]
+        pos.push(v[0], v[1], v[2])
+        nor.push(a === 0 ? sg : 0, a === 1 ? sg : 0, a === 2 ? sg : 0)
+        // world-anchored UVs: along the wall / up
+        const u = a === 0 ? v[2] : v[0], w = a === 1 ? v[2] : v[1]
+        uv.push(u / tile[0], w / tile[1])
+      }
+    }
+  }
+  const make = (p: number[], n: number[], u: number[]) => {
+    if (!p.length) return null
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3))
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(n, 3))
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(u, 2))
+    return g
+  }
+  return { outer: make(out.outer, out.outerN, out.outerUv), inner: make(out.inner, out.innerN, out.innerUv) }
 }
 
 function useBoxesGeometry(boxes: Box[]) {
@@ -202,7 +244,13 @@ function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, select
   const tex = useMemo(() => getTextures(), [])
 
   const wallBoxes = useMemo(() => f.walls.flatMap((w) => (w.exterior && cut && w.side && cut.includes(w.side) ? w.cutPieces : w.pieces)), [f.walls, cut])
-  const wallGeo = useBoxesGeometry(wallBoxes)
+  const look0 = opts.look ?? DEFAULT_LOOK
+  const splitWalls = look0.exterior !== 'paint' || look0.wallOut !== look0.wallIn
+  const wallGeo = useBoxesGeometry(splitWalls ? [] : wallBoxes)
+  const tile = look0.exterior === 'paint' ? PAINT_TILE : WALL_TEXTURE_SIZE[look0.exterior]
+  const faceGeos = useMemo(() => (splitWalls ? wallFaceGeometries(wallBoxes, L / 2 + wallT / 2, W / 2 + wallT / 2, tile) : null), [splitWalls, wallBoxes, L, W, wallT, tile])
+  useEffect(() => () => { faceGeos?.outer?.dispose(); faceGeos?.inner?.dispose() }, [faceGeos])
+  const outerMap = look0.exterior === 'paint' ? null : getExtraTextures()[look0.exterior]
   const { frames, glass } = useMemo(() => {
     // when a side is cut away its openings are not built, so skip their frames/glass too
     const visible = f.openings.filter((o) => {
@@ -226,14 +274,17 @@ function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, select
   }, [f.furniture])
   useEffect(() => () => furnitureGeos.forEach((g) => g.geo?.dispose()), [furnitureGeos])
 
+  const look = opts.look ?? DEFAULT_LOOK
+  const finish = (type: string) => floorFinishFor(type, floorKind(type), look.floor)
+  const UNIT = { tile: 0.6, wood: 1.0, concrete: 1.2, marble: 0.8, granite: 0.6 }
   const floorGeos = useMemo(() => f.rooms.flatMap((r) => {
-    const unit = floorKind(r.type) === 'tile' ? 0.6 : floorKind(r.type) === 'wood' ? 1.0 : 1.2
+    const unit = UNIT[finish(r.type)]
     const holes = f.holes.map((h) => h.rect)
     // rooms over a stairwell keep their floor finish only around the opening
     const cut = holes.length ? subtractRects(r, holes) : null
     if (!cut || (cut.length === 1 && cut[0].x0 === r.x0 && cut[0].x1 === r.x1 && cut[0].z0 === r.z0 && cut[0].z1 === r.z1)) return [{ id: r.id, key: r.id, at: undefined, geo: floorGeometry(r.sx, r.sz, unit) }]
     return cut.map((c, i) => ({ id: r.id, key: `${r.id}-${i}`, at: c as Rect | undefined, geo: floorGeometry(c.x1 - c.x0, c.z1 - c.z0, unit) }))
-  }), [f.rooms, f.holes])
+  }), [f.rooms, f.holes, look.floor]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => floorGeos.forEach((g) => g.geo.dispose()), [floorGeos])
   const slabGeo = useBoxesGeometry(useMemo(() => {
     if (!f.holes.length) return []
@@ -246,7 +297,10 @@ function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, select
     wood: new THREE.MeshStandardMaterial({ map: tex.wood, roughness: 0.7, wireframe: wf }),
     tile: new THREE.MeshStandardMaterial({ map: tex.tile, roughness: 0.35, wireframe: wf }),
     concrete: new THREE.MeshStandardMaterial({ map: tex.concrete, roughness: 0.9, wireframe: wf }),
-  }), [tex, wf])
+    // extra finishes are only created when chosen
+    ...(look.floor === 'marble' ? { marble: new THREE.MeshStandardMaterial({ map: getExtraTextures().marble, roughness: 0.25, wireframe: wf }) } : {}),
+    ...(look.floor === 'granite' ? { granite: new THREE.MeshStandardMaterial({ map: getExtraTextures().granite, roughness: 0.3, wireframe: wf }) } : {}),
+  } as Record<string, THREE.MeshStandardMaterial>), [tex, wf, look.floor])
   useEffect(() => () => Object.values(mats).forEach((m) => m.dispose()), [mats])
 
   return (
@@ -260,14 +314,26 @@ function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, select
         </mesh>
       )}
 
-      {f.rooms.map((r) => floorGeos.filter((x) => x.id === r.id).map((g) => <RoomFloor key={g.key} r={r} at={g.at} mat={mats[floorKind(r.type)]} geo={g.geo} />))}
+      {f.rooms.map((r) => floorGeos.filter((x) => x.id === r.id).map((g) => <RoomFloor key={g.key} r={r} at={g.at} mat={mats[finish(r.type)] ?? mats[floorKind(r.type)]} geo={g.geo} />))}
       <Stairs stairs={f.stairs} holes={f.holes} wireframe={wf} clipTop={aboveShown ? null : f.y + model.height} />
       {!belowShown && f.index > 1 && <Stairs stairs={model.floors[f.index - 2]?.stairs ?? []} wireframe={wf} clipBottom={f.y - 1.4} />}
 
       {wallGeo && opts.showWalls && (
         <mesh geometry={wallGeo} castShadow receiveShadow>
-          <meshStandardMaterial color={PALETTE.wall} roughness={0.92} wireframe={wf} />
+          <meshStandardMaterial color={look0.wallIn} roughness={0.92} wireframe={wf} />
         </mesh>
+      )}
+      {faceGeos && opts.showWalls && (
+        <>
+          {faceGeos.inner && <mesh geometry={faceGeos.inner} castShadow receiveShadow><meshStandardMaterial color={look0.wallIn} roughness={0.92} wireframe={wf} /></mesh>}
+          {faceGeos.outer && (
+            <mesh geometry={faceGeos.outer} castShadow receiveShadow>
+              {outerMap
+                ? <meshStandardMaterial key={look0.exterior} map={outerMap} roughness={0.95} wireframe={wf} />
+                : <meshStandardMaterial key="paint" color={look0.wallOut} roughness={0.92} wireframe={wf} />}
+            </mesh>
+          )}
+        </>
       )}
       {opts.showOpenings && frameGeo && <mesh geometry={frameGeo} castShadow><meshStandardMaterial color={PALETTE.frame} roughness={0.6} wireframe={wf} /></mesh>}
       {opts.showOpenings && glassGeo && <mesh geometry={glassGeo}><meshStandardMaterial color={PALETTE.glass} transparent opacity={wf ? 1 : 0.35} roughness={0.05} metalness={0.2} depthWrite={false} wireframe={wf} /></mesh>}
@@ -347,7 +413,7 @@ function Dimensions({ L, W, size }: { L: number; W: number; size: number }) {
 }
 
 /** Gable roof (flat ceiling slab + pitched roof). Optional: hidden in the dollhouse / plan views. */
-function Roof({ model, wireframe }: { model: Model3D; wireframe: boolean }) {
+function Roof({ model, wireframe, roofColor = PALETTE.roof }: { model: Model3D; wireframe: boolean; roofColor?: string }) {
   const { length: L, width: W, totalHeight, slab, roof } = model
   const o = roof.overhang
   const alongX = roof.ridge === 'x'
@@ -368,7 +434,7 @@ function Roof({ model, wireframe }: { model: Model3D; wireframe: boolean }) {
         <meshStandardMaterial color={PALETTE.slab} roughness={0.95} wireframe={wireframe} />
       </mesh>
       <mesh geometry={geo} position={[0, totalHeight + slab, 0]} rotation={[0, alongX ? Math.PI / 2 : 0, 0]} castShadow receiveShadow>
-        <meshStandardMaterial color={PALETTE.roof} roughness={0.85} wireframe={wireframe} side={THREE.DoubleSide} />
+        <meshStandardMaterial color={roofColor} roughness={0.85} wireframe={wireframe} side={THREE.DoubleSide} />
       </mesh>
     </group>
   )
@@ -415,7 +481,7 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
         <Floor key={f.index} f={f} model={model} opts={opts} cut={cutaway ? cutSides : null} aboveShown={visible.some((v) => v.index === f.index + 1)} belowShown={visible.some((v) => v.index === f.index - 1)} selectedId={selectedId} selectedFurnitureId={selectedFurnitureId} selectedOpeningId={selectedOpeningId} hoverId={hoverId}
           onSelect={onSelect} onHover={setHoverId} labelsOn={opts.showLabels && !roofVisible && f.index === labelFloor} />
       ))}
-      {roofVisible && <Roof model={model} wireframe={opts.wireframe} />}
+      {roofVisible && <Roof model={model} wireframe={opts.wireframe} roofColor={opts.look?.roof} />}
 
       <OrbitControls makeDefault enableDamping dampingFactor={0.1} minDistance={2} maxDistance={size * 10} maxPolarAngle={Math.PI / 2 - 0.02} />
       <CameraRig model={model} view={opts.view} nonce={opts.resetNonce} />

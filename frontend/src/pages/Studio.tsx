@@ -14,6 +14,7 @@ import { configFromProject, LayoutGeneratorDialog } from '@/features/studio/Layo
 import { DEFAULT_CONFIG, generateLayout, type GeneratorConfig } from '@/features/studio/layoutGenerator'
 import { PlanView, type PlanMode } from '@/features/studio/PlanView'
 import { FurniturePanel, IssuesPanel, OpeningPanel } from '@/features/studio/StudioPanels'
+import { LookPanel } from '@/features/studio/LookPanel'
 import { useStudioLayout } from '@/features/studio/useStudioLayout'
 import { BuildingDialog } from '@/features/projects/BuildingDialog'
 import { useFloorplanUrl } from '@/features/projects/FloorPlanPanel'
@@ -197,7 +198,7 @@ function StudioBody({ projectId }: { projectId: string }) {
             ) : (
               <ErrorBoundary label="The 3D viewer" resetKey={model.length + model.width}>
                 <BuildingViewer model={model} selectedId={selected} selectedFurnitureId={selFurn} selectedOpeningId={selOpen} onSelect={(id) => { setSelected(id); if (id) { setSelFurn(null); setSelOpen(null) } }}
-                  opts={{ view: view as ViewMode, floor, showLabels, showRoof, showFurniture, showWalls, showOpenings, doorsOpen, wireframe, resetNonce: nonce }} />
+                  opts={{ view: view as ViewMode, floor, showLabels, showRoof, showFurniture, showWalls, showOpenings, doorsOpen, wireframe, resetNonce: nonce, look: S.look }} />
               </ErrorBoundary>
             )}
             {model.ok && !hasRooms && (
@@ -261,6 +262,8 @@ function StudioBody({ projectId }: { projectId: string }) {
 
         <IssuesPanel issues={model.issues.filter((i) => i.code !== 'schematic')} onSelectRoom={selectRoom} onFit={fitToFootprint} busy={busy} />
         {errors.length > 0 && <p className="text-xs text-red-700">Fix the errors above, then generate / save again. The model still shows the plan exactly as saved.</p>}
+
+        <LookPanel look={S.look} onChange={S.setLook} />
 
         <Card>
           <CardHeader title="Building" action={<Button size="sm" variant="outline" onClick={() => setEditBuilding(true)}><Pencil className="h-3.5 w-3.5" /> Edit</Button>} />

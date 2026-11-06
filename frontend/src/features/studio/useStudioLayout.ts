@@ -5,6 +5,7 @@ import {
   circulationOk, clampSize, findFreeSpot, FURNITURE_SPECS, placementProblem, rotateFacing, type FurnitureItem,
 } from './furniture'
 import { makeLayout, parseLayout, planSignature, type SavedFurniture, type SavedLayout, type SavedOpening } from './layoutStore'
+import { isDefaultLook, lookSettings, readLook, type Look } from './look'
 import { buildModel, DOOR_SIZES, roomEdges, searchSlot, slotFree, type FloorModel, type Model3D, type Opening, type RoomBox } from './model'
 
 interface Notify { success: (m: string) => void; error: (m: string) => void; info: (m: string) => void }
@@ -111,6 +112,14 @@ export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Prom
     commit({ ...cur, furniture: null, settings: { ...cur.settings, furnishSeed: Number(cur.settings.furnishSeed ?? 0) + 1 } })
   }
   const restoreAutomatic = () => { const cur = base(); commit({ ...cur, furniture: null, settings: { ...cur.settings, furnishSeed: 0 } }) }
+  // ---- colours & finishes (visual only) --------------------------------------------------------------------------
+  const look: Look = useMemo(() => readLook(layout?.settings), [layout])
+  const setLook = (l: Look) => {
+    const cur = base()
+    const { lookWallOut: _a, lookWallIn: _b, lookExterior: _c, lookFloor: _d, lookRoof: _e, ...rest } = cur.settings
+    void _a; void _b; void _c; void _d; void _e
+    commit({ ...cur, settings: isDefaultLook(l) ? rest : { ...rest, ...lookSettings(l) } })
+  }
   const setAutoFurnish = (v: boolean) => { setAuto(v); const cur = base(); commit({ ...cur, settings: { ...cur.settings, autoFurnish: v } }) }
 
   // ---- openings -----------------------------------------------------------------------------------------------
@@ -228,7 +237,7 @@ export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Prom
   return {
     model, layout, dirty, saving, autoFurnish, hasCustomFurniture: !!layout?.furniture, hasCustomOpenings: !!layout?.openings,
     canPlaceFurniture, moveFurniture, rotateFurniture, resizeFurniture, nudgeFurniture, replaceFurniture, deleteFurniture, addFurniture,
-    regenerateRoom, regenerateAll, restoreAutomatic, setAutoFurnish,
+    regenerateRoom, regenerateAll, restoreAutomatic, setAutoFurnish, look, setLook,
     canMoveOpening, moveOpening, nudgeOpening, changeOpening, deleteOpening, flipOpening, addOpening,
     save, reset, discard,
   }
