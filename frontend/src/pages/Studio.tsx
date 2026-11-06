@@ -1,5 +1,5 @@
 import { Box as BoxIcon, DoorClosed, DoorOpen, Eye, EyeOff, FilePlus2, Home, LayoutGrid, Lock, Map as MapIcon, PanelTop, Pencil, RotateCcw, Ruler, Save, Sofa, Square, Tag, Undo2, Upload, Wand2, Blocks, AppWindow, Undo, Redo } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ProjectScope } from '@/components/ProjectScope'
@@ -8,7 +8,8 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/ui/dialog'
 import { Alert, Badge, ErrorState, Spinner } from '@/components/ui/feedback'
 import { Field, Input, Select } from '@/components/ui/form'
-import { BuildingViewer, type ViewMode } from '@/features/studio/BuildingViewer'
+import type { ViewMode } from '@/features/studio/BuildingViewer'
+import { loadViewer } from '@/features/studio/prefetch'
 import { FloorPlanImportDialog } from '@/features/studio/FloorPlanImportDialog'
 import { configFromProject, LayoutGeneratorDialog } from '@/features/studio/LayoutGeneratorDialog'
 import { DEFAULT_CONFIG, generateLayout, type GeneratorConfig } from '@/features/studio/layoutGenerator'
@@ -30,6 +31,17 @@ import { cn } from '@/lib/utils'
 import type { ProjectDetail, RoomInput } from '@/types'
 
 type StudioView = ViewMode | 'plan'
+
+// The 3D engine is the biggest download: load it separately, so the rest of the Studio shows straight away.
+const BuildingViewer = lazy(() => loadViewer().then((m) => ({ default: m.BuildingViewer })))
+
+function ViewerLoading() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-b from-[#e9eff6] to-[#f8fafc] text-sm text-slate-500" role="status">
+      <Spinner /> Loading 3D view…
+    </div>
+  )
+}
 
 export default function Studio() {
   return (
@@ -260,8 +272,10 @@ function StudioBody({ projectId }: { projectId: string }) {
                 onAddOpening={(kind, wallId, along) => { const id = S.addOpening(kind, wallId, along, selected); if (id) { setSelOpen(id); setMode('select') } }} onMessage={(m) => toast.error(m)} />
             ) : (
               <ErrorBoundary label="The 3D viewer" resetKey={model.length + model.width}>
+                <Suspense fallback={<ViewerLoading />}>
                 <BuildingViewer model={model} selectedId={selected} selectedFurnitureId={selFurn} selectedOpeningId={selOpen} onSelect={(id) => { setSelected(id); if (id) { setSelFurn(null); setSelOpen(null) } }}
                   opts={{ view: view as ViewMode, floor, showLabels, showRoof, showFurniture, showWalls, showOpenings, doorsOpen, wireframe, resetNonce: nonce, look: S.look }} />
+                </Suspense>
               </ErrorBoundary>
             )}
             {model.ok && !hasRooms && (

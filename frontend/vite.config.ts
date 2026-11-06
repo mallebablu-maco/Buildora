@@ -16,7 +16,11 @@ export default defineConfig(({ mode }) => {
     root: admin ? here('./admin') : undefined,
     envDir: here('.'), // .env.local lives next to this file for both websites
     publicDir: here('./public'),
-    build: admin ? { outDir: here('./dist-admin'), emptyOutDir: true } : undefined,
+    build: {
+      ...(admin ? { outDir: here('./dist-admin'), emptyOutDir: true } : {}),
+      // The 3D engine (three.js + React bindings) in its own file: it rarely changes, so browsers keep it cached across releases.
+      rolldownOptions: { output: { codeSplitting: { includeDependenciesRecursively: false, groups: [{ name: 'engine-3d', test: /node_modules[\\/](three|three-stdlib|@react-three)[\\/]/ }] } } },
+    },
     server: {
       port: admin ? 5174 : 5173,
       // Local development: the browser calls /api on this server and Vite forwards it to the FastAPI backend.

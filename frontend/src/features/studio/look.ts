@@ -2,7 +2,7 @@
  * Colours and finishes of the 3D model. Stored in the saved layout's `settings` (look* keys), purely visual:
  * geometry, plan and estimate never read it. Defaults reproduce the original look exactly.
  */
-import { PALETTE } from './materials'
+import { PALETTE } from './palette'
 
 export type ExteriorFinish = 'paint' | 'brick' | 'stone'
 export type RoofStyle = 'gable' | 'hip' | 'flat' | 'shed'

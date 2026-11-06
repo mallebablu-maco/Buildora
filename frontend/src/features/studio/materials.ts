@@ -1,4 +1,5 @@
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace, type Texture } from 'three'
+export { floorKind, PALETTE } from './palette'
 
 /** Small procedural textures (no network assets). Created lazily, once, in the browser. */
 let cache: { wood: Texture; tile: Texture; concrete: Texture } | null = null
@@ -42,27 +43,7 @@ export function getTextures() {
   return cache
 }
 
-export const PALETTE = {
-  wall: '#f2eee7',
-  slab: '#b7b3ab',
-  frame: '#fbfaf7',
-  door: '#8a5d3c',
-  glass: '#a9d0e8',
-  stair: '#d9d4cb',
-  rail: '#3f4650',
-  lawn: '#9fc38a',
-  path: '#d8d1c4',
-  roof: '#4f5a66',
-  ground: '#e6eaef',
-  highlight: '#f97316',
-  hover: '#3c6194',
-}
 
-export function floorKind(type: string): 'wood' | 'tile' | 'concrete' {
-  if (type === 'bathroom' || type === 'kitchen' || type === 'balcony') return 'tile'
-  if (['bedroom', 'living', 'dining', 'study', 'office'].includes(type)) return 'wood'
-  return 'concrete'
-}
 
 /** Extra finishes for the "Colours & finishes" options (separate cache: the original textures above stay untouched). */
 let extra: { marble: Texture; granite: Texture; brick: Texture; stone: Texture } | null = null

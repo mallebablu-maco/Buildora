@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/feedback'
 import { LogoutConfirm } from '@/features/auth/LogoutConfirm'
 import { useAuth } from '@/features/auth/useAuth'
+import { prefetchStudio3D } from '@/features/studio/prefetch'
 import { cn } from '@/lib/utils'
 
 const NAV = [
@@ -34,6 +35,8 @@ export function AppLayout() {
   const name = (user?.user_metadata?.full_name as string | undefined) || user?.email || 'Account'
 
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
+  // fetch the 3D Studio's engine quietly once the app is idle, so opening the Studio is fast
+  useEffect(() => { prefetchStudio3D() }, [])
   const toggle = () => setCollapsed((c) => { try { localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1') } catch { /* private window: just don't remember it */ } return !c })
 
   const sidebar = (compact: boolean) => (
