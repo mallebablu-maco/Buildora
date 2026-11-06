@@ -7,6 +7,7 @@ import { Label } from './Label'
 import { floorKind, getExtraTextures, getTextures, PALETTE, WALL_TEXTURE_SIZE } from './materials'
 import { DEFAULT_LOOK, floorFinishFor, type Look } from './look'
 import { entranceParts, GARDEN_MARGIN, gardenParts, sunshades } from './exterior'
+import { dist3, type Measure3D, type P3 } from './measure'
 import { itemRect } from './furniture'
 import type { Box, FloorModel, Model3D, Opening, RoomBox, Side } from './model'
 import { subtractRects, type Rect, type Segment, type Stair, type StairHole } from './stairs'
@@ -25,6 +26,34 @@ export interface ViewerOptions {
   resetNonce: number
   /** colours and finishes (default: the original look) */
   look?: Look
+}
+
+const noRaycast = () => null
+
+/** Lines, end points and lengths of the 3D measurements (drawn on top of everything). */
+function Measurements({ items, pending, hover, fmt, size }: { items: Measure3D[]; pending: P3 | null; hover: P3 | null; fmt: (m: number) => string; size: number }) {
+  const one = (m: Measure3D, key: string, preview = false) => {
+    const mid: P3 = [(m.a[0] + m.b[0]) / 2, (m.a[1] + m.b[1]) / 2 + size * 0.35, (m.a[2] + m.b[2]) / 2]
+    return (
+      <group key={key}>
+        <Line points={[m.a, m.b]} color="#0f766e" lineWidth={preview ? 2 : 3} dashed={preview} dashSize={0.15} gapSize={0.1} depthTest={false} renderOrder={30} transparent opacity={preview ? 0.7 : 1} />
+        {[m.a, m.b].map((p, i) => (
+          <mesh key={i} position={p} renderOrder={31} raycast={noRaycast}>
+            <sphereGeometry args={[size * 0.09, 12, 12]} />
+            <meshBasicMaterial color="#0f766e" depthTest={false} transparent />
+          </mesh>
+        ))}
+        <Label text={fmt(dist3(m.a, m.b))} position={mid} size={size} active={!preview} />
+      </group>
+    )
+  }
+  return (
+    <>
+      {items.map((m, i) => one(m, `m${i}`))}
+      {pending && hover && dist3(pending, hover) > 0.01 && one({ a: pending, b: hover }, 'preview', true)}
+      {pending && !hover && <mesh position={pending} raycast={noRaycast}><sphereGeometry args={[size * 0.09, 12, 12]} /><meshBasicMaterial color="#0f766e" depthTest={false} transparent /></mesh>}
+    </>
+  )
 }
 
 /** Merge axis-aligned boxes into one geometry (one draw call, no per-box overhead). */
@@ -235,8 +264,8 @@ function openingParts(openings: Opening[], y: number): { frames: Box[]; glass: B
   return { frames, glass }
 }
 
-function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, selectedFurnitureId, selectedOpeningId, hoverId, onSelect, onHover, labelsOn }: {
-  f: FloorModel; model: Model3D; opts: ViewerOptions; cut: Side[] | null; aboveShown: boolean; belowShown: boolean
+function Floor({ f, model, opts, cut, aboveShown, belowShown, measuring = false, selectedId, selectedFurnitureId, selectedOpeningId, hoverId, onSelect, onHover, labelsOn }: {
+  f: FloorModel; model: Model3D; opts: ViewerOptions; cut: Side[] | null; aboveShown: boolean; belowShown: boolean; measuring?: boolean
   selectedId: string | null; selectedFurnitureId: string | null; selectedOpeningId: string | null; hoverId: string | null; onSelect: (id: string | null) => void; onHover: (id: string | null) => void; labelsOn: boolean
 }) {
   const wf = opts.wireframe
@@ -355,7 +384,7 @@ function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, select
         return (
           <group key={r.id}>
             {/* invisible pick volume: clicking anywhere in the room selects it */}
-            <mesh position={[r.cx, r.y + r.h / 2, r.cz]}
+            <mesh position={[r.cx, r.y + r.h / 2, r.cz]} raycast={measuring ? noRaycast : undefined}
               onClick={(e) => { e.stopPropagation(); onSelect(sel ? null : r.id) }}
               onPointerOver={(e) => { e.stopPropagation(); onHover(r.id); document.body.style.cursor = 'pointer' }}
               onPointerOut={() => { onHover(null); document.body.style.cursor = '' }}>
@@ -582,10 +611,34 @@ function GableRoof({ model, wireframe, roofColor = PALETTE.roof }: { model: Mode
 
 // ---------------------------------------------------------------------------------------------------------------
 
-export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = null, selectedOpeningId = null, onSelect }: {
+export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = null, selectedOpeningId = null, onSelect, measure = null }: {
   model: Model3D; opts: ViewerOptions; selectedId: string | null; selectedFurnitureId?: string | null; selectedOpeningId?: string | null; onSelect: (id: string | null) => void
+  /** measuring: clicks on any surface place measurement points instead of selecting rooms */
+  measure?: { items: Measure3D[]; onAdd: (m: Measure3D) => void; fmt: (metres: number) => string } | null
 }) {
   const [hoverId, setHoverId] = useState<string | null>(null)
+  const measuring = !!measure
+  const [mPending, setMPending] = useState<P3 | null>(null)
+  const [mHover, setMHover] = useState<P3 | null>(null)
+  useEffect(() => { if (!measuring) { setMPending(null); setMHover(null) } }, [measuring])
+  useEffect(() => {
+    if (!mPending) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setMPending(null) } }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [mPending])
+  const r3 = (v: number) => Math.round(v * 1000) / 1000
+  const pick = (e: { point: THREE.Vector3 }): P3 => [r3(e.point.x), r3(e.point.y), r3(e.point.z)]
+  const measureHandlers = measuring ? {
+    onClick: (e: { point: THREE.Vector3; delta: number; stopPropagation: () => void }) => {
+      e.stopPropagation()
+      if (e.delta > 4) return // that was a drag to rotate, not a click
+      const pt = pick(e)
+      if (!mPending) setMPending(pt)
+      else { if (dist3(mPending, pt) > 0.01) measure!.onAdd({ a: mPending, b: pt }); setMPending(null) }
+    },
+    onPointerMove: (e: { point: THREE.Vector3; stopPropagation: () => void }) => { e.stopPropagation(); if (mPending) setMHover(pick(e)) },
+  } : {}
   const [cutSides, setCutSides] = useState<Side[]>(['E', 'S'])
   const topIndex = model.floors.length
   const visible = useMemo(() => {
@@ -601,7 +654,7 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
   const shadowR = Math.hypot(model.length, model.width) * 0.75 + 2
 
   return (
-    <Canvas shadows dpr={[1, 2]} camera={{ fov: 35, near: 0.1, far: 3000, position: [20, 15, 20] }} onPointerMissed={() => onSelect(null)}
+    <Canvas shadows dpr={[1, 2]} camera={{ fov: 35, near: 0.1, far: 3000, position: [20, 15, 20] }} onPointerMissed={() => { if (!measuring) onSelect(null) }}
       gl={{ antialias: true }} onCreated={({ gl }) => { gl.localClippingEnabled = true }} style={{ background: 'linear-gradient(#e9eff6,#f8fafc)' }}>
       <hemisphereLight args={['#ffffff', '#cfc9bf', 0.7]} />
       <ambientLight intensity={0.2} />
@@ -611,20 +664,23 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
         shadow-camera-near={0.5} shadow-camera-far={size * 6} />
       <directionalLight position={[-size, size * 0.8, -size * 0.6]} intensity={0.35} />
 
+      <group {...measureHandlers}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -model.slab - 0.03, 0]} receiveShadow>
         <planeGeometry args={[size * 8, size * 8]} />
         <meshStandardMaterial color={PALETTE.ground} roughness={1} />
       </mesh>
-      <gridHelper args={[Math.max(60, size * 3), Math.max(60, size * 3), '#c4ccd6', '#d7dde5']} position={[0, -model.slab - 0.02, 0]} />
+      <gridHelper args={[Math.max(60, size * 3), Math.max(60, size * 3), '#c4ccd6', '#d7dde5']} position={[0, -model.slab - 0.02, 0]} raycast={noRaycast} />
 
       {visible.map((f) => (
-        <Floor key={f.index} f={f} model={model} opts={opts} cut={cutaway ? cutSides : null} aboveShown={visible.some((v) => v.index === f.index + 1)} belowShown={visible.some((v) => v.index === f.index - 1)} selectedId={selectedId} selectedFurnitureId={selectedFurnitureId} selectedOpeningId={selectedOpeningId} hoverId={hoverId}
+        <Floor key={f.index} f={f} model={model} opts={opts} cut={cutaway ? cutSides : null} aboveShown={visible.some((v) => v.index === f.index + 1)} belowShown={visible.some((v) => v.index === f.index - 1)} measuring={measuring} selectedId={selectedId} selectedFurnitureId={selectedFurnitureId} selectedOpeningId={selectedOpeningId} hoverId={hoverId}
           onSelect={onSelect} onHover={setHoverId} labelsOn={opts.showLabels && !roofVisible && f.index === labelFloor} />
       ))}
       {opts.look && (opts.look.entrance || opts.look.garden) && (
         <Surroundings model={model} look={opts.look} wireframe={opts.wireframe} showEntrance={visible.some((f) => f.index === 1)} />
       )}
       {roofVisible && <Roof model={model} wireframe={opts.wireframe} roofColor={opts.look?.roof} look={opts.look} />}
+      </group>
+      {measure && <Measurements items={measure.items} pending={mPending} hover={mHover} fmt={measure.fmt} size={model.labelSize * 0.8} />}
 
       <OrbitControls makeDefault enableDamping dampingFactor={0.1} minDistance={2} maxDistance={size * 10} maxPolarAngle={Math.PI / 2 - 0.02} />
       <CameraRig model={model} view={opts.view} nonce={opts.resetNonce} pad={opts.look?.garden ? GARDEN_MARGIN + 0.5 : 0.5} />

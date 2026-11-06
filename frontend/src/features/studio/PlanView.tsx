@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { itemRect } from './furniture'
 import type { Stair } from './stairs'
 import { dragRect, rectProblem, type Grip, type Rect } from './roomEdit'
+import { dist2, snapPoint, snapTargets, type Measure2D, type P2 } from './measure'
 import type { FloorModel, Model3D } from './model'
 import { buildPlanShapes, type PlanShapes } from './plan2d'
 
@@ -39,6 +40,8 @@ interface Props {
   onMessage: (message: string) => void
   /** move / resize a room (building-local metres); when missing, rooms cannot be dragged */
   onChangeRoom?: (id: string, rect: { pos_x: number; pos_y: number; length: number; width: number }) => Promise<void>
+  /** measuring: clicks place measurement points instead of selecting / dragging */
+  measure?: { items: Measure2D[]; onAdd: (m: Measure2D) => void; fmt: (metres: number) => string } | null
 }
 
 const snap = (v: number, s = 0.05) => Math.round(v / s) * s
@@ -53,6 +56,18 @@ export function PlanView(props: Props) {
   const [drag, setDrag] = useState<{ kind: 'furniture' | 'opening'; id: string; cx: number; cz: number; ok: boolean; dx: number; dz: number } | null>(null)
   const [roomDrag, setRoomDrag] = useState<{ id: string; grip: Grip; start: Rect; px: number; pz: number; rect: Rect; problem: string | null; moved: boolean; saving?: boolean } | null>(null)
   const justDragged = useRef(false)
+  const [mPending, setMPending] = useState<P2 | null>(null)
+  const [mHover, setMHover] = useState<P2 | null>(null)
+  const measuring = !!props.measure
+  const targets = useMemo(() => (floor && measuring ? snapTargets(floor, model) : null), [floor, model, measuring])
+  useEffect(() => { if (!measuring) { setMPending(null); setMHover(null) } }, [measuring])
+  // Esc first drops a half-finished measurement (before the Studio's own Esc handling)
+  useEffect(() => {
+    if (!mPending) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setMPending(null) } }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [mPending])
 
   if (!floor || !shapes) return null
   const { view, fontSize: fs } = shapes
@@ -168,8 +183,16 @@ export function PlanView(props: Props) {
   const tick = fs * 0.5
 
   return (
-    <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className={cn('h-full w-full touch-none select-none bg-white', mode !== 'select' && 'cursor-crosshair')}
-      role="img" aria-label={`2D floor plan of floor ${floor.index}`} onPointerMove={onMove} onPointerUp={onUp}
+    <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className={cn('h-full w-full touch-none select-none bg-white', (mode !== 'select' || measuring) && 'cursor-crosshair')}
+      role="img" aria-label={`2D floor plan of floor ${floor.index}`} onPointerMove={(e) => { if (measuring) { const q = toPlan(e); setMHover(snapPoint([q.x, q.z], targets!).p); return } onMove(e) }} onPointerUp={onUp}
+      onPointerDownCapture={(e) => {
+        if (!measuring || e.button !== 0) return
+        e.stopPropagation()
+        const q = toPlan(e), pt = snapPoint([q.x, q.z], targets!).p
+        if (!mPending) setMPending(pt)
+        else { if (dist2(mPending, pt) > 0.01) props.measure!.onAdd({ a: mPending, b: pt }); setMPending(null) }
+      }}
+      onClickCapture={(e) => { if (measuring) e.stopPropagation() }}
       onClick={() => { if (justDragged.current) { justDragged.current = false; return } props.onSelectRoom(null); props.onSelectFurniture(null); props.onSelectOpening(null) }}>
       <defs>
         <pattern id="plan-grid" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M 1 0 L 0 0 0 1" fill="none" stroke="#eef1f5" strokeWidth={lw * 0.4} /></pattern>
@@ -268,10 +291,13 @@ export function PlanView(props: Props) {
         <text x={dimX - fs * 0.5} y={0} textAnchor="middle" stroke="none" transform={`rotate(-90 ${dimX - fs * 0.5} 0)`}>{W.toFixed(2)} m</text>
       </g>
       <text x={view.x + fs * 0.6} y={view.y + fs * 1.4} fontSize={fs * 0.9} fill="#64748b" pointerEvents="none">Floor {floor.index} · N ↑</text>
-      {props.onChangeRoom && mode === 'select' && props.selectedRoomId && !roomDrag && floor.rooms.some((r) => r.id === props.selectedRoomId) && (
+      {props.measure && (
+        <MeasureLayer items={props.measure.items} pending={mPending} hover={mHover} fmt={props.measure.fmt} lw={lw} fs={fs} />
+      )}
+      {props.onChangeRoom && !measuring && mode === 'select' && props.selectedRoomId && !roomDrag && floor.rooms.some((r) => r.id === props.selectedRoomId) && (
         <text x={view.x + fs * 0.6} y={view.y + fs * 2.6} fontSize={fs * 0.8} fill="#64748b" pointerEvents="none">Drag the room to move it · drag its edges or corners to resize</text>
       )}
-      <RoomEditOverlay floor={floor} selectedId={mode === 'select' && props.onChangeRoom ? props.selectedRoomId : null} drag={roomDrag} lw={lw} fs={fs} onGrip={startRoomDrag} />
+      <RoomEditOverlay floor={floor} selectedId={mode === 'select' && props.onChangeRoom && !measuring ? props.selectedRoomId : null} drag={roomDrag} lw={lw} fs={fs} onGrip={startRoomDrag} />
     </svg>
   )
 }
@@ -339,6 +365,35 @@ function RoomEditOverlay({ floor, selectedId, drag, lw, fs, onGrip }: {
             style={{ cursor: CURSOR[g] }} onPointerDown={(e) => onGrip(e, id, g)} onClick={(e) => e.stopPropagation()} aria-label={`Resize ${g}`} />
         )
       })}
+    </g>
+  )
+}
+
+/** Measurement lines with their length (and the across / along parts) in the 2D plan. */
+function MeasureLayer({ items, pending, hover, fmt, lw, fs }: { items: Measure2D[]; pending: P2 | null; hover: P2 | null; fmt: (m: number) => string; lw: number; fs: number }) {
+  const one = (m: Measure2D, key: string, preview = false) => {
+    const d = dist2(m.a, m.b)
+    const dx = Math.abs(m.b[0] - m.a[0]), dz = Math.abs(m.b[1] - m.a[1])
+    const mid: P2 = [(m.a[0] + m.b[0]) / 2, (m.a[1] + m.b[1]) / 2]
+    const main = fmt(d), sub = dx > 0.05 && dz > 0.05 ? `↔ ${fmt(dx)} · ↕ ${fmt(dz)}` : ''
+    const w = Math.max(main.length, sub.length * 0.82) * fs * 0.55 + fs * 0.8, h = sub ? fs * 2.2 : fs * 1.3
+    const col = preview ? '#0f766e99' : '#0f766e'
+    return (
+      <g key={key}>
+        <line x1={m.a[0]} y1={m.a[1]} x2={m.b[0]} y2={m.b[1]} stroke={col} strokeWidth={lw * 1.4} strokeDasharray={preview ? `${lw * 3} ${lw * 2}` : undefined} />
+        {[m.a, m.b].map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r={lw * 2.2} fill="#fff" stroke={col} strokeWidth={lw} />)}
+        <rect x={mid[0] - w / 2} y={mid[1] - h / 2} width={w} height={h} rx={fs * 0.25} fill="#fff" fillOpacity={0.95} stroke={col} strokeWidth={lw * 0.6} />
+        <text x={mid[0]} y={mid[1] - (sub ? fs * 0.35 : 0)} textAnchor="middle" dominantBaseline="middle" fontSize={fs * 0.85} fontWeight={700} fill="#0f766e">{main}</text>
+        {sub && <text x={mid[0]} y={mid[1] + fs * 0.55} textAnchor="middle" dominantBaseline="middle" fontSize={fs * 0.65} fill="#0f766e">{sub}</text>}
+      </g>
+    )
+  }
+  return (
+    <g pointerEvents="none" data-testid="measurements">
+      {items.map((m, i) => one(m, `m${i}`))}
+      {pending && hover && dist2(pending, hover) > 0.01 && one({ a: pending, b: hover }, 'preview', true)}
+      {pending && !hover && <circle cx={pending[0]} cy={pending[1]} r={lw * 2.2} fill="#fff" stroke="#0f766e" strokeWidth={lw} />}
+      {!pending && hover && <circle cx={hover[0]} cy={hover[1]} r={lw * 1.6} fill="#0f766e" fillOpacity={0.6} />}
     </g>
   )
 }

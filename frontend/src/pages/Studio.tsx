@@ -17,6 +17,7 @@ import { FurniturePanel, IssuesPanel, OpeningPanel } from '@/features/studio/Stu
 import { LookPanel } from '@/features/studio/LookPanel'
 import { FloorsPanel } from '@/features/studio/FloorsPanel'
 import { useHistory, type HistoryApi } from '@/features/studio/history'
+import type { Measure2D, Measure3D } from '@/features/studio/measure'
 import { useStudioLayout } from '@/features/studio/useStudioLayout'
 import { BuildingDialog } from '@/features/projects/BuildingDialog'
 import { useFloorplanUrl } from '@/features/projects/FloorPlanPanel'
@@ -94,6 +95,9 @@ function StudioBody({ projectId }: { projectId: string }) {
   const [selFurn, setSelFurn] = useState<string | null>(null)
   const [selOpen, setSelOpen] = useState<string | null>(null)
   const [mode, setMode] = useState<PlanMode>('select')
+  const [measuring, setMeasuring] = useState(false)
+  const [m2d, setM2d] = useState<Measure2D[]>([])
+  const [m3d, setM3d] = useState<Measure3D[]>([])
   const [editBuilding, setEditBuilding] = useState(false)
   const [genOpen, setGenOpen] = useState(false)
   const [genVariant, setGenVariant] = useState(0)
@@ -137,6 +141,12 @@ function StudioBody({ projectId }: { projectId: string }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+  useEffect(() => {
+    if (!measuring) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMeasuring(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [measuring])
 
   if (loading && !p) return <Spinner />
   if (error || !p) return <ErrorState message={error ?? 'Project not found.'} onRetry={reload} />
@@ -231,6 +241,10 @@ function StudioBody({ projectId }: { projectId: string }) {
           <ToggleBtn on={view === 'top'} onClick={() => { setView('top'); setNonce((n) => n + 1) }} icon={<Square className="h-3.5 w-3.5" />}>Top-down plan</ToggleBtn>
           <ToggleBtn on={view === 'plan'} onClick={() => setView('plan')} icon={<MapIcon className="h-3.5 w-3.5" />}>2D plan</ToggleBtn>
           <UndoRedo H={H} onUndo={undo} onRedo={redo} />
+          <ToggleBtn on={measuring} onClick={() => { setMeasuring((v) => !v); setMode('select') }} icon={<Ruler className="h-3.5 w-3.5" />} title="Measure distances (Esc to stop)">Measure</ToggleBtn>
+          {(view === 'plan' ? m2d : m3d).length > 0 && (
+            <Button size="sm" variant="outline" onClick={() => (view === 'plan' ? setM2d([]) : setM3d([]))}>Clear {(view === 'plan' ? m2d : m3d).length} measurement{(view === 'plan' ? m2d : m3d).length === 1 ? '' : 's'}</Button>
+          )}
           {view !== 'plan' && <Button size="sm" variant="outline" onClick={() => setNonce((n) => n + 1)}><RotateCcw className="h-3.5 w-3.5" /> Reset camera</Button>}
           <Select aria-label="Floor" value={String(floor)} onChange={(e) => setFloor(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="h-8 w-36 text-xs">
             <option value="all">All floors</option>
@@ -255,11 +269,11 @@ function StudioBody({ projectId }: { projectId: string }) {
                 onSelectFurniture={(id) => { setSelFurn(id); setSelOpen(null); const it = allFurniture.find((i) => i.id === id); if (it) setSelected(it.room_id) }}
                 onSelectOpening={(id) => { setSelOpen(id); setSelFurn(null); const o = model.floors.flatMap((f) => f.openings).find((x) => x.id === id); if (o) setSelected(o.roomId) }}
                 canPlaceFurniture={S.canPlaceFurniture} onMoveFurniture={S.moveFurniture} canMoveOpening={S.canMoveOpening} onMoveOpening={S.moveOpening}
-                onChangeRoom={changeRoom}
+                onChangeRoom={changeRoom} measure={measuring ? { items: m2d, onAdd: (m) => setM2d((l) => [...l, m]), fmt: units.length } : null}
                 onAddOpening={(kind, wallId, along) => { const id = S.addOpening(kind, wallId, along, selected); if (id) { setSelOpen(id); setMode('select') } }} onMessage={(m) => toast.error(m)} />
             ) : (
               <ErrorBoundary label="The 3D viewer" resetKey={model.length + model.width}>
-                <BuildingViewer model={model} selectedId={selected} selectedFurnitureId={selFurn} selectedOpeningId={selOpen} onSelect={(id) => { setSelected(id); if (id) { setSelFurn(null); setSelOpen(null) } }}
+                <BuildingViewer model={model} measure={measuring ? { items: m3d, onAdd: (m) => setM3d((l) => [...l, m]), fmt: units.length } : null} selectedId={selected} selectedFurnitureId={selFurn} selectedOpeningId={selOpen} onSelect={(id) => { setSelected(id); if (id) { setSelFurn(null); setSelOpen(null) } }}
                   opts={{ view: view as ViewMode, floor, showLabels, showRoof, showFurniture, showWalls, showOpenings, doorsOpen, wireframe, resetNonce: nonce, look: S.look }} />
               </ErrorBoundary>
             )}
@@ -278,7 +292,9 @@ function StudioBody({ projectId }: { projectId: string }) {
               </div>
             )}
             <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-white/85 px-2 py-1 text-[11px] text-slate-600">
-              {view === 'plan'
+              {measuring
+                ? <>Click two points to measure{view === 'plan' ? ' (snaps to wall and room corners)' : ' on any wall, floor or object'} · Esc to stop</>
+                : view === 'plan'
                 ? mode === 'select' ? 'Click a room · drag furniture and doors/windows · use “Add door / window” on the right' : `Click a wall to place a ${mode === 'add-door' ? 'door' : 'window'}`
                 : <>Drag to rotate · scroll to zoom · right-drag to pan · click a room to select{view === 'top' && floor === 'all' ? ' · plan shows floor 1 (choose a floor above to change)' : ''}</>}
             </div>
@@ -357,7 +373,7 @@ function StudioBody({ projectId }: { projectId: string }) {
           </CardBody>
         </Card>
 
-        <OpeningPanel opening={selOpening} owner={openingOwner} mode={mode} onMode={(m) => { setMode(m); if (m !== 'select') setView('plan') }}
+        <OpeningPanel opening={selOpening} owner={openingOwner} mode={mode} onMode={(m) => { setMode(m); if (m !== 'select') { setView('plan'); setMeasuring(false) } }}
           onChange={(patch) => selOpening && S.changeOpening(selOpening.id, patch)} onNudge={(d) => selOpening && S.nudgeOpening(selOpening.id, d)}
           onFlip={() => selOpening && S.flipOpening(selOpening.id)} onDelete={() => selOpening && S.deleteOpening(selOpening.id)} />
 
