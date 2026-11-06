@@ -15,6 +15,7 @@
 import type { ProjectDetail, Room } from '@/types'
 import { circulationOk, furnishRoom, partsFor, placementProblem, type FurnitureItem, type FurniturePart } from './furniture'
 import { roomSignature, type LayoutSummary, type SavedLayout, type SavedFurniture, type SavedOpening } from './layoutStore'
+import { buildStair, rectOverlap, stairHole, type Stair, type StairHole } from './stairs'
 
 export type { FurnitureItem, FurniturePart } from './furniture'
 
@@ -116,6 +117,10 @@ export interface FloorModel {
   furnitureItems: FurnitureItem[]
   furniture: FurniturePart[]
   schematic: boolean
+  /** stairs going up from this floor (staircase rooms with a staircase directly above) */
+  stairs: Stair[]
+  /** stairwell openings in this floor (over the stairs of the floor below) */
+  holes: StairHole[]
 }
 
 /** Everything needed to save the current arrangement back to the project. */
@@ -568,7 +573,7 @@ function buildFloor(ctx: FloorCtx): { floor: FloorModel; overflow: boolean } {
 
   return {
     floor: {
-      index: fl, y, slabY: y - T / 2, rooms: boxes, walls, openings, furnitureItems, schematic,
+      index: fl, y, slabY: y - T / 2, rooms: boxes, walls, openings, furnitureItems, schematic, stairs: [], holes: [],
       furniture: furnitureItems.flatMap((it) => partsFor(it, y)),
     },
     overflow: boxes.some((b) => b.overflow),
@@ -631,6 +636,26 @@ function validateAccess(boxes: RoomBox[], openings: Opening[], openEdge: Set<str
   }
 }
 
+/** Real stairs between staircase rooms that sit above each other, and the stairwell openings they need. */
+function addStairs(floors: FloorModel[], rise: number) {
+  for (let i = 0; i + 1 < floors.length; i++) {
+    const lower = floors[i], upper = floors[i + 1]
+    for (const r of lower.rooms) {
+      if (r.type !== 'staircase' || r.overflow) continue
+      for (const u of upper.rooms) {
+        if (u.type !== 'staircase' || u.overflow) continue
+        const area = rectOverlap(r, u)
+        if (!area) continue
+        const s = buildStair(r, area, rise, lower.rooms)
+        if (!s) continue
+        lower.stairs.push(s)
+        upper.holes.push(stairHole(s, upper.y))
+        break
+      }
+    }
+  }
+}
+
 export function buildModel(p: ProjectDetail | null | undefined, opts: BuildOptions = {}): Model3D {
   if (!p) return empty(['No project loaded.'])
   const errors = validateProject(p)
@@ -649,6 +674,7 @@ export function buildModel(p: ProjectDetail | null | undefined, opts: BuildOptio
     if (floor.schematic) anySchematic = true
     floors.push(floor)
   }
+  addStairs(floors, H + T)
   if (anySchematic) issues.push({ severity: 'info', code: 'schematic', message: 'Some rooms have no stored position: they are arranged in a schematic layout (not the original floor plan).' })
   if (!validRooms.length) issues.push({ severity: 'info', code: 'no-rooms', message: 'No rooms yet. Generate a layout from the building details or add rooms.' })
 

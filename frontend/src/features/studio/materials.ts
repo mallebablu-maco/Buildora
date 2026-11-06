@@ -48,6 +48,8 @@ export const PALETTE = {
   frame: '#fbfaf7',
   door: '#8a5d3c',
   glass: '#a9d0e8',
+  stair: '#d9d4cb',
+  rail: '#3f4650',
   roof: '#4f5a66',
   ground: '#e6eaef',
   highlight: '#f97316',

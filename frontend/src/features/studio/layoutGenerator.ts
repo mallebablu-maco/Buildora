@@ -141,6 +141,8 @@ export function generateLayout(input: GeneratorConfig): GeneratorResult {
   const floorItems = assignFloors(cfg, all)
   const rooms: RoomInput[] = []
   const mirror = (cfg.variant & 1) === 1, flip = (cfg.variant & 2) === 2
+  // depth of the back row on the first floor with a staircase: upper floors try to keep the passage (and stairs) right above it
+  let stairBack: number | null = null
 
   for (let f = 0; f < cfg.floors; f++) {
     const items = floorItems[f]
@@ -202,7 +204,7 @@ export function generateLayout(input: GeneratorConfig): GeneratorResult {
     }
     interface Plan { bands: Item[][]; passage: number; depths: number[]; widths: number[][] }
     type Attempt = { plan: Plan } | { failBand: Item[]; message: string; suggestions: string[] }
-    const attempt = (pubI: Item[], prvI: Item[], withPassage = usePassage): Attempt => {
+    const attempt = (pubI: Item[], prvI: Item[], withPassage = usePassage, backDepth: number | null = null): Attempt => {
       const bands = [pubI, prvI].filter((b) => b.length)
       const passage = withPassage && bands.length === 2 ? PASSAGE : 0
       const depthTotal = W - passage
@@ -218,6 +220,13 @@ export function generateLayout(input: GeneratorConfig): GeneratorResult {
       if (excess > 1e-9) { const k = depths.indexOf(Math.max(...depths)); depths[k] -= excess }
       depths = depths.map(r05)
       depths[depths.length - 1] = r3(depthTotal - depths.slice(0, -1).reduce((a, b) => a + b, 0))
+      if (backDepth != null) {
+        if (bands.length !== 2 || !passage) return { failBand: bands[0], message: '', suggestions: [] }
+        const back = flip ? 0 : 1
+        depths[back] = backDepth
+        depths[1 - back] = r3(depthTotal - backDepth)
+        if (depths.some((d, k) => d < need[k] - 1e-9)) return { failBand: bands[0], message: '', suggestions: [] }
+      }
       const widths = bands.map((b, k) => distribute(L, b, depths[k]))
       const bad = widths.findIndex((w) => w === null)
       if (bad >= 0) {
@@ -231,7 +240,9 @@ export function generateLayout(input: GeneratorConfig): GeneratorResult {
     }
     // If a zone is too crowded, move rooms (bathrooms first) into the other zone before giving up.
     const MOVE_ORDER: RoomKind[] = ['bathroom', 'store', 'study', 'dining', 'kitchen', 'bedroom']
-    let res = attempt(pub, prv)
+    // upper floors: first try to keep the passage and staircase exactly above the floor below; otherwise lay out freely
+    const aligned: Attempt | null = stairs && stairBack != null ? attempt(pub, prv, usePassage, stairBack) : null
+    let res: Attempt = aligned && 'plan' in aligned ? aligned : attempt(pub, prv)
     if (!('plan' in res) && usePassage) { const noPassage = attempt(pub, prv, false); if ('plan' in noPassage) res = noPassage } // narrow plan: rooms open onto each other
     for (let guard = 0; guard < items.length && !('plan' in res); guard++) {
       const from = res.failBand === pub ? pub : prv
@@ -244,7 +255,7 @@ export function generateLayout(input: GeneratorConfig): GeneratorResult {
       if (!('plan' in res) && usePassage) { const noPassage = attempt(pub, prv, false); if ('plan' in noPassage) res = noPassage }
     }
     if (!('plan' in res)) return fail(res.message, ...res.suggestions)
-    const { bands, passage, depths, widths } = res.plan
+    const { bands, passage, depths, widths }: Plan = res.plan
 
     // z positions: public band at the front (+Z), private band at the back; `flip` swaps them
     const order = bands.length === 2 ? (flip ? [0, 1] : [1, 0]) : [0] // indices into `bands` from z=0 (back/north) to the front
@@ -265,6 +276,7 @@ export function generateLayout(input: GeneratorConfig): GeneratorResult {
         x += w
       })
     })
+    if (passage && stairs && stairBack == null) stairBack = depths[order[0]]
     if (passage) {
       const stairW = stairs ? Math.min(STAIR_W, L * 0.3) : 0
       if (stairs) rooms.push(mk('Staircase', 'staircase', 0, passageZ, stairW, passage, 0, 0))

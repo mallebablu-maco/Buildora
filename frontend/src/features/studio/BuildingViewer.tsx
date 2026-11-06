@@ -7,6 +7,7 @@ import { Label } from './Label'
 import { floorKind, getTextures, PALETTE } from './materials'
 import { itemRect } from './furniture'
 import type { Box, FloorModel, Model3D, Opening, RoomBox, Side } from './model'
+import { subtractRects, type Rect, type Segment, type Stair, type StairHole } from './stairs'
 
 export type ViewMode = 'exterior' | 'top'
 export interface ViewerOptions {
@@ -33,6 +34,28 @@ function boxesGeometry(boxes: Box[]): THREE.BufferGeometry | null {
   const merged = mergeGeometries(geos, false)
   geos.forEach((g) => g.dispose())
   return merged
+}
+
+/** Thin square bars between two points (handrails), merged into one geometry. */
+function railsGeometry(segs: Segment[], t = 0.045): THREE.BufferGeometry | null {
+  if (!segs.length) return null
+  const geos = segs.map(({ a, b }) => {
+    const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b)
+    const g = new THREE.BoxGeometry(t, t, A.distanceTo(B))
+    const m = new THREE.Matrix4().lookAt(A, B, Math.abs(B.y - A.y) > 0.999 * A.distanceTo(B) ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0))
+    m.setPosition(A.clone().add(B).multiplyScalar(0.5))
+    g.applyMatrix4(m)
+    return g
+  })
+  const merged = mergeGeometries(geos, false)
+  geos.forEach((g) => g.dispose())
+  return merged
+}
+
+function useRailsGeometry(segs: Segment[]) {
+  const geo = useMemo(() => railsGeometry(segs), [segs])
+  useEffect(() => () => { geo?.dispose() }, [geo])
+  return geo
 }
 
 function useBoxesGeometry(boxes: Box[]) {
@@ -104,8 +127,33 @@ function floorGeometry(sx: number, sz: number, unit: number) {
   return g
 }
 
-function RoomFloor({ r, mat, geo }: { r: RoomBox; mat: THREE.Material; geo: THREE.BufferGeometry }) {
-  return <mesh geometry={geo} material={mat} position={[r.cx, r.y + 0.012, r.cz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow />
+function RoomFloor({ r, mat, geo, at }: { r: RoomBox; mat: THREE.Material; geo: THREE.BufferGeometry; at?: Rect }) {
+  const [cx, cz] = at ? [(at.x0 + at.x1) / 2, (at.z0 + at.z1) / 2] : [r.cx, r.cz]
+  return <mesh geometry={geo} material={mat} position={[cx, r.y + 0.012, cz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow />
+}
+
+/** Treads, landings and handrails of the stairs going up from this floor, plus guard rails around stairwells in it. */
+function Stairs({ stairs, holes = [], wireframe, clipTop = null, clipBottom = null }: { stairs: Stair[]; holes?: StairHole[]; wireframe: boolean; clipTop?: number | null; clipBottom?: number | null }) {
+  // floor above hidden: stop the stairs at the wall tops; floor below hidden: show only the top of the flight in the stairwell
+  const clip = useMemo(() => {
+    const planes: THREE.Plane[] = []
+    if (clipTop != null) planes.push(new THREE.Plane(new THREE.Vector3(0, -1, 0), clipTop))
+    if (clipBottom != null) planes.push(new THREE.Plane(new THREE.Vector3(0, 1, 0), -clipBottom))
+    return planes.length ? planes : undefined
+  }, [clipTop, clipBottom])
+  const steps = useMemo(() => stairs.flatMap((s) => s.steps), [stairs])
+  const posts = useMemo(() => [...stairs.flatMap((s) => s.posts), ...holes.flatMap((h) => h.guard.posts)], [stairs, holes])
+  const rails = useMemo(() => [...stairs.flatMap((s) => s.rails), ...holes.flatMap((h) => h.guard.rails)], [stairs, holes])
+  const stepGeo = useBoxesGeometry(steps)
+  const postGeo = useBoxesGeometry(posts)
+  const railGeo = useRailsGeometry(rails)
+  return (
+    <>
+      {stepGeo && <mesh geometry={stepGeo} castShadow receiveShadow><meshStandardMaterial color={PALETTE.stair} roughness={0.8} wireframe={wireframe} clippingPlanes={clip} clipShadows /></mesh>}
+      {postGeo && <mesh geometry={postGeo} castShadow><meshStandardMaterial color={PALETTE.rail} roughness={0.4} metalness={0.5} wireframe={wireframe} clippingPlanes={clip} clipShadows /></mesh>}
+      {railGeo && <mesh geometry={railGeo} castShadow><meshStandardMaterial color={PALETTE.rail} roughness={0.4} metalness={0.5} wireframe={wireframe} clippingPlanes={clip} clipShadows /></mesh>}
+    </>
+  )
 }
 
 function DoorLeaf({ o, y, wireframe, open }: { o: Opening; y: number; wireframe: boolean; open: boolean }) {
@@ -145,8 +193,8 @@ function openingParts(openings: Opening[], y: number): { frames: Box[]; glass: B
   return { frames, glass }
 }
 
-function Floor({ f, model, opts, cut, selectedId, selectedFurnitureId, selectedOpeningId, hoverId, onSelect, onHover, labelsOn }: {
-  f: FloorModel; model: Model3D; opts: ViewerOptions; cut: Side[] | null
+function Floor({ f, model, opts, cut, aboveShown, belowShown, selectedId, selectedFurnitureId, selectedOpeningId, hoverId, onSelect, onHover, labelsOn }: {
+  f: FloorModel; model: Model3D; opts: ViewerOptions; cut: Side[] | null; aboveShown: boolean; belowShown: boolean
   selectedId: string | null; selectedFurnitureId: string | null; selectedOpeningId: string | null; hoverId: string | null; onSelect: (id: string | null) => void; onHover: (id: string | null) => void; labelsOn: boolean
 }) {
   const wf = opts.wireframe
@@ -178,8 +226,21 @@ function Floor({ f, model, opts, cut, selectedId, selectedFurnitureId, selectedO
   }, [f.furniture])
   useEffect(() => () => furnitureGeos.forEach((g) => g.geo?.dispose()), [furnitureGeos])
 
-  const floorGeos = useMemo(() => f.rooms.map((r) => ({ id: r.id, geo: floorGeometry(r.sx, r.sz, floorKind(r.type) === 'tile' ? 0.6 : floorKind(r.type) === 'wood' ? 1.0 : 1.2) })), [f.rooms])
+  const floorGeos = useMemo(() => f.rooms.flatMap((r) => {
+    const unit = floorKind(r.type) === 'tile' ? 0.6 : floorKind(r.type) === 'wood' ? 1.0 : 1.2
+    const holes = f.holes.map((h) => h.rect)
+    // rooms over a stairwell keep their floor finish only around the opening
+    const cut = holes.length ? subtractRects(r, holes) : null
+    if (!cut || (cut.length === 1 && cut[0].x0 === r.x0 && cut[0].x1 === r.x1 && cut[0].z0 === r.z0 && cut[0].z1 === r.z1)) return [{ id: r.id, key: r.id, at: undefined, geo: floorGeometry(r.sx, r.sz, unit) }]
+    return cut.map((c, i) => ({ id: r.id, key: `${r.id}-${i}`, at: c as Rect | undefined, geo: floorGeometry(c.x1 - c.x0, c.z1 - c.z0, unit) }))
+  }), [f.rooms, f.holes])
   useEffect(() => () => floorGeos.forEach((g) => g.geo.dispose()), [floorGeos])
+  const slabGeo = useBoxesGeometry(useMemo(() => {
+    if (!f.holes.length) return []
+    const e = wallT / 2
+    return subtractRects({ x0: -L / 2 - e, x1: L / 2 + e, z0: -W / 2 - e, z1: W / 2 + e }, f.holes.map((h) => h.rect))
+      .map((r) => ({ cx: (r.x0 + r.x1) / 2, cy: f.slabY, cz: (r.z0 + r.z1) / 2, sx: r.x1 - r.x0, sy: slab, sz: r.z1 - r.z0 }))
+  }, [f.holes, f.slabY, L, W, wallT, slab]))
 
   const mats = useMemo(() => ({
     wood: new THREE.MeshStandardMaterial({ map: tex.wood, roughness: 0.7, wireframe: wf }),
@@ -190,12 +251,18 @@ function Floor({ f, model, opts, cut, selectedId, selectedFurnitureId, selectedO
 
   return (
     <group>
-      <mesh position={[0, f.slabY, 0]} castShadow receiveShadow>
-        <boxGeometry args={[L + wallT, slab, W + wallT]} />
-        <meshStandardMaterial color={PALETTE.slab} roughness={0.95} wireframe={wf} />
-      </mesh>
+      {f.holes.length ? (
+        slabGeo && <mesh geometry={slabGeo} castShadow receiveShadow><meshStandardMaterial color={PALETTE.slab} roughness={0.95} wireframe={wf} /></mesh>
+      ) : (
+        <mesh position={[0, f.slabY, 0]} castShadow receiveShadow>
+          <boxGeometry args={[L + wallT, slab, W + wallT]} />
+          <meshStandardMaterial color={PALETTE.slab} roughness={0.95} wireframe={wf} />
+        </mesh>
+      )}
 
-      {f.rooms.map((r) => { const g = floorGeos.find((x) => x.id === r.id)!; return <RoomFloor key={r.id} r={r} mat={mats[floorKind(r.type)]} geo={g.geo} /> })}
+      {f.rooms.map((r) => floorGeos.filter((x) => x.id === r.id).map((g) => <RoomFloor key={g.key} r={r} at={g.at} mat={mats[floorKind(r.type)]} geo={g.geo} />))}
+      <Stairs stairs={f.stairs} holes={f.holes} wireframe={wf} clipTop={aboveShown ? null : f.y + model.height} />
+      {!belowShown && f.index > 1 && <Stairs stairs={model.floors[f.index - 2]?.stairs ?? []} wireframe={wf} clipBottom={f.y - 1.4} />}
 
       {wallGeo && opts.showWalls && (
         <mesh geometry={wallGeo} castShadow receiveShadow>
@@ -329,7 +396,7 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
 
   return (
     <Canvas shadows dpr={[1, 2]} camera={{ fov: 35, near: 0.1, far: 3000, position: [20, 15, 20] }} onPointerMissed={() => onSelect(null)}
-      gl={{ antialias: true }} style={{ background: 'linear-gradient(#e9eff6,#f8fafc)' }}>
+      gl={{ antialias: true }} onCreated={({ gl }) => { gl.localClippingEnabled = true }} style={{ background: 'linear-gradient(#e9eff6,#f8fafc)' }}>
       <hemisphereLight args={['#ffffff', '#cfc9bf', 0.7]} />
       <ambientLight intensity={0.2} />
       <directionalLight castShadow position={[size * 0.9, size * 1.5, size * 0.6]} intensity={1.7}
@@ -345,7 +412,7 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
       <gridHelper args={[Math.max(60, size * 3), Math.max(60, size * 3), '#c4ccd6', '#d7dde5']} position={[0, -model.slab - 0.02, 0]} />
 
       {visible.map((f) => (
-        <Floor key={f.index} f={f} model={model} opts={opts} cut={cutaway ? cutSides : null} selectedId={selectedId} selectedFurnitureId={selectedFurnitureId} selectedOpeningId={selectedOpeningId} hoverId={hoverId}
+        <Floor key={f.index} f={f} model={model} opts={opts} cut={cutaway ? cutSides : null} aboveShown={visible.some((v) => v.index === f.index + 1)} belowShown={visible.some((v) => v.index === f.index - 1)} selectedId={selectedId} selectedFurnitureId={selectedFurnitureId} selectedOpeningId={selectedOpeningId} hoverId={hoverId}
           onSelect={onSelect} onHover={setHoverId} labelsOn={opts.showLabels && !roofVisible && f.index === labelFloor} />
       ))}
       {roofVisible && <Roof model={model} wireframe={opts.wireframe} />}

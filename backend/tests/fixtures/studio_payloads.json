@@ -995,8 +995,8 @@
     {
      "name": "Bedroom 1",
      "room_type": "bedroom",
-     "length": 5.1,
-     "width": 3.55,
+     "length": 5.2,
+     "width": 3.2,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -1004,41 +1004,41 @@
      "windows": 2,
      "area_override": null,
      "pos_x": 0,
-     "pos_y": 4.45
+     "pos_y": 4.8
     },
     {
      "name": "Study",
      "room_type": "study",
-     "length": 3.05,
-     "width": 3.55,
+     "length": 3.15,
+     "width": 3.2,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
      "doors": 1,
      "windows": 1,
      "area_override": null,
-     "pos_x": 5.1,
-     "pos_y": 4.45
+     "pos_x": 5.2,
+     "pos_y": 4.8
     },
     {
      "name": "Bathroom 2",
      "room_type": "bathroom",
-     "length": 1.85,
-     "width": 3.55,
+     "length": 1.65,
+     "width": 3.2,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
      "doors": 1,
      "windows": 1,
      "area_override": null,
-     "pos_x": 8.15,
-     "pos_y": 4.45
+     "pos_x": 8.35,
+     "pos_y": 4.8
     },
     {
      "name": "Bedroom 2",
      "room_type": "bedroom",
      "length": 5,
-     "width": 3.25,
+     "width": 3.6,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -1052,7 +1052,7 @@
      "name": "Bedroom 3",
      "room_type": "bedroom",
      "length": 5,
-     "width": 3.25,
+     "width": 3.6,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -1074,7 +1074,7 @@
      "windows": 0,
      "area_override": null,
      "pos_x": 0,
-     "pos_y": 3.25
+     "pos_y": 3.6
     },
     {
      "name": "Passage",
@@ -1088,7 +1088,7 @@
      "windows": 0,
      "area_override": null,
      "pos_x": 2.4,
-     "pos_y": 3.25
+     "pos_y": 3.6
     }
    ],
    "room_ids": [
@@ -1109,7 +1109,7 @@
    "layouts": {
     "automatic": {
      "version": 1,
-     "signature": "10000|8000|2|3000|230|r0:0:4800:10000:3200:1:1:2:living;r1:0:0:2050:3600:1:1:1:bathroom;r10:5000:0:5000:3250:2:1:2:bedroom;r11:0:3250:2400:1200:2:0:0:staircase;r12:2400:3250:7600:1200:2:0:0:corridor;r2:2050:0:4150:3600:1:1:1:dining;r3:6200:0:3800:3600:1:1:1:kitchen;r4:0:3600:2400:1200:1:0:0:staircase;r5:2400:3600:7600:1200:1:0:0:corridor;r6:0:4450:5100:3550:2:1:2:bedroom;r7:5100:4450:3050:3550:2:1:1:study;r8:8150:4450:1850:3550:2:1:1:bathroom;r9:0:0:5000:3250:2:1:2:bedroom",
+     "signature": "10000|8000|2|3000|230|r0:0:4800:10000:3200:1:1:2:living;r1:0:0:2050:3600:1:1:1:bathroom;r10:5000:0:5000:3600:2:1:2:bedroom;r11:0:3600:2400:1200:2:0:0:staircase;r12:2400:3600:7600:1200:2:0:0:corridor;r2:2050:0:4150:3600:1:1:1:dining;r3:6200:0:3800:3600:1:1:1:kitchen;r4:0:3600:2400:1200:1:0:0:staircase;r5:2400:3600:7600:1200:1:0:0:corridor;r6:0:4800:5200:3200:2:1:2:bedroom;r7:5200:4800:3150:3200:2:1:1:study;r8:8350:4800:1650:3200:2:1:1:bathroom;r9:0:0:5000:3600:2:1:2:bedroom",
      "settings": {
       "autoFurnish": true
      },
@@ -1226,7 +1226,7 @@
     },
     "custom": {
      "version": 1,
-     "signature": "10000|8000|2|3000|230|r0:0:4800:10000:3200:1:1:2:living;r1:0:0:2050:3600:1:1:1:bathroom;r10:5000:0:5000:3250:2:1:2:bedroom;r11:0:3250:2400:1200:2:0:0:staircase;r12:2400:3250:7600:1200:2:0:0:corridor;r2:2050:0:4150:3600:1:1:1:dining;r3:6200:0:3800:3600:1:1:1:kitchen;r4:0:3600:2400:1200:1:0:0:staircase;r5:2400:3600:7600:1200:1:0:0:corridor;r6:0:4450:5100:3550:2:1:2:bedroom;r7:5100:4450:3050:3550:2:1:1:study;r8:8150:4450:1850:3550:2:1:1:bathroom;r9:0:0:5000:3250:2:1:2:bedroom",
+     "signature": "10000|8000|2|3000|230|r0:0:4800:10000:3200:1:1:2:living;r1:0:0:2050:3600:1:1:1:bathroom;r10:5000:0:5000:3600:2:1:2:bedroom;r11:0:3600:2400:1200:2:0:0:staircase;r12:2400:3600:7600:1200:2:0:0:corridor;r2:2050:0:4150:3600:1:1:1:dining;r3:6200:0:3800:3600:1:1:1:kitchen;r4:0:3600:2400:1200:1:0:0:staircase;r5:2400:3600:7600:1200:1:0:0:corridor;r6:0:4800:5200:3200:2:1:2:bedroom;r7:5200:4800:3150:3200:2:1:1:study;r8:8350:4800:1650:3200:2:1:1:bathroom;r9:0:0:5000:3600:2:1:2:bedroom",
      "settings": {
       "autoFurnish": true,
       "furnishSeed": 1
@@ -1377,8 +1377,8 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 4.45,
-       "center": 3.75,
+       "line": 4.8,
+       "center": 3.8,
        "width": 0.9,
        "height": 2.1,
        "sill": 0,
@@ -1391,8 +1391,8 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 4.45,
-       "center": 6.625,
+       "line": 4.8,
+       "center": 6.775,
        "width": 0.9,
        "height": 2.1,
        "sill": 0,
@@ -1405,8 +1405,8 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 4.45,
-       "center": 9.075,
+       "line": 4.8,
+       "center": 9.175,
        "width": 0.75,
        "height": 2,
        "sill": 0,
@@ -1419,7 +1419,7 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 3.25,
+       "line": 3.6,
        "center": 3.7,
        "width": 0.9,
        "height": 2.1,
@@ -1433,7 +1433,7 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 3.25,
+       "line": 3.6,
        "center": 7.5,
        "width": 0.9,
        "height": 2.1,
@@ -1448,7 +1448,7 @@
        "floor": 2,
        "orientation": "x",
        "line": 8,
-       "center": 2.55,
+       "center": 2.6,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -1462,7 +1462,7 @@
        "floor": 2,
        "orientation": "z",
        "line": 0,
-       "center": 6.225,
+       "center": 6.4,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -1476,7 +1476,7 @@
        "floor": 2,
        "orientation": "x",
        "line": 8,
-       "center": 6.625,
+       "center": 6.775,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -1490,7 +1490,7 @@
        "floor": 2,
        "orientation": "z",
        "line": 10,
-       "center": 6.225,
+       "center": 6.4,
        "width": 0.6,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -1518,7 +1518,7 @@
        "floor": 2,
        "orientation": "z",
        "line": 0,
-       "center": 1.625,
+       "center": 1.7999999999999998,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -1546,7 +1546,7 @@
        "floor": 2,
        "orientation": "z",
        "line": 10,
-       "center": 1.625,
+       "center": 1.7999999999999998,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -1732,7 +1732,7 @@
         "room_id": "r6",
         "type": "bed_double",
         "cx": 1.1449999999999996,
-        "cz": 6.202500000000001,
+        "cz": 6.352500000000001,
         "w": 1.55,
         "d": 2,
         "facing": "W"
@@ -1742,7 +1742,7 @@
         "room_id": "r6",
         "type": "nightstand",
         "cx": 0.34499999999999975,
-        "cz": 5.187500000000001,
+        "cz": 5.3375,
         "w": 0.4,
         "d": 0.4,
         "facing": "W"
@@ -1752,7 +1752,7 @@
         "room_id": "r6",
         "type": "nightstand",
         "cx": 0.34499999999999975,
-        "cz": 7.217500000000001,
+        "cz": 7.367500000000001,
         "w": 0.4,
         "d": 0.4,
         "facing": "W"
@@ -1761,7 +1761,7 @@
         "id": "r6:wardrobe:1",
         "room_id": "r6",
         "type": "wardrobe",
-        "cx": 4.08499999999999,
+        "cx": 4.13499999999999,
         "cz": 7.58,
         "w": 1.5,
         "d": 0.55,
@@ -1771,20 +1771,10 @@
         "id": "r6:desk:1",
         "room_id": "r6",
         "type": "desk",
-        "cx": 2.684999999999993,
+        "cx": 2.7349999999999928,
         "cz": 7.555,
         "w": 1.2,
         "d": 0.6,
-        "facing": "S"
-       },
-       {
-        "id": "r6:dresser:1",
-        "room_id": "r6",
-        "type": "dresser",
-        "cx": 1.5349999999999966,
-        "cz": 7.63,
-        "w": 1,
-        "d": 0.45,
         "facing": "S"
        },
        {
@@ -1792,7 +1782,7 @@
         "room_id": "r6",
         "type": "rug",
         "cx": 2.1449999999999996,
-        "cz": 6.202500000000001,
+        "cz": 6.352500000000001,
         "w": 2.35,
         "d": 1.4,
         "facing": "W"
@@ -1801,7 +1791,7 @@
         "id": "r7:desk:1",
         "room_id": "r7",
         "type": "desk",
-        "cx": 6.6274999999999995,
+        "cx": 6.777500000000001,
         "cz": 7.555,
         "w": 1.5,
         "d": 0.6,
@@ -1811,20 +1801,10 @@
         "id": "r7:bookshelf:1",
         "room_id": "r7",
         "type": "bookshelf",
-        "cx": 5.3374999999999995,
-        "cz": 6.177500000000001,
+        "cx": 5.4375,
+        "cz": 6.377500000000001,
         "w": 0.9,
         "d": 0.3,
-        "facing": "W"
-       },
-       {
-        "id": "r7:wardrobe:1",
-        "room_id": "r7",
-        "type": "wardrobe",
-        "cx": 5.4624999999999995,
-        "cz": 5.0275,
-        "w": 0.9,
-        "d": 0.55,
         "facing": "W"
        },
        {
@@ -1841,7 +1821,7 @@
         "id": "r8:basin:1",
         "room_id": "r8",
         "type": "basin",
-        "cx": 8.5525,
+        "cx": 8.7525,
         "cz": 7.645,
         "w": 0.55,
         "d": 0.42,
@@ -1851,28 +1831,18 @@
         "id": "r8:mirror:1",
         "room_id": "r8",
         "type": "mirror",
-        "cx": 8.5525,
+        "cx": 8.7525,
         "cz": 7.835,
         "w": 0.6,
         "d": 0.04,
         "facing": "S"
        },
        {
-        "id": "r8:shower:1",
-        "room_id": "r8",
-        "type": "shower",
-        "cx": 8.6875,
-        "cz": 6.9075,
-        "w": 0.9,
-        "d": 0.9,
-        "facing": "W"
-       },
-       {
         "id": "r9:bed_double:1",
         "room_id": "r9",
         "type": "bed_double",
         "cx": 1.1449999999999996,
-        "cz": 1.6599999999999975,
+        "cz": 1.809999999999997,
         "w": 1.55,
         "d": 2,
         "facing": "W"
@@ -1882,7 +1852,7 @@
         "room_id": "r9",
         "type": "nightstand",
         "cx": 0.34499999999999975,
-        "cz": 0.6449999999999974,
+        "cz": 0.7949999999999968,
         "w": 0.4,
         "d": 0.4,
         "facing": "W"
@@ -1892,7 +1862,7 @@
         "room_id": "r9",
         "type": "nightstand",
         "cx": 0.34499999999999975,
-        "cz": 2.6749999999999976,
+        "cz": 2.824999999999997,
         "w": 0.4,
         "d": 0.4,
         "facing": "W"
@@ -1918,11 +1888,21 @@
         "facing": "N"
        },
        {
+        "id": "r9:dresser:1",
+        "room_id": "r9",
+        "type": "dresser",
+        "cx": 1.4849999999999968,
+        "cz": 0.3700000000000001,
+        "w": 1,
+        "d": 0.45,
+        "facing": "N"
+       },
+       {
         "id": "r9:rug:1",
         "room_id": "r9",
         "type": "rug",
         "cx": 2.1449999999999996,
-        "cz": 1.6599999999999975,
+        "cz": 1.809999999999997,
         "w": 2.35,
         "d": 1.4,
         "facing": "W"
@@ -1962,8 +1942,8 @@
         "room_id": "r10",
         "type": "wardrobe",
         "cx": 5.3625,
-        "cz": 0.685,
-        "w": 1,
+        "cz": 0.935,
+        "w": 1.5,
         "d": 0.55,
         "facing": "W"
        },
@@ -1972,10 +1952,20 @@
         "room_id": "r10",
         "type": "desk",
         "cx": 5.3875,
-        "cz": 2.5225,
+        "cz": 2.8725,
         "w": 1.2,
         "d": 0.6,
         "facing": "W"
+       },
+       {
+        "id": "r10:dresser:1",
+        "room_id": "r10",
+        "type": "dresser",
+        "cx": 9.63,
+        "cz": 1.834999999999996,
+        "w": 1,
+        "d": 0.45,
+        "facing": "E"
        }
       ],
       "room_sigs": {
@@ -1985,13 +1975,13 @@
        "r3": "6200:0:3800:3600:1:kitchen",
        "r4": "0:3600:2400:1200:1:staircase",
        "r5": "2400:3600:7600:1200:1:corridor",
-       "r6": "0:4450:5100:3550:2:bedroom",
-       "r7": "5100:4450:3050:3550:2:study",
-       "r8": "8150:4450:1850:3550:2:bathroom",
-       "r9": "0:0:5000:3250:2:bedroom",
-       "r10": "5000:0:5000:3250:2:bedroom",
-       "r11": "0:3250:2400:1200:2:staircase",
-       "r12": "2400:3250:7600:1200:2:corridor"
+       "r6": "0:4800:5200:3200:2:bedroom",
+       "r7": "5200:4800:3150:3200:2:study",
+       "r8": "8350:4800:1650:3200:2:bathroom",
+       "r9": "0:0:5000:3600:2:bedroom",
+       "r10": "5000:0:5000:3600:2:bedroom",
+       "r11": "0:3600:2400:1200:2:staircase",
+       "r12": "2400:3600:7600:1200:2:corridor"
       }
      },
      "summary": {
@@ -2106,7 +2096,7 @@
    },
    "counts": {
     "openings": 23,
-    "furniture": 42,
+    "furniture": 41,
     "doors": 10,
     "windows": 13
    }
@@ -2730,7 +2720,7 @@
      "name": "Office 1",
      "room_type": "study",
      "length": 5.95,
-     "width": 5.8,
+     "width": 5.35,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -2738,13 +2728,13 @@
      "windows": 1,
      "area_override": null,
      "pos_x": 0,
-     "pos_y": 6.2
+     "pos_y": 6.65
     },
     {
      "name": "Office 5",
      "room_type": "study",
      "length": 5.95,
-     "width": 5.8,
+     "width": 5.35,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -2752,13 +2742,13 @@
      "windows": 1,
      "area_override": null,
      "pos_x": 5.95,
-     "pos_y": 6.2
+     "pos_y": 6.65
     },
     {
      "name": "Waiting area",
      "room_type": "living",
      "length": 8.1,
-     "width": 5.8,
+     "width": 5.35,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -2766,13 +2756,13 @@
      "windows": 2,
      "area_override": null,
      "pos_x": 11.9,
-     "pos_y": 6.2
+     "pos_y": 6.65
     },
     {
      "name": "Office 3",
      "room_type": "study",
      "length": 6.55,
-     "width": 5,
+     "width": 5.45,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -2786,7 +2776,7 @@
      "name": "Washroom 2",
      "room_type": "bathroom",
      "length": 4.5,
-     "width": 5,
+     "width": 5.45,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -2800,7 +2790,7 @@
      "name": "Waiting area",
      "room_type": "living",
      "length": 8.95,
-     "width": 5,
+     "width": 5.45,
      "height": 3,
      "floor_number": 2,
      "wall_thickness": null,
@@ -2822,7 +2812,7 @@
      "windows": 0,
      "area_override": null,
      "pos_x": 0,
-     "pos_y": 5
+     "pos_y": 5.45
     },
     {
      "name": "Passage",
@@ -2836,13 +2826,13 @@
      "windows": 0,
      "area_override": null,
      "pos_x": 2.4,
-     "pos_y": 5
+     "pos_y": 5.45
     },
     {
      "name": "Office 2",
      "room_type": "study",
      "length": 5.95,
-     "width": 5.8,
+     "width": 5.35,
      "height": 3,
      "floor_number": 3,
      "wall_thickness": null,
@@ -2850,13 +2840,13 @@
      "windows": 1,
      "area_override": null,
      "pos_x": 0,
-     "pos_y": 6.2
+     "pos_y": 6.65
     },
     {
      "name": "Office 6",
      "room_type": "study",
      "length": 5.95,
-     "width": 5.8,
+     "width": 5.35,
      "height": 3,
      "floor_number": 3,
      "wall_thickness": null,
@@ -2864,13 +2854,13 @@
      "windows": 1,
      "area_override": null,
      "pos_x": 5.95,
-     "pos_y": 6.2
+     "pos_y": 6.65
     },
     {
      "name": "Waiting area",
      "room_type": "living",
      "length": 8.1,
-     "width": 5.8,
+     "width": 5.35,
      "height": 3,
      "floor_number": 3,
      "wall_thickness": null,
@@ -2878,13 +2868,13 @@
      "windows": 2,
      "area_override": null,
      "pos_x": 11.9,
-     "pos_y": 6.2
+     "pos_y": 6.65
     },
     {
      "name": "Office 4",
      "room_type": "study",
      "length": 6.55,
-     "width": 5,
+     "width": 5.45,
      "height": 3,
      "floor_number": 3,
      "wall_thickness": null,
@@ -2898,7 +2888,7 @@
      "name": "Washroom 3",
      "room_type": "bathroom",
      "length": 4.5,
-     "width": 5,
+     "width": 5.45,
      "height": 3,
      "floor_number": 3,
      "wall_thickness": null,
@@ -2912,7 +2902,7 @@
      "name": "Waiting area",
      "room_type": "living",
      "length": 8.95,
-     "width": 5,
+     "width": 5.45,
      "height": 3,
      "floor_number": 3,
      "wall_thickness": null,
@@ -2934,7 +2924,7 @@
      "windows": 0,
      "area_override": null,
      "pos_x": 0,
-     "pos_y": 5
+     "pos_y": 5.45
     },
     {
      "name": "Passage",
@@ -2948,7 +2938,7 @@
      "windows": 0,
      "area_override": null,
      "pos_x": 2.4,
-     "pos_y": 5
+     "pos_y": 5.45
     }
    ],
    "room_ids": [
@@ -2981,7 +2971,7 @@
    "layouts": {
     "automatic": {
      "version": 1,
-     "signature": "20000|12000|3|3000|230|r0:0:6650:10600:5350:1:1:2:living;r1:10600:6650:4250:5350:1:1:0:store;r10:5950:6200:5950:5800:2:1:1:study;r11:11900:6200:8100:5800:2:1:2:living;r12:0:0:6550:5000:2:1:1:study;r13:6550:0:4500:5000:2:1:1:bathroom;r14:11050:0:8950:5000:2:1:2:living;r15:0:5000:2400:1200:2:0:0:staircase;r16:2400:5000:17600:1200:2:0:0:corridor;r17:0:6200:5950:5800:3:1:1:study;r18:5950:6200:5950:5800:3:1:1:study;r19:11900:6200:8100:5800:3:1:2:living;r2:14850:6650:5150:5350:1:1:0:store;r20:0:0:6550:5000:3:1:1:study;r21:6550:0:4500:5000:3:1:1:bathroom;r22:11050:0:8950:5000:3:1:2:living;r23:0:5000:2400:1200:3:0:0:staircase;r24:2400:5000:17600:1200:3:0:0:corridor;r3:0:0:3900:5450:1:1:1:bathroom;r4:3900:0:6250:5450:1:1:1:dining;r5:10150:0:5200:5450:1:1:1:kitchen;r6:15350:0:4650:5450:1:1:0:store;r7:0:5450:2400:1200:1:0:0:staircase;r8:2400:5450:17600:1200:1:0:0:corridor;r9:0:6200:5950:5800:2:1:1:study",
+     "signature": "20000|12000|3|3000|230|r0:0:6650:10600:5350:1:1:2:living;r1:10600:6650:4250:5350:1:1:0:store;r10:5950:6650:5950:5350:2:1:1:study;r11:11900:6650:8100:5350:2:1:2:living;r12:0:0:6550:5450:2:1:1:study;r13:6550:0:4500:5450:2:1:1:bathroom;r14:11050:0:8950:5450:2:1:2:living;r15:0:5450:2400:1200:2:0:0:staircase;r16:2400:5450:17600:1200:2:0:0:corridor;r17:0:6650:5950:5350:3:1:1:study;r18:5950:6650:5950:5350:3:1:1:study;r19:11900:6650:8100:5350:3:1:2:living;r2:14850:6650:5150:5350:1:1:0:store;r20:0:0:6550:5450:3:1:1:study;r21:6550:0:4500:5450:3:1:1:bathroom;r22:11050:0:8950:5450:3:1:2:living;r23:0:5450:2400:1200:3:0:0:staircase;r24:2400:5450:17600:1200:3:0:0:corridor;r3:0:0:3900:5450:1:1:1:bathroom;r4:3900:0:6250:5450:1:1:1:dining;r5:10150:0:5200:5450:1:1:1:kitchen;r6:15350:0:4650:5450:1:1:0:store;r7:0:5450:2400:1200:1:0:0:staircase;r8:2400:5450:17600:1200:1:0:0:corridor;r9:0:6650:5950:5350:2:1:1:study",
      "settings": {
       "autoFurnish": true
      },
@@ -3180,7 +3170,7 @@
     },
     "custom": {
      "version": 1,
-     "signature": "20000|12000|3|3000|230|r0:0:6650:10600:5350:1:1:2:living;r1:10600:6650:4250:5350:1:1:0:store;r10:5950:6200:5950:5800:2:1:1:study;r11:11900:6200:8100:5800:2:1:2:living;r12:0:0:6550:5000:2:1:1:study;r13:6550:0:4500:5000:2:1:1:bathroom;r14:11050:0:8950:5000:2:1:2:living;r15:0:5000:2400:1200:2:0:0:staircase;r16:2400:5000:17600:1200:2:0:0:corridor;r17:0:6200:5950:5800:3:1:1:study;r18:5950:6200:5950:5800:3:1:1:study;r19:11900:6200:8100:5800:3:1:2:living;r2:14850:6650:5150:5350:1:1:0:store;r20:0:0:6550:5000:3:1:1:study;r21:6550:0:4500:5000:3:1:1:bathroom;r22:11050:0:8950:5000:3:1:2:living;r23:0:5000:2400:1200:3:0:0:staircase;r24:2400:5000:17600:1200:3:0:0:corridor;r3:0:0:3900:5450:1:1:1:bathroom;r4:3900:0:6250:5450:1:1:1:dining;r5:10150:0:5200:5450:1:1:1:kitchen;r6:15350:0:4650:5450:1:1:0:store;r7:0:5450:2400:1200:1:0:0:staircase;r8:2400:5450:17600:1200:1:0:0:corridor;r9:0:6200:5950:5800:2:1:1:study",
+     "signature": "20000|12000|3|3000|230|r0:0:6650:10600:5350:1:1:2:living;r1:10600:6650:4250:5350:1:1:0:store;r10:5950:6650:5950:5350:2:1:1:study;r11:11900:6650:8100:5350:2:1:2:living;r12:0:0:6550:5450:2:1:1:study;r13:6550:0:4500:5450:2:1:1:bathroom;r14:11050:0:8950:5450:2:1:2:living;r15:0:5450:2400:1200:2:0:0:staircase;r16:2400:5450:17600:1200:2:0:0:corridor;r17:0:6650:5950:5350:3:1:1:study;r18:5950:6650:5950:5350:3:1:1:study;r19:11900:6650:8100:5350:3:1:2:living;r2:14850:6650:5150:5350:1:1:0:store;r20:0:0:6550:5450:3:1:1:study;r21:6550:0:4500:5450:3:1:1:bathroom;r22:11050:0:8950:5450:3:1:2:living;r23:0:5450:2400:1200:3:0:0:staircase;r24:2400:5450:17600:1200:3:0:0:corridor;r3:0:0:3900:5450:1:1:1:bathroom;r4:3900:0:6250:5450:1:1:1:dining;r5:10150:0:5200:5450:1:1:1:kitchen;r6:15350:0:4650:5450:1:1:0:store;r7:0:5450:2400:1200:1:0:0:staircase;r8:2400:5450:17600:1200:1:0:0:corridor;r9:0:6650:5950:5350:2:1:1:study",
      "settings": {
       "autoFurnish": true,
       "furnishSeed": 1
@@ -3373,7 +3363,7 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 6.2,
+       "line": 6.65,
        "center": 4.175000000000001,
        "width": 0.9,
        "height": 2.1,
@@ -3387,7 +3377,7 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 6.2,
+       "line": 6.65,
        "center": 8.925,
        "width": 0.9,
        "height": 2.1,
@@ -3401,7 +3391,7 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 6.2,
+       "line": 6.65,
        "center": 15.95,
        "width": 0.9,
        "height": 2.1,
@@ -3415,7 +3405,7 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 5,
+       "line": 5.45,
        "center": 4.475,
        "width": 0.9,
        "height": 2.1,
@@ -3429,7 +3419,7 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 5,
+       "line": 5.45,
        "center": 8.8,
        "width": 0.75,
        "height": 2,
@@ -3443,7 +3433,7 @@
        "kind": "door",
        "floor": 2,
        "orientation": "x",
-       "line": 5,
+       "line": 5.45,
        "center": 15.525,
        "width": 0.9,
        "height": 2.1,
@@ -3500,7 +3490,7 @@
        "floor": 2,
        "orientation": "z",
        "line": 20,
-       "center": 9.1,
+       "center": 9.325,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -3556,7 +3546,7 @@
        "floor": 2,
        "orientation": "z",
        "line": 20,
-       "center": 2.5,
+       "center": 2.725,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -3569,7 +3559,7 @@
        "kind": "door",
        "floor": 3,
        "orientation": "x",
-       "line": 6.2,
+       "line": 6.65,
        "center": 4.175000000000001,
        "width": 0.9,
        "height": 2.1,
@@ -3583,7 +3573,7 @@
        "kind": "door",
        "floor": 3,
        "orientation": "x",
-       "line": 6.2,
+       "line": 6.65,
        "center": 8.925,
        "width": 0.9,
        "height": 2.1,
@@ -3597,7 +3587,7 @@
        "kind": "door",
        "floor": 3,
        "orientation": "x",
-       "line": 6.2,
+       "line": 6.65,
        "center": 15.95,
        "width": 0.9,
        "height": 2.1,
@@ -3611,7 +3601,7 @@
        "kind": "door",
        "floor": 3,
        "orientation": "x",
-       "line": 5,
+       "line": 5.45,
        "center": 4.475,
        "width": 0.9,
        "height": 2.1,
@@ -3625,7 +3615,7 @@
        "kind": "door",
        "floor": 3,
        "orientation": "x",
-       "line": 5,
+       "line": 5.45,
        "center": 8.8,
        "width": 0.75,
        "height": 2,
@@ -3639,7 +3629,7 @@
        "kind": "door",
        "floor": 3,
        "orientation": "x",
-       "line": 5,
+       "line": 5.45,
        "center": 15.525,
        "width": 0.9,
        "height": 2.1,
@@ -3696,7 +3686,7 @@
        "floor": 3,
        "orientation": "z",
        "line": 20,
-       "center": 9.1,
+       "center": 9.325,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -3752,7 +3742,7 @@
        "floor": 3,
        "orientation": "z",
        "line": 20,
-       "center": 2.5,
+       "center": 2.725,
        "width": 1.2,
        "height": 1.2,
        "sill": 0.8999999999999999,
@@ -4048,7 +4038,7 @@
         "room_id": "r11",
         "type": "tv_unit",
         "cx": 14.527499999999995,
-        "cz": 6.4875,
+        "cz": 6.9375,
         "w": 1.6,
         "d": 0.4,
         "facing": "N"
@@ -4188,7 +4178,7 @@
         "room_id": "r14",
         "type": "sofa_l",
         "cx": 13.5275,
-        "cz": 4.1125,
+        "cz": 4.5625,
         "w": 2.7,
         "d": 1.6,
         "facing": "S"
@@ -4198,7 +4188,7 @@
         "room_id": "r14",
         "type": "coffee_table",
         "cx": 13.5275,
-        "cz": 2.6125,
+        "cz": 3.0625,
         "w": 1,
         "d": 0.5,
         "facing": "S"
@@ -4208,7 +4198,7 @@
         "room_id": "r14",
         "type": "rug",
         "cx": 13.5275,
-        "cz": 2.6125,
+        "cz": 3.0625,
         "w": 2.4,
         "d": 1.6,
         "facing": "S"
@@ -4218,7 +4208,7 @@
         "room_id": "r14",
         "type": "side_table",
         "cx": 11.877500000000001,
-        "cz": 4.6625,
+        "cz": 5.1125,
         "w": 0.45,
         "d": 0.45,
         "facing": "S"
@@ -4288,7 +4278,7 @@
         "room_id": "r19",
         "type": "tv_unit",
         "cx": 14.527499999999995,
-        "cz": 6.4875,
+        "cz": 6.9375,
         "w": 1.6,
         "d": 0.4,
         "facing": "N"
@@ -4428,7 +4418,7 @@
         "room_id": "r22",
         "type": "sofa_l",
         "cx": 13.5275,
-        "cz": 4.1125,
+        "cz": 4.5625,
         "w": 2.7,
         "d": 1.6,
         "facing": "S"
@@ -4438,7 +4428,7 @@
         "room_id": "r22",
         "type": "coffee_table",
         "cx": 13.5275,
-        "cz": 2.6125,
+        "cz": 3.0625,
         "w": 1,
         "d": 0.5,
         "facing": "S"
@@ -4448,7 +4438,7 @@
         "room_id": "r22",
         "type": "rug",
         "cx": 13.5275,
-        "cz": 2.6125,
+        "cz": 3.0625,
         "w": 2.4,
         "d": 1.6,
         "facing": "S"
@@ -4458,7 +4448,7 @@
         "room_id": "r22",
         "type": "side_table",
         "cx": 11.877500000000001,
-        "cz": 4.6625,
+        "cz": 5.1125,
         "w": 0.45,
         "d": 0.45,
         "facing": "S"
@@ -4474,22 +4464,22 @@
        "r6": "15350:0:4650:5450:1:store",
        "r7": "0:5450:2400:1200:1:staircase",
        "r8": "2400:5450:17600:1200:1:corridor",
-       "r9": "0:6200:5950:5800:2:study",
-       "r10": "5950:6200:5950:5800:2:study",
-       "r11": "11900:6200:8100:5800:2:living",
-       "r12": "0:0:6550:5000:2:study",
-       "r13": "6550:0:4500:5000:2:bathroom",
-       "r14": "11050:0:8950:5000:2:living",
-       "r15": "0:5000:2400:1200:2:staircase",
-       "r16": "2400:5000:17600:1200:2:corridor",
-       "r17": "0:6200:5950:5800:3:study",
-       "r18": "5950:6200:5950:5800:3:study",
-       "r19": "11900:6200:8100:5800:3:living",
-       "r20": "0:0:6550:5000:3:study",
-       "r21": "6550:0:4500:5000:3:bathroom",
-       "r22": "11050:0:8950:5000:3:living",
-       "r23": "0:5000:2400:1200:3:staircase",
-       "r24": "2400:5000:17600:1200:3:corridor"
+       "r9": "0:6650:5950:5350:2:study",
+       "r10": "5950:6650:5950:5350:2:study",
+       "r11": "11900:6650:8100:5350:2:living",
+       "r12": "0:0:6550:5450:2:study",
+       "r13": "6550:0:4500:5450:2:bathroom",
+       "r14": "11050:0:8950:5450:2:living",
+       "r15": "0:5450:2400:1200:2:staircase",
+       "r16": "2400:5450:17600:1200:2:corridor",
+       "r17": "0:6650:5950:5350:3:study",
+       "r18": "5950:6650:5950:5350:3:study",
+       "r19": "11900:6650:8100:5350:3:living",
+       "r20": "0:0:6550:5450:3:study",
+       "r21": "6550:0:4500:5450:3:bathroom",
+       "r22": "11050:0:8950:5450:3:living",
+       "r23": "0:5450:2400:1200:3:staircase",
+       "r24": "2400:5450:17600:1200:3:corridor"
       }
      },
      "summary": {

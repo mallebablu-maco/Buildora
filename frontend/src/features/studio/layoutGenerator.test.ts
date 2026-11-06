@@ -150,4 +150,20 @@ describe('layouts that cannot fit', () => {
     const none = generateLayout({ ...DEFAULT_CONFIG, counts: { bedroom: 0, living: 0, kitchen: 0, dining: 0, bathroom: 0, study: 0, store: 0 } })
     expect(none.errors[0]).toMatch(/at least one room/i)
   })
+
+  it('keeps the staircase in the same place on every floor, so real stairs can connect them', () => {
+    for (const floors of [2, 3, 4]) for (const variant of [0, 1, 2, 3]) for (const [length, width] of [[9, 7], [12, 9], [20, 12]]) for (const bedroom of [2, 4, 6]) {
+      const g = generateLayout({ ...DEFAULT_CONFIG, floors, variant, length, width, counts: { ...DEFAULT_CONFIG.counts, bedroom } })
+      if (g.errors.length) continue
+      const stairs = g.rooms.filter((r) => r.room_type === 'staircase').sort((a, b) => a.floor_number - b.floor_number)
+      for (let i = 1; i < stairs.length; i++) {
+        const lo = stairs[i - 1], hi = stairs[i]
+        if (hi.floor_number !== lo.floor_number + 1) continue
+        // same place when the rooms allow it; in tight plans at least overlapping enough for a flight
+        expect(hi.pos_x).toBe(lo.pos_x)
+        expect(Math.min(lo.pos_y! + lo.width, hi.pos_y! + hi.width) - Math.max(lo.pos_y!, hi.pos_y!)).toBeGreaterThanOrEqual(0.6)
+        if (width >= 9) expect(hi.pos_y).toBe(lo.pos_y)
+      }
+    }
+  })
 })

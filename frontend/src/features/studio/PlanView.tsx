@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { itemRect } from './furniture'
+import type { Stair } from './stairs'
 import type { FloorModel, Model3D } from './model'
 import { buildPlanShapes, type PlanShapes } from './plan2d'
 
@@ -137,6 +138,12 @@ export function PlanView(props: Props) {
         </g>
       ))}
 
+      {/* stairs: treads + walking direction on this floor; the stairs below shown dashed inside a stairwell */}
+      <g pointerEvents="none" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        {floor.stairs.map((st) => <StairLines key={st.roomId} s={st} lw={lw} />)}
+        {(model.floors[floor.index - 2]?.stairs ?? []).map((st) => <StairLines key={`b${st.roomId}`} s={st} lw={lw} below />)}
+      </g>
+
       {props.showFurniture && shapes.furniture.map((f) => {
         const moving = drag?.kind === 'furniture' && drag.id === f.id
         const it = floor.furnitureItems.find((i) => i.id === f.id)!
@@ -214,5 +221,34 @@ export function PlanView(props: Props) {
       </g>
       <text x={view.x + fs * 0.6} y={view.y + fs * 1.4} fontSize={fs * 0.9} fill="#64748b" pointerEvents="none">Floor {floor.index} · N ↑</text>
     </svg>
+  )
+}
+
+function StairLines({ s, lw, below = false }: { s: Stair; lw: number; below?: boolean }) {
+  const col = below ? '#94a3b8' : '#475569'
+  const dash = below ? `${lw * 3} ${lw * 2}` : undefined
+  const { rect: c } = s
+  const arrow = s.planArrow
+  const end = arrow[arrow.length - 1], prev = arrow[arrow.length - 2]
+  const ang = end && prev ? Math.atan2(end[1] - prev[1], end[0] - prev[0]) : 0
+  const ah = Math.min(0.25, (Math.min(c.x1 - c.x0, c.z1 - c.z0)) * 0.2)
+  return (
+    <g stroke={col} strokeDasharray={dash}>
+      <rect x={c.x0} y={c.z0} width={c.x1 - c.x0} height={c.z1 - c.z0} strokeWidth={lw * 0.8} />
+      {s.planTreads.map((t, i) => s.axis === 'x'
+        ? <line key={i} x1={t.at} y1={t.c0} x2={t.at} y2={t.c1} strokeWidth={lw * 0.6} />
+        : <line key={i} x1={t.c0} y1={t.at} x2={t.c1} y2={t.at} strokeWidth={lw * 0.6} />)}
+      {s.kind === 'u' && (s.axis === 'x'
+        ? <line x1={Math.min(...s.planTreads.map((t) => t.at))} y1={(c.z0 + c.z1) / 2} x2={Math.max(...s.planTreads.map((t) => t.at))} y2={(c.z0 + c.z1) / 2} strokeWidth={lw * 0.8} />
+        : <line x1={(c.x0 + c.x1) / 2} y1={Math.min(...s.planTreads.map((t) => t.at))} x2={(c.x0 + c.x1) / 2} y2={Math.max(...s.planTreads.map((t) => t.at))} strokeWidth={lw * 0.8} />)}
+      {!below && arrow.length > 1 && (
+        <>
+          <polyline points={arrow.map((p) => p.join(',')).join(' ')} stroke="#0f766e" strokeWidth={lw} strokeDasharray={undefined} />
+          <polyline stroke="#0f766e" strokeWidth={lw} points={[
+            [end[0] - ah * Math.cos(ang - 0.5), end[1] - ah * Math.sin(ang - 0.5)], end, [end[0] - ah * Math.cos(ang + 0.5), end[1] - ah * Math.sin(ang + 0.5)],
+          ].map((p) => p.join(',')).join(' ')} />
+        </>
+      )}
+    </g>
   )
 }
