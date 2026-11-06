@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { itemRect } from './furniture'
 import type { Stair } from './stairs'
+import { dragRect, rectProblem, type Grip, type Rect } from './roomEdit'
 import type { FloorModel, Model3D } from './model'
 import { buildPlanShapes, type PlanShapes } from './plan2d'
 
@@ -36,9 +37,13 @@ interface Props {
   onMoveOpening: (id: string, center: number) => void
   onAddOpening: (kind: 'door' | 'window', wallId: string, along: number) => void
   onMessage: (message: string) => void
+  /** move / resize a room (building-local metres); when missing, rooms cannot be dragged */
+  onChangeRoom?: (id: string, rect: { pos_x: number; pos_y: number; length: number; width: number }) => Promise<void>
 }
 
 const snap = (v: number, s = 0.05) => Math.round(v / s) * s
+/** Plan rectangles are {x, y, w, h}; SVG needs width / height (spreading them directly drew nothing). */
+const svgRect = (r: { x: number; y: number; w: number; h: number }) => ({ x: r.x, y: r.y, width: r.w, height: r.h })
 
 export function PlanView(props: Props) {
   const { model, floorIndex, mode } = props
@@ -46,6 +51,8 @@ export function PlanView(props: Props) {
   const shapes: PlanShapes | null = useMemo(() => (floor ? buildPlanShapes(floor, model) : null), [floor, model])
   const svgRef = useRef<SVGSVGElement>(null)
   const [drag, setDrag] = useState<{ kind: 'furniture' | 'opening'; id: string; cx: number; cz: number; ok: boolean; dx: number; dz: number } | null>(null)
+  const [roomDrag, setRoomDrag] = useState<{ id: string; grip: Grip; start: Rect; px: number; pz: number; rect: Rect; problem: string | null; moved: boolean; saving?: boolean } | null>(null)
+  const justDragged = useRef(false)
 
   if (!floor || !shapes) return null
   const { view, fontSize: fs } = shapes
@@ -78,7 +85,45 @@ export function PlanView(props: Props) {
     ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
     setDrag({ kind: 'opening', id, cx: o.center, cz: 0, ok: true, dx: o.center - (o.orientation === 'x' ? p.x : p.z), dz: 0 })
   }
+  // ---- rooms: drag the selected room to move it, its edges / corners to resize it ----
+  const bounds: Rect = { x0: -model.length / 2, x1: model.length / 2, z0: -model.width / 2, z1: model.width / 2 }
+  const others = (id: string) => floor.rooms.filter((r) => r.id !== id).map((r) => ({ rect: { x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1 }, name: r.name }))
+  const startRoomDrag = (e: React.PointerEvent, id: string, grip: Grip) => {
+    if (mode !== 'select' || !props.onChangeRoom || roomDrag?.saving) return
+    if (grip === 'move' && id !== props.selectedRoomId) return // first click selects, then drag
+    e.stopPropagation()
+    if (floor.schematic) { props.onMessage('Press "Save this layout" first, so every room has a fixed position. Then you can drag rooms.'); return }
+    const r = floor.rooms.find((x) => x.id === id)!
+    const p = toPlan(e)
+    ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+    const start = { x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1 }
+    setRoomDrag({ id, grip, start, px: p.x, pz: p.z, rect: start, problem: null, moved: false })
+  }
+  const onRoomMove = (e: React.PointerEvent) => {
+    if (!roomDrag || roomDrag.saving) return
+    const p = toPlan(e)
+    const dx = p.x - roomDrag.px, dz = p.z - roomDrag.pz
+    if (!roomDrag.moved && Math.hypot(dx, dz) < 0.05) return
+    const ot = others(roomDrag.id)
+    const rect = dragRect(roomDrag.start, roomDrag.grip, dx, dz, ot.map((o) => o.rect), bounds)
+    setRoomDrag({ ...roomDrag, rect, problem: rectProblem(rect, ot, bounds), moved: true })
+  }
+  const onRoomUp = async () => {
+    if (!roomDrag || roomDrag.saving) return
+    const { id, rect, start, problem, moved } = roomDrag
+    if (moved) justDragged.current = true
+    const same = Math.abs(rect.x0 - start.x0) < 1e-6 && Math.abs(rect.x1 - start.x1) < 1e-6 && Math.abs(rect.z0 - start.z0) < 1e-6 && Math.abs(rect.z1 - start.z1) < 1e-6
+    if (!moved || same) { setRoomDrag(null); return }
+    if (problem) { props.onMessage(`The room was not moved: ${problem}`); setRoomDrag(null); return }
+    setRoomDrag({ ...roomDrag, saving: true })
+    const r3 = (v: number) => Math.round(v * 1000) / 1000
+    try {
+      await props.onChangeRoom!(id, { pos_x: r3(rect.x0 + model.length / 2), pos_y: r3(rect.z0 + model.width / 2), length: r3(rect.x1 - rect.x0), width: r3(rect.z1 - rect.z0) })
+    } finally { setRoomDrag(null) }
+  }
+
   const onMove = (e: React.PointerEvent) => {
+    if (roomDrag) { onRoomMove(e); return }
     if (!drag) return
     const p = toPlan(e)
     if (drag.kind === 'furniture') {
@@ -91,6 +136,7 @@ export function PlanView(props: Props) {
     }
   }
   const onUp = () => {
+    if (roomDrag) { void onRoomUp(); return }
     if (!drag) return
     if (drag.kind === 'furniture') {
       const it = floor.furnitureItems.find((i) => i.id === drag.id)!
@@ -124,17 +170,19 @@ export function PlanView(props: Props) {
   return (
     <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className={cn('h-full w-full touch-none select-none bg-white', mode !== 'select' && 'cursor-crosshair')}
       role="img" aria-label={`2D floor plan of floor ${floor.index}`} onPointerMove={onMove} onPointerUp={onUp}
-      onClick={() => { props.onSelectRoom(null); props.onSelectFurniture(null); props.onSelectOpening(null) }}>
+      onClick={() => { if (justDragged.current) { justDragged.current = false; return } props.onSelectRoom(null); props.onSelectFurniture(null); props.onSelectOpening(null) }}>
       <defs>
         <pattern id="plan-grid" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M 1 0 L 0 0 0 1" fill="none" stroke="#eef1f5" strokeWidth={lw * 0.4} /></pattern>
       </defs>
       <rect x={view.x} y={view.y} width={view.w} height={view.h} fill="url(#plan-grid)" />
-      <rect {...shapes.footprint} fill="#fff" />
+      <rect {...svgRect(shapes.footprint)} fill="#fff" />
 
       {shapes.rooms.map((r) => (
-        <g key={r.id} onClick={(e) => { if (mode !== 'select') return; e.stopPropagation(); props.onSelectRoom(r.id === props.selectedRoomId ? null : r.id) }} className={mode === 'select' ? 'cursor-pointer' : ''}>
-          <rect {...r.rect} fill={ROOM_FILL[r.type] ?? ROOM_FILL.other} />
-          {r.id === props.selectedRoomId && <rect {...r.rect} fill="#f97316" fillOpacity={0.22} stroke="#ea580c" strokeWidth={lw * 1.5} />}
+        <g key={r.id} onPointerDown={(e) => startRoomDrag(e, r.id, 'move')}
+          onClick={(e) => { if (mode !== 'select') return; e.stopPropagation(); if (justDragged.current) { justDragged.current = false; return } props.onSelectRoom(r.id === props.selectedRoomId ? null : r.id) }}
+          className={mode === 'select' ? (r.id === props.selectedRoomId && props.onChangeRoom ? 'cursor-move' : 'cursor-pointer') : ''}>
+          <rect {...svgRect(r.rect)} fill={ROOM_FILL[r.type] ?? ROOM_FILL.other} />
+          {r.id === props.selectedRoomId && <rect {...svgRect(r.rect)} fill="#f97316" fillOpacity={0.22} stroke="#ea580c" strokeWidth={lw * 1.5} />}
         </g>
       ))}
 
@@ -173,7 +221,7 @@ export function PlanView(props: Props) {
         const tr = o.orientation === 'x' ? `translate(${shift} 0)` : `translate(0 ${shift})`
         return (
           <g key={wd.id} transform={tr} onPointerDown={(e) => startOpeningDrag(e, wd.id)} onClick={(e) => e.stopPropagation()} className={mode === 'select' ? 'cursor-grab' : ''}>
-            <rect {...wd.rect} fill="#fff" stroke={moving ? (drag.ok ? '#16a34a' : '#dc2626') : sel ? '#ea580c' : '#38bdf8'} strokeWidth={sel || moving ? lw * 1.8 : lw * 0.8} />
+            <rect {...svgRect(wd.rect)} fill="#fff" stroke={moving ? (drag.ok ? '#16a34a' : '#dc2626') : sel ? '#ea580c' : '#38bdf8'} strokeWidth={sel || moving ? lw * 1.8 : lw * 0.8} />
             {wd.glass.map((g, k) => <line key={k} x1={g[0]} y1={g[1]} x2={g[2]} y2={g[3]} stroke="#38bdf8" strokeWidth={lw * 0.7} />)}
           </g>
         )
@@ -220,6 +268,10 @@ export function PlanView(props: Props) {
         <text x={dimX - fs * 0.5} y={0} textAnchor="middle" stroke="none" transform={`rotate(-90 ${dimX - fs * 0.5} 0)`}>{W.toFixed(2)} m</text>
       </g>
       <text x={view.x + fs * 0.6} y={view.y + fs * 1.4} fontSize={fs * 0.9} fill="#64748b" pointerEvents="none">Floor {floor.index} · N ↑</text>
+      {props.onChangeRoom && mode === 'select' && props.selectedRoomId && !roomDrag && floor.rooms.some((r) => r.id === props.selectedRoomId) && (
+        <text x={view.x + fs * 0.6} y={view.y + fs * 2.6} fontSize={fs * 0.8} fill="#64748b" pointerEvents="none">Drag the room to move it · drag its edges or corners to resize</text>
+      )}
+      <RoomEditOverlay floor={floor} selectedId={mode === 'select' && props.onChangeRoom ? props.selectedRoomId : null} drag={roomDrag} lw={lw} fs={fs} onGrip={startRoomDrag} />
     </svg>
   )
 }
@@ -252,3 +304,42 @@ function StairLines({ s, lw, below = false }: { s: Stair; lw: number; below?: bo
     </g>
   )
 }
+
+const GRIPS: Grip[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']
+const CURSOR: Record<Grip, string> = { move: 'move', n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize', ne: 'nesw-resize', sw: 'nesw-resize', nw: 'nwse-resize', se: 'nwse-resize' }
+
+/** Resize handles on the selected room, and the live outline (green = fits, red = does not) while dragging. */
+function RoomEditOverlay({ floor, selectedId, drag, lw, fs, onGrip }: {
+  floor: FloorModel; selectedId: string | null; lw: number; fs: number
+  drag: { id: string; rect: Rect; problem: string | null; moved: boolean; saving?: boolean } | null
+  onGrip: (e: React.PointerEvent, id: string, grip: Grip) => void
+}) {
+  const room = selectedId ? floor.rooms.find((r) => r.id === selectedId) : null
+  const live = drag?.moved ? drag : null
+  const r = live ? live.rect : room ? { x0: room.x0, x1: room.x1, z0: room.z0, z1: room.z1 } : null
+  if (!r) return null
+  const id = live?.id ?? room!.id
+  const hs = Math.max(fs * 0.5, lw * 4)
+  const at = (g: Grip): [number, number] => [g.includes('w') ? r.x0 : g.includes('e') ? r.x1 : (r.x0 + r.x1) / 2, g.includes('n') ? r.z0 : g.includes('s') ? r.z1 : (r.z0 + r.z1) / 2]
+  const col = live ? (live.problem ? '#dc2626' : '#16a34a') : '#ea580c'
+  return (
+    <g>
+      {live && (
+        <>
+          <rect x={r.x0} y={r.z0} width={r.x1 - r.x0} height={r.z1 - r.z0} fill={col} fillOpacity={0.12} stroke={col} strokeWidth={lw * 2} strokeDasharray={`${lw * 4} ${lw * 2}`} pointerEvents="none" />
+          <text x={(r.x0 + r.x1) / 2} y={r.z0 - fs * 0.4} textAnchor="middle" fontSize={fs * 0.85} fill={col} fontWeight={600} pointerEvents="none">
+            {live.saving ? 'Saving…' : live.problem ?? `${(r.x1 - r.x0).toFixed(2)} × ${(r.z1 - r.z0).toFixed(2)} m · ${((r.x1 - r.x0) * (r.z1 - r.z0)).toFixed(1)} m²`}
+          </text>
+        </>
+      )}
+      {!live && GRIPS.map((g) => {
+        const [x, z] = at(g)
+        return (
+          <rect key={g} x={x - hs / 2} y={z - hs / 2} width={hs} height={hs} rx={hs * 0.2} fill="#fff" stroke={col} strokeWidth={lw * 1.2}
+            style={{ cursor: CURSOR[g] }} onPointerDown={(e) => onGrip(e, id, g)} onClick={(e) => e.stopPropagation()} aria-label={`Resize ${g}`} />
+        )
+      })}
+    </g>
+  )
+}
+

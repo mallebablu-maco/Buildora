@@ -159,6 +159,16 @@ function StudioBody({ projectId }: { projectId: string }) {
     toast.success(`${rooms.length} confirmed rooms created. Doors and windows were added automatically: adjust them in the 2D plan.`)
   }
 
+  /** Room dragged / resized in the 2D plan: saved straight away (the server still checks it). */
+  const changeRoom = async (id: string, rect: { pos_x: number; pos_y: number; length: number; width: number }) => {
+    const r = p.rooms.find((x) => x.id === id)
+    if (!r) return
+    try {
+      await api.updateRoom(p.id, id, { ...roomInput(r), ...rect })
+      await reload()
+      toast.success(`"${r.name}" is now ${units.length(rect.length)} × ${units.length(rect.width)}.`)
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not move the room.') }
+  }
   const selectRoom = (id: string | null) => { setSelected(id); if (id && floor !== 'all') { const r = p.rooms.find((x) => x.id === id); if (r) setFloor(r.floor_number) } }
   const hasRooms = p.rooms.length > 0
   const errors = model.issues.filter((i) => i.severity === 'error')
@@ -195,6 +205,7 @@ function StudioBody({ projectId }: { projectId: string }) {
                 onSelectFurniture={(id) => { setSelFurn(id); setSelOpen(null); const it = allFurniture.find((i) => i.id === id); if (it) setSelected(it.room_id) }}
                 onSelectOpening={(id) => { setSelOpen(id); setSelFurn(null); const o = model.floors.flatMap((f) => f.openings).find((x) => x.id === id); if (o) setSelected(o.roomId) }}
                 canPlaceFurniture={S.canPlaceFurniture} onMoveFurniture={S.moveFurniture} canMoveOpening={S.canMoveOpening} onMoveOpening={S.moveOpening}
+                onChangeRoom={changeRoom}
                 onAddOpening={(kind, wallId, along) => { const id = S.addOpening(kind, wallId, along, selected); if (id) { setSelOpen(id); setMode('select') } }} onMessage={(m) => toast.error(m)} />
             ) : (
               <ErrorBoundary label="The 3D viewer" resetKey={model.length + model.width}>
