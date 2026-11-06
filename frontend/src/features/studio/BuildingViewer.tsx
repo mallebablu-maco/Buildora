@@ -413,7 +413,110 @@ function Dimensions({ L, W, size }: { L: number; W: number; size: number }) {
 }
 
 /** Gable roof (flat ceiling slab + pitched roof). Optional: hidden in the dollhouse / plan views. */
-function Roof({ model, wireframe, roofColor = PALETTE.roof }: { model: Model3D; wireframe: boolean; roofColor?: string }) {
+/** Triangles -> geometry; each triangle is turned to face `hint` (so lighting is right on both sloped and vertical faces). */
+function trianglesGeometry(tris: { p: [number, number, number][]; hint: [number, number, number] }[]) {
+  const pos: number[] = []
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), N = new THREE.Vector3()
+  for (const t of tris) {
+    A.set(...t.p[0]); B.set(...t.p[1]); C.set(...t.p[2])
+    N.subVectors(B, A).cross(C.clone().sub(A))
+    const pts = N.dot(new THREE.Vector3(...t.hint)) < 0 ? [t.p[0], t.p[2], t.p[1]] : t.p
+    for (const q of pts) pos.push(...q)
+  }
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  g.computeVertexNormals()
+  return g
+}
+
+/** Hip or single-slope roof over the footprint (+ overhang), base at y = 0, ridge / high side along the longer side. */
+function pitchedGeometry(style: 'hip' | 'shed', lx: number, lz: number, h: number) {
+  const alongX = lx >= lz
+  const au = (alongX ? lx : lz) / 2, av = (alongX ? lz : lx) / 2
+  // local (u along the long side, v across) -> world (x, y, z)
+  const P = (u: number, y: number, v: number): [number, number, number] => (alongX ? [u, y, v] : [v, y, u])
+  const H = (u: number, y: number, v: number): [number, number, number] => (alongX ? [u, y, v] : [v, y, u])
+  const up = H(0, 1, 0)
+  const tris: { p: [number, number, number][]; hint: [number, number, number] }[] = []
+  const quad = (a: [number, number, number], b: [number, number, number], c: [number, number, number], d: [number, number, number], hint: [number, number, number]) => {
+    tris.push({ p: [a, b, c], hint }, { p: [a, c, d], hint })
+  }
+  if (style === 'hip') {
+    const r = Math.max(0, au - av) // ridge half-length (equal slopes on all four sides)
+    quad(P(-au, 0, av), P(au, 0, av), P(r, h, 0), P(-r, h, 0), up)
+    quad(P(-au, 0, -av), P(au, 0, -av), P(r, h, 0), P(-r, h, 0), up)
+    tris.push({ p: [P(au, 0, av), P(au, 0, -av), P(r, h, 0)], hint: up }, { p: [P(-au, 0, av), P(-au, 0, -av), P(-r, h, 0)], hint: up })
+  } else {
+    // high side at -v, low side at +v
+    quad(P(-au, 0, av), P(au, 0, av), P(au, h, -av), P(-au, h, -av), up)
+    quad(P(-au, 0, -av), P(au, 0, -av), P(au, h, -av), P(-au, h, -av), H(0, 0, -1))
+    tris.push({ p: [P(au, 0, av), P(au, 0, -av), P(au, h, -av)], hint: H(1, 0, 0) }, { p: [P(-au, 0, av), P(-au, 0, -av), P(-au, h, -av)], hint: H(-1, 0, 0) })
+  }
+  return trianglesGeometry(tris)
+}
+
+function Roof({ model, wireframe, roofColor = PALETTE.roof, look = DEFAULT_LOOK }: { model: Model3D; wireframe: boolean; roofColor?: string; look?: Look }) {
+  if (look.roofStyle === 'flat') return <FlatRoof model={model} wireframe={wireframe} look={look} />
+  if (look.roofStyle === 'hip' || look.roofStyle === 'shed') return <PitchedRoof model={model} wireframe={wireframe} roofColor={roofColor} style={look.roofStyle} />
+  return <GableRoof model={model} wireframe={wireframe} roofColor={roofColor} />
+}
+
+function PitchedRoof({ model, wireframe, roofColor, style }: { model: Model3D; wireframe: boolean; roofColor: string; style: 'hip' | 'shed' }) {
+  const { length: L, width: W, totalHeight, slab, roof, wallT } = model
+  const o = roof.overhang
+  const h = style === 'shed' ? Math.min(L, W) * 0.15 : roof.height
+  const geo = useMemo(() => pitchedGeometry(style, L + 2 * o, W + 2 * o, h), [style, L, W, o, h])
+  // ridge, hips and eaves as fine lines, so the slopes read clearly from every angle
+  const edges = useMemo(() => new THREE.EdgesGeometry(geo, 1), [geo])
+  useEffect(() => () => { geo.dispose(); edges.dispose() }, [geo, edges])
+  return (
+    <group>
+      <mesh position={[0, model.roofY, 0]} castShadow receiveShadow>
+        <boxGeometry args={[L + wallT + 2 * o, slab, W + wallT + 2 * o]} />
+        <meshStandardMaterial color={PALETTE.slab} roughness={0.95} wireframe={wireframe} />
+      </mesh>
+      <mesh geometry={geo} position={[0, totalHeight + slab, 0]} castShadow receiveShadow>
+        <meshStandardMaterial color={roofColor} roughness={0.85} wireframe={wireframe} side={THREE.DoubleSide} />
+      </mesh>
+      <lineSegments geometry={edges} position={[0, totalHeight + slab + 0.005, 0]}>
+        <lineBasicMaterial color="#111827" transparent opacity={0.45} />
+      </lineSegments>
+    </group>
+  )
+}
+
+/** Flat RCC terrace: roof slab on the walls with a 1 m parapet in the outside-wall finish. */
+function FlatRoof({ model, wireframe, look }: { model: Model3D; wireframe: boolean; look: Look }) {
+  const { length: L, width: W, slab, wallT: t } = model
+  const y0 = model.roofY + slab / 2, ph = 1.0
+  const ex = L / 2 + t / 2, ez = W / 2 + t / 2
+  const boxes = useMemo<Box[]>(() => [
+    { cx: 0, cy: y0 + ph / 2, cz: -ez + t / 2, sx: 2 * ex, sy: ph, sz: t },
+    { cx: 0, cy: y0 + ph / 2, cz: ez - t / 2, sx: 2 * ex, sy: ph, sz: t },
+    { cx: -ex + t / 2, cy: y0 + ph / 2, cz: 0, sx: t, sy: ph, sz: 2 * ez - 2 * t },
+    { cx: ex - t / 2, cy: y0 + ph / 2, cz: 0, sx: t, sy: ph, sz: 2 * ez - 2 * t },
+  ], [ex, ez, t, y0])
+  const tile = look.exterior === 'paint' ? PAINT_TILE : WALL_TEXTURE_SIZE[look.exterior]
+  const geos = useMemo(() => wallFaceGeometries(boxes, ex, ez, tile), [boxes, ex, ez, tile])
+  useEffect(() => () => { geos.outer?.dispose(); geos.inner?.dispose() }, [geos])
+  const map = look.exterior === 'paint' ? null : getExtraTextures()[look.exterior]
+  const mat = map
+    ? <meshStandardMaterial key={look.exterior} map={map} roughness={0.95} wireframe={wireframe} />
+    : <meshStandardMaterial key="paint" color={look.wallOut} roughness={0.92} wireframe={wireframe} />
+  return (
+    <group>
+      <mesh position={[0, model.roofY, 0]} castShadow receiveShadow>
+        <boxGeometry args={[L + t, slab, W + t]} />
+        <meshStandardMaterial color={PALETTE.slab} roughness={0.95} wireframe={wireframe} />
+      </mesh>
+      {geos.outer && <mesh geometry={geos.outer} castShadow receiveShadow>{mat}</mesh>}
+      {geos.inner && <mesh geometry={geos.inner} castShadow receiveShadow>{mat}</mesh>}
+    </group>
+  )
+}
+
+/** Gable roof (flat ceiling slab + pitched roof): the original roof. */
+function GableRoof({ model, wireframe, roofColor = PALETTE.roof }: { model: Model3D; wireframe: boolean; roofColor?: string }) {
   const { length: L, width: W, totalHeight, slab, roof } = model
   const o = roof.overhang
   const alongX = roof.ridge === 'x'
@@ -481,7 +584,7 @@ export function BuildingViewer({ model, opts, selectedId, selectedFurnitureId = 
         <Floor key={f.index} f={f} model={model} opts={opts} cut={cutaway ? cutSides : null} aboveShown={visible.some((v) => v.index === f.index + 1)} belowShown={visible.some((v) => v.index === f.index - 1)} selectedId={selectedId} selectedFurnitureId={selectedFurnitureId} selectedOpeningId={selectedOpeningId} hoverId={hoverId}
           onSelect={onSelect} onHover={setHoverId} labelsOn={opts.showLabels && !roofVisible && f.index === labelFloor} />
       ))}
-      {roofVisible && <Roof model={model} wireframe={opts.wireframe} roofColor={opts.look?.roof} />}
+      {roofVisible && <Roof model={model} wireframe={opts.wireframe} roofColor={opts.look?.roof} look={opts.look} />}
 
       <OrbitControls makeDefault enableDamping dampingFactor={0.1} minDistance={2} maxDistance={size * 10} maxPolarAngle={Math.PI / 2 - 0.02} />
       <CameraRig model={model} view={opts.view} nonce={opts.resetNonce} />

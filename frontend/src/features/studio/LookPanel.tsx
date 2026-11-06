@@ -2,7 +2,7 @@ import { Palette, RotateCcw } from 'lucide-react'
 import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { Select } from '@/components/ui/form'
 import { cn } from '@/lib/utils'
-import { DEFAULT_LOOK, EXTERIOR_FINISHES, FLOOR_FINISHES, isDefaultLook, ROOF_COLOURS, WALL_COLOURS, type ExteriorFinish, type FloorFinish, type Look } from './look'
+import { DEFAULT_LOOK, EXTERIOR_FINISHES, FLOOR_FINISHES, isDefaultLook, ROOF_COLOURS, ROOF_STYLES, WALL_COLOURS, type ExteriorFinish, type FloorFinish, type Look, type RoofStyle } from './look'
 
 function Swatches({ label, value, options, onChange }: { label: string; value: string; options: { name: string; hex: string }[]; onChange: (hex: string) => void }) {
   const custom = !options.some((o) => o.hex === value)
@@ -60,7 +60,17 @@ export function LookPanel({ look, onChange }: { look: Look; onChange: (l: Look) 
         </div>
         <div className="space-y-2">
           <div className="font-medium text-slate-700">Roof <span className="font-normal text-slate-500">(turn on Roof to see it)</span></div>
-          <Swatches label="Roof colour" value={look.roof} options={ROOF_COLOURS} onChange={(roof) => set({ roof })} />
+          <div role="radiogroup" aria-label="Roof style" className="grid grid-cols-4 gap-1 rounded-md bg-slate-100 p-1">
+            {ROOF_STYLES.map((r) => (
+              <button key={r.value} type="button" role="radio" aria-checked={look.roofStyle === r.value} onClick={() => set({ roofStyle: r.value as RoofStyle })}
+                className={cn('rounded px-1 py-1 text-xs font-medium', look.roofStyle === r.value ? 'bg-white text-orange-700 shadow-sm' : 'text-slate-600 hover:text-slate-900')}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+          {look.roofStyle === 'flat'
+            ? <p className="text-xs text-slate-500">A flat RCC terrace with a 1 m parapet in the outside-wall finish.</p>
+            : <Swatches label="Roof colour" value={look.roof} options={ROOF_COLOURS} onChange={(roof) => set({ roof })} />}
         </div>
       </CardBody>
     </Card>

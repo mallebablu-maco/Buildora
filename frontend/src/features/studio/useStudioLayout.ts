@@ -116,8 +116,8 @@ export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Prom
   const look: Look = useMemo(() => readLook(layout?.settings), [layout])
   const setLook = (l: Look) => {
     const cur = base()
-    const { lookWallOut: _a, lookWallIn: _b, lookExterior: _c, lookFloor: _d, lookRoof: _e, ...rest } = cur.settings
-    void _a; void _b; void _c; void _d; void _e
+    const { lookWallOut: _a, lookWallIn: _b, lookExterior: _c, lookFloor: _d, lookRoof: _e, lookRoofStyle: _f, ...rest } = cur.settings
+    void _a; void _b; void _c; void _d; void _e; void _f
     commit({ ...cur, settings: isDefaultLook(l) ? rest : { ...rest, ...lookSettings(l) } })
   }
   const setAutoFurnish = (v: boolean) => { setAuto(v); const cur = base(); commit({ ...cur, settings: { ...cur.settings, autoFurnish: v } }) }
