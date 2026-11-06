@@ -168,6 +168,12 @@ export function generateLayout(input: GeneratorConfig): GeneratorResult {
       for (const it of sorted) { if (ap <= ar) { pub.push(it); ap += it.target } else { prv.push(it); ar += it.target } }
       if (!prv.length && pub.length > 1) prv.push(pub.pop() as Item)
     }
+    // a floor of a multi-storey building needs a passage and staircase; with only one row of rooms add a lounge as the second row
+    if (stairs && usePassage && (!pub.length || !prv.length)) {
+      const lounge: Item = { kind: 'living', name: cfg.buildingType === 'commercial' ? 'Waiting area' : 'Family lounge', target: 14, minSide: 3.0, minArea: 10 }
+      ;(pub.length ? prv : pub).push(lounge)
+      notes.push(`Floor ${fl}: added a ${lounge.name.toLowerCase()} so the staircase can reach this floor.`)
+    }
     // Balance the zones by area so no band is left with one tiny room stretched along the whole length
     // (e.g. a ground-floor bathroom alone in the back band). The living room stays at the front with the entrance.
     const area = (list: Item[]) => list.reduce((a, i) => a + i.target, 0)

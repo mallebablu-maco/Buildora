@@ -105,3 +105,15 @@ describe('when stairs cannot be drawn', () => {
   })
 })
 
+describe('generated multi-storey buildings', () => {
+  it('every floor with rooms is reached by real stairs (a lounge is added to one-row floors)', () => {
+    for (const floors of [2, 3, 6]) for (const [length, width] of [[10, 8], [12, 9], [20, 12]]) {
+      const { p, g } = generatedProject({ floors, length, width })
+      expect(g.errors).toEqual([])
+      const m = buildModel(p)
+      for (let i = 0; i + 1 < m.floors.length; i++) if (m.floors[i + 1].rooms.length) expect(m.floors[i].stairs).toHaveLength(1)
+      expect(m.issues.filter((x) => x.code === 'no-stairs' || x.code === 'stairs-not-aligned')).toEqual([])
+    }
+  })
+})
+
