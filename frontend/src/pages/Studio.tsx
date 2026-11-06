@@ -1,4 +1,4 @@
-import { Box as BoxIcon, DoorClosed, DoorOpen, Eye, EyeOff, FilePlus2, Home, LayoutGrid, Lock, Map as MapIcon, PanelTop, Pencil, RotateCcw, Ruler, Save, Sofa, Square, Tag, Undo2, Upload, Wand2, Blocks, AppWindow, Undo, Redo } from 'lucide-react'
+import { Box as BoxIcon, DoorClosed, DoorOpen, Eye, EyeOff, FilePlus2, Home, LayoutGrid, Lock, Map as MapIcon, PanelTop, Pencil, RotateCcw, Ruler, Save, Sofa, Square, Tag, Undo2, Upload, Wand2, Blocks, AppWindow, Undo, Redo, Footprints, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, RotateCw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/components/ui/dialog'
 import { Alert, Badge, ErrorState, Spinner } from '@/components/ui/feedback'
 import { Field, Input, Select } from '@/components/ui/form'
 import { BuildingViewer, type ViewMode } from '@/features/studio/BuildingViewer'
+import { newWalkInput, type WalkInput } from '@/features/studio/walk'
 import { FloorPlanImportDialog } from '@/features/studio/FloorPlanImportDialog'
 import { configFromProject, LayoutGeneratorDialog } from '@/features/studio/LayoutGeneratorDialog'
 import { DEFAULT_CONFIG, generateLayout, type GeneratorConfig } from '@/features/studio/layoutGenerator'
@@ -44,6 +45,25 @@ function ToggleBtn({ on, onClick, icon, children, title }: { on: boolean; onClic
     <button onClick={onClick} aria-pressed={on} title={title} className={cn('inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium', on ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50')}>
       {icon}{children}
     </button>
+  )
+}
+
+/** On-screen walking buttons (hold to move), for mouse-only and touch use. */
+function WalkPad({ input, floor }: { input: WalkInput; floor: number }) {
+  const hold = (k: keyof WalkInput, icon: React.ReactNode, label: string) => (
+    <button type="button" aria-label={label} title={label}
+      onPointerDown={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); input[k] = true }}
+      onPointerUp={() => { input[k] = false }} onPointerCancel={() => { input[k] = false }} onLostPointerCapture={() => { input[k] = false }}
+      className="flex h-9 w-9 touch-none select-none items-center justify-center rounded-md bg-white/90 text-navy-900 shadow ring-1 ring-slate-300 hover:bg-white active:bg-orange-100">
+      {icon}
+    </button>
+  )
+  return (
+    <div className="absolute bottom-10 right-3 flex flex-col items-center gap-1">
+      <span className="mb-1 rounded bg-navy-900/80 px-2 py-0.5 text-[11px] font-medium text-white">Walking · floor {floor}</span>
+      <div className="flex gap-1">{hold('turnLeft', <RotateCcw className="h-4 w-4" />, 'Turn left')}{hold('forward', <ArrowUp className="h-4 w-4" />, 'Walk forward')}{hold('turnRight', <RotateCw className="h-4 w-4" />, 'Turn right')}</div>
+      <div className="flex gap-1">{hold('left', <ArrowLeft className="h-4 w-4" />, 'Step left')}{hold('back', <ArrowDown className="h-4 w-4" />, 'Walk back')}{hold('right', <ArrowRight className="h-4 w-4" />, 'Step right')}</div>
+    </div>
   )
 }
 
@@ -94,6 +114,8 @@ function StudioBody({ projectId }: { projectId: string }) {
   const [selFurn, setSelFurn] = useState<string | null>(null)
   const [selOpen, setSelOpen] = useState<string | null>(null)
   const [mode, setMode] = useState<PlanMode>('select')
+  const [walking, setWalking] = useState(false)
+  const walkInput = useRef<WalkInput>(newWalkInput())
   const [editBuilding, setEditBuilding] = useState(false)
   const [genOpen, setGenOpen] = useState(false)
   const [genVariant, setGenVariant] = useState(0)
@@ -137,6 +159,13 @@ function StudioBody({ projectId }: { projectId: string }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+  // Esc leaves the walk-through (and the normal view is framed again)
+  useEffect(() => {
+    if (!walking) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setWalking(false); setNonce((n) => n + 1) } }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [walking])
 
   if (loading && !p) return <Spinner />
   if (error || !p) return <ErrorState message={error ?? 'Project not found.'} onRetry={reload} />
@@ -231,6 +260,10 @@ function StudioBody({ projectId }: { projectId: string }) {
           <ToggleBtn on={view === 'top'} onClick={() => { setView('top'); setNonce((n) => n + 1) }} icon={<Square className="h-3.5 w-3.5" />}>Top-down plan</ToggleBtn>
           <ToggleBtn on={view === 'plan'} onClick={() => setView('plan')} icon={<MapIcon className="h-3.5 w-3.5" />}>2D plan</ToggleBtn>
           <UndoRedo H={H} onUndo={undo} onRedo={redo} />
+          <ToggleBtn on={walking} title="Walk through the house at eye height (Esc to leave)" icon={<Footprints className="h-3.5 w-3.5" />}
+            onClick={() => { if (walking) { setWalking(false); setNonce((n) => n + 1) } else { setWalking(true); if (view === 'plan') setView('exterior') } }}>
+            {walking ? 'Leave walk' : 'Walk inside'}
+          </ToggleBtn>
           {view !== 'plan' && <Button size="sm" variant="outline" onClick={() => setNonce((n) => n + 1)}><RotateCcw className="h-3.5 w-3.5" /> Reset camera</Button>}
           <Select aria-label="Floor" value={String(floor)} onChange={(e) => setFloor(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="h-8 w-36 text-xs">
             <option value="all">All floors</option>
@@ -259,8 +292,8 @@ function StudioBody({ projectId }: { projectId: string }) {
                 onAddOpening={(kind, wallId, along) => { const id = S.addOpening(kind, wallId, along, selected); if (id) { setSelOpen(id); setMode('select') } }} onMessage={(m) => toast.error(m)} />
             ) : (
               <ErrorBoundary label="The 3D viewer" resetKey={model.length + model.width}>
-                <BuildingViewer model={model} selectedId={selected} selectedFurnitureId={selFurn} selectedOpeningId={selOpen} onSelect={(id) => { setSelected(id); if (id) { setSelFurn(null); setSelOpen(null) } }}
-                  opts={{ view: view as ViewMode, floor, showLabels, showRoof, showFurniture, showWalls, showOpenings, doorsOpen, wireframe, resetNonce: nonce, look: S.look }} />
+                <BuildingViewer model={model} walk={walking ? { floor: floor === 'all' ? 1 : floor, input: walkInput.current } : null} selectedId={selected} selectedFurnitureId={selFurn} selectedOpeningId={selOpen} onSelect={(id) => { setSelected(id); if (id) { setSelFurn(null); setSelOpen(null) } }}
+                  opts={{ view: walking ? 'exterior' : view as ViewMode, floor: walking ? 'all' : floor, showLabels: showLabels && !walking, hideDimensions: walking, showRoof, showFurniture, showWalls, showOpenings, doorsOpen, wireframe, resetNonce: nonce, look: S.look }} />
               </ErrorBoundary>
             )}
             {model.ok && !hasRooms && (
@@ -277,8 +310,9 @@ function StudioBody({ projectId }: { projectId: string }) {
                 </div>
               </div>
             )}
+            {walking && view !== 'plan' && <WalkPad input={walkInput.current} floor={floor === 'all' ? 1 : floor} />}
             <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-white/85 px-2 py-1 text-[11px] text-slate-600">
-              {view === 'plan'
+              {walking && view !== 'plan' ? <>W / ↑ walk · S / ↓ back · A / D step aside · ← / → turn · Shift faster · drag to look · Floor menu to change floor · Esc to leave</> : view === 'plan'
                 ? mode === 'select' ? 'Click a room · drag furniture and doors/windows · use “Add door / window” on the right' : `Click a wall to place a ${mode === 'add-door' ? 'door' : 'window'}`
                 : <>Drag to rotate · scroll to zoom · right-drag to pan · click a room to select{view === 'top' && floor === 'all' ? ' · plan shows floor 1 (choose a floor above to change)' : ''}</>}
             </div>

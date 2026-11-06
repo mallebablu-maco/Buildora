@@ -300,6 +300,17 @@ describe('3D Building Studio', () => {
     expect(sent.filter((r) => r.floor_number === 2)).toHaveLength(f1)
   })
 
+  it('walk-through: button shows the walking arrows and help; Esc leaves', async () => {
+    const user = await open()
+    await user.click(screen.getByRole('button', { name: /Walk inside/ }))
+    expect(screen.getByRole('button', { name: 'Walk forward' })).toBeInTheDocument()
+    expect(screen.getByText(/W \/ ↑ walk/)).toBeInTheDocument()
+    expect(screen.getByText('Walking · floor 1')).toBeInTheDocument()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('button', { name: 'Walk forward' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Walk inside/ })).toBeInTheDocument()
+  })
+
   it('switches to the 2D plan of the same geometry', async () => {
     const user = await open()
     await user.click(screen.getByRole('button', { name: '2D plan' }))
