@@ -1,5 +1,5 @@
-import { Box as BoxIcon, DoorClosed, DoorOpen, Eye, EyeOff, FilePlus2, Home, LayoutGrid, Lock, Map as MapIcon, PanelTop, Pencil, RotateCcw, Ruler, Save, Sofa, Square, Tag, Undo2, Upload, Wand2, Blocks, AppWindow } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Box as BoxIcon, DoorClosed, DoorOpen, Eye, EyeOff, FilePlus2, Home, LayoutGrid, Lock, Map as MapIcon, PanelTop, Pencil, RotateCcw, Ruler, Save, Sofa, Square, Tag, Undo2, Upload, Wand2, Blocks, AppWindow, Undo, Redo } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ProjectScope } from '@/components/ProjectScope'
@@ -15,6 +15,7 @@ import { DEFAULT_CONFIG, generateLayout, type GeneratorConfig } from '@/features
 import { PlanView, type PlanMode } from '@/features/studio/PlanView'
 import { FurniturePanel, IssuesPanel, OpeningPanel } from '@/features/studio/StudioPanels'
 import { LookPanel } from '@/features/studio/LookPanel'
+import { useHistory, type HistoryApi } from '@/features/studio/history'
 import { useStudioLayout } from '@/features/studio/useStudioLayout'
 import { BuildingDialog } from '@/features/projects/BuildingDialog'
 import { useFloorplanUrl } from '@/features/projects/FloorPlanPanel'
@@ -42,6 +43,26 @@ function ToggleBtn({ on, onClick, icon, children, title }: { on: boolean; onClic
     <button onClick={onClick} aria-pressed={on} title={title} className={cn('inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium', on ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50')}>
       {icon}{children}
     </button>
+  )
+}
+
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
+
+function UndoRedo({ H, onUndo, onRedo }: { H: HistoryApi; onUndo: () => void; onRedo: () => void }) {
+  const mod = isMac ? '⌘' : 'Ctrl+'
+  return (
+    <div className="inline-flex overflow-hidden rounded-md border border-slate-300 bg-white">
+      <button type="button" onClick={onUndo} disabled={!H.canUndo || H.busy} aria-label="Undo"
+        title={H.undoLabel ? `Undo: ${H.undoLabel} (${mod}Z)` : 'Nothing to undo'}
+        className="inline-flex h-8 items-center gap-1 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300">
+        <Undo className="h-3.5 w-3.5" /> Undo
+      </button>
+      <button type="button" onClick={onRedo} disabled={!H.canRedo || H.busy} aria-label="Redo"
+        title={H.redoLabel ? `Redo: ${H.redoLabel} (${isMac ? '⇧⌘Z' : 'Ctrl+Y'})` : 'Nothing to redo'}
+        className="inline-flex h-8 items-center gap-1 border-l border-slate-300 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300">
+        <Redo className="h-3.5 w-3.5" /> Redo
+      </button>
+    </div>
   )
 }
 
@@ -79,7 +100,8 @@ function StudioBody({ projectId }: { projectId: string }) {
   const [confirmReset, setConfirmReset] = useState(false)
   const [busy, setBusy] = useState(false)
 
-  const S = useStudioLayout(p, reload, toast)
+  const H = useHistory((e) => toast.error(e instanceof Error ? e.message : 'Could not undo that change.'))
+  const S = useStudioLayout(p, reload, toast, H)
   const { model } = S
   const selectedRoom = p?.rooms.find((r) => r.id === selected) ?? null
   const selectedBox = model.floors.flatMap((f) => f.rooms).find((r) => r.id === selected) ?? null
@@ -96,6 +118,24 @@ function StudioBody({ projectId }: { projectId: string }) {
   useEffect(() => { if (floor !== 'all' && p && floor > p.floors) setFloor('all') }, [p, floor])
   useEffect(() => { if (selFurn && !allFurniture.some((i) => i.id === selFurn)) setSelFurn(null) }, [allFurniture, selFurn])
   useEffect(() => { if (selOpen && !selOpening) setSelOpen(null) }, [selOpening, selOpen])
+
+  const undo = async () => { const s = await H.undo(); if (s) toast.info(`Undone: ${s.label}.`) }
+  const redo = async () => { const s = await H.redo(); if (s) toast.info(`Redone: ${s.label}.`) }
+  // ⌘Z / Ctrl+Z undo, ⇧⌘Z / Ctrl+Y redo (typing in a box keeps the browser's own undo)
+  const keys = useRef({ undo, redo })
+  keys.current = { undo, redo }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return
+      const k = e.key.toLowerCase()
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); void keys.current.undo() }
+      else if ((k === 'z' && e.shiftKey) || (k === 'y' && !e.metaKey)) { e.preventDefault(); void keys.current.redo() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   if (loading && !p) return <Spinner />
   if (error || !p) return <ErrorState message={error ?? 'Project not found.'} onRetry={reload} />
@@ -123,6 +163,7 @@ function StudioBody({ projectId }: { projectId: string }) {
     }
     await api.replaceRooms(p.id, rooms)
     await reload()
+    H.clear() // every room is new: older undo steps no longer apply
     setSelected(null); setSelFurn(null); setSelOpen(null)
     toast.success(`Layout generated: ${rooms.length} rooms, doors, windows${cfg.furnish ? ' and furniture' : ''}.`)
   }
@@ -155,17 +196,24 @@ function StudioBody({ projectId }: { projectId: string }) {
     if (dims) await api.updateProject(p.id, { ...projectBase(p), length: dims.length, width: dims.width, built_up_area: null })
     await api.replaceRooms(p.id, [...p.rooms.filter((r) => r.floor_number !== fl).map(roomInput), ...rooms])
     await reload()
+    H.clear()
     setView('exterior'); setNonce((n) => n + 1)
     toast.success(`${rooms.length} confirmed rooms created. Doors and windows were added automatically: adjust them in the 2D plan.`)
   }
 
+  /** A saved room change that undo / redo can send again. */
+  const pushRoomStep = (id: string, label: string, before: RoomInput, after: RoomInput) => {
+    H.push({ label, undo: async () => { await api.updateRoom(p.id, id, before); await reload() }, redo: async () => { await api.updateRoom(p.id, id, after); await reload() } })
+  }
   /** Room dragged / resized in the 2D plan: saved straight away (the server still checks it). */
   const changeRoom = async (id: string, rect: { pos_x: number; pos_y: number; length: number; width: number }) => {
     const r = p.rooms.find((x) => x.id === id)
     if (!r) return
     try {
-      await api.updateRoom(p.id, id, { ...roomInput(r), ...rect })
+      const before = roomInput(r), after = { ...roomInput(r), ...rect }
+      await api.updateRoom(p.id, id, after)
       await reload()
+      pushRoomStep(id, `"${r.name}" moved / resized`, before, after)
       toast.success(`"${r.name}" is now ${units.length(rect.length)} × ${units.length(rect.width)}.`)
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not move the room.') }
   }
@@ -181,6 +229,7 @@ function StudioBody({ projectId }: { projectId: string }) {
           <ToggleBtn on={view === 'exterior'} onClick={() => { setView('exterior'); setNonce((n) => n + 1) }} icon={<Home className="h-3.5 w-3.5" />}>Exterior</ToggleBtn>
           <ToggleBtn on={view === 'top'} onClick={() => { setView('top'); setNonce((n) => n + 1) }} icon={<Square className="h-3.5 w-3.5" />}>Top-down plan</ToggleBtn>
           <ToggleBtn on={view === 'plan'} onClick={() => setView('plan')} icon={<MapIcon className="h-3.5 w-3.5" />}>2D plan</ToggleBtn>
+          <UndoRedo H={H} onUndo={undo} onRedo={redo} />
           {view !== 'plan' && <Button size="sm" variant="outline" onClick={() => setNonce((n) => n + 1)}><RotateCcw className="h-3.5 w-3.5" /> Reset camera</Button>}
           <Select aria-label="Floor" value={String(floor)} onChange={(e) => setFloor(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="h-8 w-36 text-xs">
             <option value="all">All floors</option>
@@ -295,7 +344,8 @@ function StudioBody({ projectId }: { projectId: string }) {
           <CardHeader title="Room information" />
           <CardBody>
             {selectedRoom ? (
-              <RoomEditor key={selectedRoom.id} project={p} roomId={selectedRoom.id} onSaved={reload} schematic={!!selectedBox?.schematic} />
+              <RoomEditor key={selectedRoom.id} project={p} roomId={selectedRoom.id} onSaved={reload} schematic={!!selectedBox?.schematic}
+                onChanged={(before, after) => pushRoomStep(selectedRoom.id, `"${selectedRoom.name}" edited`, before, after)} />
             ) : <p className="text-sm text-slate-500">Select a room in the model or from the list below to see and edit its properties.</p>}
           </CardBody>
         </Card>
@@ -327,7 +377,7 @@ function StudioBody({ projectId }: { projectId: string }) {
         </Card>
       </div>
 
-      <BuildingDialog open={editBuilding} onClose={() => setEditBuilding(false)} project={p} onSaved={reload} dimensionsOnly />
+      <BuildingDialog open={editBuilding} onClose={() => setEditBuilding(false)} project={p} onSaved={async () => { await reload(); H.clear() }} dimensionsOnly />
       <LayoutGeneratorDialog open={genOpen} onClose={() => setGenOpen(false)} project={p} startVariant={genVariant} onApply={applyGenerated} />
       <FloorPlanImportDialog open={importOpen} onClose={() => setImportOpen(false)} project={p} onConfirm={applyImport} />
       <ConfirmDialog open={confirmReset} onClose={() => setConfirmReset(false)} confirmLabel="Reset" title="Reset the layout?"
@@ -341,7 +391,7 @@ function Row({ k, v }: { k: string; v: string }) {
   return <div className="flex justify-between gap-3"><span className="text-slate-500">{k}</span><span className="font-medium text-slate-800">{v}</span></div>
 }
 
-function RoomEditor({ project, roomId, onSaved, schematic }: { project: ProjectDetail; roomId: string; onSaved: () => Promise<void>; schematic: boolean }) {
+function RoomEditor({ project, roomId, onSaved, schematic, onChanged }: { project: ProjectDetail; roomId: string; onSaved: () => Promise<void>; schematic: boolean; onChanged?: (before: RoomInput, after: RoomInput) => void }) {
   const toast = useToast()
   const units = useUnits()
   const room = project.rooms.find((r) => r.id === roomId)!
@@ -369,7 +419,7 @@ function RoomEditor({ project, roomId, onSaved, schematic }: { project: ProjectD
       pos_x: f.x === '' ? null : n(f.x), pos_y: f.y === '' ? null : n(f.y),
     }
     setBusy(true)
-    try { await api.updateRoom(project.id, room.id, input); toast.success('Room updated. The model has been regenerated.'); await onSaved() }
+    try { await api.updateRoom(project.id, room.id, input); onChanged?.(roomInput(room), input); toast.success('Room updated. The model has been regenerated.'); await onSaved() }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Could not update the room.') } finally { setBusy(false) }
   }
 

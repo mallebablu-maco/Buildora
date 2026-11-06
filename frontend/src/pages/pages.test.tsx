@@ -253,6 +253,37 @@ describe('3D Building Studio', () => {
     expect(screen.getByDisplayValue('5')).toBeInTheDocument()  // length of the room
   })
 
+  it('undo / redo: buttons and ⌘Z / ⇧⌘Z take back and repeat a change', async () => {
+    const user = await open()
+    const undo = screen.getByRole('button', { name: 'Undo' }), redo = screen.getByRole('button', { name: 'Redo' })
+    expect(undo).toBeDisabled(); expect(redo).toBeDisabled()
+    await user.click(screen.getByRole('radio', { name: 'Brick' }))
+    expect(screen.getByRole('radio', { name: 'Brick' })).toHaveAttribute('aria-checked', 'true')
+    expect(undo).toBeEnabled()
+    await user.click(undo)
+    expect(screen.getByRole('radio', { name: 'Paint' })).toHaveAttribute('aria-checked', 'true')
+    expect(redo).toBeEnabled()
+    await user.keyboard('{Meta>}{Shift>}z{/Shift}{/Meta}')
+    expect(screen.getByRole('radio', { name: 'Brick' })).toHaveAttribute('aria-checked', 'true')
+    await user.keyboard('{Control>}z{/Control}')
+    expect(screen.getByRole('radio', { name: 'Paint' })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('undo of a room edit sends the old values back to the server', async () => {
+    const user = await open()
+    a.updateRoom.mockResolvedValue(F.project.rooms[0] as never)
+    const list = screen.getByText('Rooms (10)').closest('.rounded-xl') as HTMLElement
+    await user.click(within(list).getByRole('button', { name: /Master Bedroom/ }))
+    const len = await screen.findByDisplayValue('5')
+    await user.clear(len); await user.type(len, '4.5')
+    await user.click(screen.getByRole('button', { name: /Save & update model/ }))
+    await waitFor(() => expect(a.updateRoom).toHaveBeenCalledTimes(1))
+    expect(a.updateRoom.mock.calls[0][2]).toMatchObject({ length: 4.5 })
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+    await waitFor(() => expect(a.updateRoom).toHaveBeenCalledTimes(2))
+    expect(a.updateRoom.mock.calls[1][2]).toMatchObject({ length: 5 })
+  })
+
   it('switches to the 2D plan of the same geometry', async () => {
     const user = await open()
     await user.click(screen.getByRole('button', { name: '2D plan' }))

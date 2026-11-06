@@ -5,13 +5,14 @@ import {
   circulationOk, clampSize, findFreeSpot, FURNITURE_SPECS, placementProblem, rotateFacing, type FurnitureItem,
 } from './furniture'
 import { makeLayout, parseLayout, planSignature, type SavedFurniture, type SavedLayout, type SavedOpening } from './layoutStore'
+import type { HistoryApi } from './history'
 import { isDefaultLook, lookSettings, readLook, type Look } from './look'
 import { buildModel, DOOR_SIZES, roomEdges, searchSlot, slotFree, type FloorModel, type Model3D, type Opening, type RoomBox } from './model'
 
 interface Notify { success: (m: string) => void; error: (m: string) => void; info: (m: string) => void }
 
 /** Working copy of the saved layout (custom openings / furniture) plus every edit operation, all validated by the geometry core. */
-export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Promise<void>, notify: Notify) {
+export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Promise<void>, notify: Notify, history?: Pick<HistoryApi, 'push' | 'clear'>) {
   const [layout, setLayout] = useState<SavedLayout | null>(null)
   const [dirty, setDirty] = useState(false)
   const [autoFurnish, setAuto] = useState(true)
@@ -34,7 +35,13 @@ export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Prom
   const base = useCallback((): SavedLayout => layout ?? makeLayout({
     signature: p ? planSignature(p, p.rooms) : '', settings: { autoFurnish }, openings: null, furniture: null, summary: model.resolved.summary,
   }), [layout, p, autoFurnish, model])
-  const commit = (next: SavedLayout) => { setLayout(next); setDirty(true) }
+  /** Apply an edit to the working layout; it can be undone (restores the previous snapshot, also the auto-furnish switch). */
+  const commit = (next: SavedLayout, label = 'change') => {
+    const prev = layout
+    const apply = (l: SavedLayout | null) => { setLayout(l); setAuto(l?.settings.autoFurnish !== false); setDirty(true) }
+    apply(next)
+    history?.push({ label, undo: () => apply(prev), redo: () => apply(next) })
+  }
 
   const floorOf = (pred: (f: FloorModel) => boolean) => model.floors.find(pred)
   const roomAt = (f: FloorModel, x: number, z: number) => f.rooms.find((r) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1)
@@ -42,7 +49,7 @@ export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Prom
   // ---- furniture -----------------------------------------------------------------------------------------------
   const toLocal = (it: FurnitureItem): SavedFurniture => ({ ...it, cx: it.cx + L / 2, cz: it.cz + W / 2 })
   const editFurniture = (fn: (items: SavedFurniture[]) => SavedFurniture[]) => {
-    commit({ ...base(), furniture: { items: fn(model.resolved.furniture.map((i) => ({ ...i }))), room_sigs: model.resolved.roomSigs } })
+    commit({ ...base(), furniture: { items: fn(model.resolved.furniture.map((i) => ({ ...i }))), room_sigs: model.resolved.roomSigs } }, 'furniture change')
   }
   /** Checks a candidate (world coordinates) against its target room; returns a reason or null. */
   const furnitureProblem = (candidate: FurnitureItem): string | null => {
@@ -105,25 +112,25 @@ export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Prom
     if (!cur.furniture) { notify.info('This room already uses the automatic arrangement. Use “Regenerate all” for another arrangement.'); return }
     const { [roomId]: _gone, ...sigs } = cur.furniture.room_sigs
     void _gone
-    commit({ ...cur, furniture: { items: cur.furniture.items.filter((i) => i.room_id !== roomId), room_sigs: sigs } })
+    commit({ ...cur, furniture: { items: cur.furniture.items.filter((i) => i.room_id !== roomId), room_sigs: sigs } }, 'new furniture arrangement')
   }
   const regenerateAll = () => {
     const cur = base()
-    commit({ ...cur, furniture: null, settings: { ...cur.settings, furnishSeed: Number(cur.settings.furnishSeed ?? 0) + 1 } })
+    commit({ ...cur, furniture: null, settings: { ...cur.settings, furnishSeed: Number(cur.settings.furnishSeed ?? 0) + 1 } }, 'new furniture arrangement')
   }
-  const restoreAutomatic = () => { const cur = base(); commit({ ...cur, furniture: null, settings: { ...cur.settings, furnishSeed: 0 } }) }
+  const restoreAutomatic = () => { const cur = base(); commit({ ...cur, furniture: null, settings: { ...cur.settings, furnishSeed: 0 } }, 'automatic furniture') }
   // ---- colours & finishes (visual only) --------------------------------------------------------------------------
   const look: Look = useMemo(() => readLook(layout?.settings), [layout])
   const setLook = (l: Look) => {
     const cur = base()
     const { lookWallOut: _a, lookWallIn: _b, lookExterior: _c, lookFloor: _d, lookRoof: _e, lookRoofStyle: _f, lookSunshades: _g, lookEntrance: _h, lookGarden: _i, ...rest } = cur.settings
     void _a; void _b; void _c; void _d; void _e; void _f; void _g; void _h; void _i
-    commit({ ...cur, settings: isDefaultLook(l) ? rest : { ...rest, ...lookSettings(l) } })
+    commit({ ...cur, settings: isDefaultLook(l) ? rest : { ...rest, ...lookSettings(l) } }, 'colours & finishes')
   }
-  const setAutoFurnish = (v: boolean) => { setAuto(v); const cur = base(); commit({ ...cur, settings: { ...cur.settings, autoFurnish: v } }) }
+  const setAutoFurnish = (v: boolean) => { setAuto(v); const cur = base(); commit({ ...cur, settings: { ...cur.settings, autoFurnish: v } }, 'automatic furnishing switch') }
 
   // ---- openings -----------------------------------------------------------------------------------------------
-  const editOpenings = (fn: (ops: SavedOpening[]) => SavedOpening[]) => commit({ ...base(), openings: fn(model.resolved.openings.map((o) => ({ ...o }))) })
+  const editOpenings = (fn: (ops: SavedOpening[]) => SavedOpening[]) => commit({ ...base(), openings: fn(model.resolved.openings.map((o) => ({ ...o }))) }, 'door / window change')
   const openingById = (id: string): { o: Opening; floor: FloorModel } | null => {
     for (const f of model.floors) { const o = f.openings.find((x) => x.id === id); if (o) return { o, floor: f } }
     return null
@@ -213,11 +220,11 @@ export function useStudioLayout(p: ProjectDetail | undefined, reload: () => Prom
   }
   const reset = async () => {
     if (!p) return
-    try { await api.resetLayout(p.id); setLayout(null); setAuto(true); setDirty(false); synced.current = ''; await reload(); notify.success('Back to the fully automatic layout.') }
+    try { await api.resetLayout(p.id); setLayout(null); setAuto(true); setDirty(false); synced.current = ''; history?.clear(); await reload(); notify.success('Back to the fully automatic layout.') }
     catch (e) { notify.error(e instanceof Error ? e.message : 'Could not reset the layout.') }
   }
   /** Discard unsaved edits (go back to what is stored). */
-  const discard = () => { const l = parseLayout(p?.layout); setLayout(l); setAuto(l?.settings.autoFurnish !== false); setDirty(false) }
+  const discard = () => { const l = parseLayout(p?.layout); setLayout(l); setAuto(l?.settings.autoFurnish !== false); setDirty(false); history?.clear() }
 
   // The estimator reads a summary of the real openings. Keep it in step automatically (never while there are unsaved edits).
   useEffect(() => {
