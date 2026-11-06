@@ -1,5 +1,5 @@
 import { Box as BoxIcon, DoorClosed, DoorOpen, Eye, EyeOff, FilePlus2, Home, LayoutGrid, Lock, Map as MapIcon, PanelTop, Pencil, RotateCcw, Ruler, Save, Sofa, Square, Tag, Undo2, Upload, Wand2, Blocks, AppWindow, Undo, Redo } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ProjectScope } from '@/components/ProjectScope'
@@ -41,7 +41,7 @@ export default function Studio() {
 
 function ToggleBtn({ on, onClick, icon, children, title }: { on: boolean; onClick: () => void; icon: React.ReactNode; children: React.ReactNode; title?: string }) {
   return (
-    <button onClick={onClick} aria-pressed={on} title={title} className={cn('inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium', on ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50')}>
+    <button onClick={onClick} aria-pressed={on} title={title} className={cn('inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium pointer-coarse:h-10 pointer-coarse:px-3', on ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50')}>
       {icon}{children}
     </button>
   )
@@ -55,12 +55,12 @@ function UndoRedo({ H, onUndo, onRedo }: { H: HistoryApi; onUndo: () => void; on
     <div className="inline-flex overflow-hidden rounded-md border border-slate-300 bg-white">
       <button type="button" onClick={onUndo} disabled={!H.canUndo || H.busy} aria-label="Undo"
         title={H.undoLabel ? `Undo: ${H.undoLabel} (${mod}Z)` : 'Nothing to undo'}
-        className="inline-flex h-8 items-center gap-1 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300">
+        className="inline-flex h-8 items-center gap-1 px-2.5 text-xs font-medium text-slate-700 pointer-coarse:h-10 pointer-coarse:px-3 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300">
         <Undo className="h-3.5 w-3.5" /> Undo
       </button>
       <button type="button" onClick={onRedo} disabled={!H.canRedo || H.busy} aria-label="Redo"
         title={H.redoLabel ? `Redo: ${H.redoLabel} (${isMac ? '⇧⌘Z' : 'Ctrl+Y'})` : 'Nothing to redo'}
-        className="inline-flex h-8 items-center gap-1 border-l border-slate-300 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300">
+        className="inline-flex h-8 items-center gap-1 border-l pointer-coarse:h-10 pointer-coarse:px-3 border-slate-300 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300">
         <Redo className="h-3.5 w-3.5" /> Redo
       </button>
     </div>
@@ -94,6 +94,7 @@ function StudioBody({ projectId }: { projectId: string }) {
   const [selFurn, setSelFurn] = useState<string | null>(null)
   const [selOpen, setSelOpen] = useState<string | null>(null)
   const [mode, setMode] = useState<PlanMode>('select')
+  const touch = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches, [])
   const [editBuilding, setEditBuilding] = useState(false)
   const [genOpen, setGenOpen] = useState(false)
   const [genVariant, setGenVariant] = useState(0)
@@ -231,8 +232,8 @@ function StudioBody({ projectId }: { projectId: string }) {
           <ToggleBtn on={view === 'top'} onClick={() => { setView('top'); setNonce((n) => n + 1) }} icon={<Square className="h-3.5 w-3.5" />}>Top-down plan</ToggleBtn>
           <ToggleBtn on={view === 'plan'} onClick={() => setView('plan')} icon={<MapIcon className="h-3.5 w-3.5" />}>2D plan</ToggleBtn>
           <UndoRedo H={H} onUndo={undo} onRedo={redo} />
-          {view !== 'plan' && <Button size="sm" variant="outline" onClick={() => setNonce((n) => n + 1)}><RotateCcw className="h-3.5 w-3.5" /> Reset camera</Button>}
-          <Select aria-label="Floor" value={String(floor)} onChange={(e) => setFloor(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="h-8 w-36 text-xs">
+          {view !== 'plan' && <Button size="sm" variant="outline" className="pointer-coarse:h-10" onClick={() => setNonce((n) => n + 1)}><RotateCcw className="h-3.5 w-3.5" /> Reset camera</Button>}
+          <Select aria-label="Floor" value={String(floor)} onChange={(e) => setFloor(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="h-8 w-36 text-xs pointer-coarse:h-10">
             <option value="all">All floors</option>
             {Array.from({ length: p.floors }, (_, i) => <option key={i} value={i + 1}>Floor {i + 1}</option>)}
           </Select>
@@ -279,8 +280,10 @@ function StudioBody({ projectId }: { projectId: string }) {
             )}
             <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-white/85 px-2 py-1 text-[11px] text-slate-600">
               {view === 'plan'
-                ? mode === 'select' ? 'Click a room · drag furniture and doors/windows · use “Add door / window” on the right' : `Click a wall to place a ${mode === 'add-door' ? 'door' : 'window'}`
-                : <>Drag to rotate · scroll to zoom · right-drag to pan · click a room to select{view === 'top' && floor === 'all' ? ' · plan shows floor 1 (choose a floor above to change)' : ''}</>}
+                ? mode === 'select'
+                  ? touch ? 'Tap a room · drag furniture and doors/windows · pinch to zoom, one finger to move' : 'Click a room · drag furniture and doors/windows · pinch the trackpad to zoom · use “Add door / window” on the right'
+                  : `${touch ? 'Tap' : 'Click'} a wall to place a ${mode === 'add-door' ? 'door' : 'window'}`
+                : touch ? <>One finger to rotate · two fingers to zoom and move · tap a room to select</> : <>Drag to rotate · scroll to zoom · right-drag to pan · click a room to select{view === 'top' && floor === 'all' ? ' · plan shows floor 1 (choose a floor above to change)' : ''}</>}
             </div>
             {model.schematic && <div className="pointer-events-none absolute right-2 top-2"><Badge tone="amber">Schematic room layout</Badge></div>}
           </div>

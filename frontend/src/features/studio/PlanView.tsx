@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { itemRect } from './furniture'
 import type { Stair } from './stairs'
 import { dragRect, rectProblem, type Grip, type Rect } from './roomEdit'
+import { toPlanPoint, zoomAt, zoomedView, type Zoom } from './planZoom'
 import type { FloorModel, Model3D } from './model'
 import { buildPlanShapes, type PlanShapes } from './plan2d'
 
@@ -52,10 +53,82 @@ export function PlanView(props: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [drag, setDrag] = useState<{ kind: 'furniture' | 'opening'; id: string; cx: number; cz: number; ok: boolean; dx: number; dz: number } | null>(null)
   const [roomDrag, setRoomDrag] = useState<{ id: string; grip: Grip; start: Rect; px: number; pz: number; rect: Rect; problem: string | null; moved: boolean; saving?: boolean } | null>(null)
-  const justDragged = useRef(false)
+  // time of the last drag / pinch / pan: the click the browser fires right after it must not select or deselect
+  // (a finger drag may fire no click at all, so this expires instead of waiting for one)
+  const lastDrag = useRef(0)
+  const markDragged = () => { lastDrag.current = performance.now() }
+  const justDragged = () => performance.now() - lastDrag.current < 350
+  // zoom / pan: pinch with two fingers, drag with one when zoomed in, trackpad pinch (ctrl + wheel)
+  const [zoom, setZoom] = useState<Zoom | null>(null)
+  const pointers = useRef(new Map<number, { x: number; y: number }>())
+  const gesture = useRef<{ kind: 'pinch'; d0: number; k0: number; p0: [number, number] } | { kind: 'pan'; sx: number; sy: number; z0: Zoom; moved: boolean } | null>(null)
+  const coarse = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches, [])
+  const baseView = shapes?.view
+  useEffect(() => { setZoom(null) }, [floorIndex, model.length, model.width])
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg || !baseView) return
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return // plain scrolling keeps scrolling the page
+      e.preventDefault()
+      const r = svg.getBoundingClientRect()
+      setZoom((z) => {
+        const vb = zoomedView(baseView, z)
+        const k = (z?.k ?? 1) * Math.exp(-e.deltaY * 0.01)
+        return k <= 1.001 ? null : zoomAt(baseView, r, k, toPlanPoint(vb, r, e.clientX, e.clientY), e.clientX, e.clientY)
+      })
+    }
+    svg.addEventListener('wheel', onWheel, { passive: false })
+    return () => svg.removeEventListener('wheel', onWheel)
+  }, [baseView])
 
   if (!floor || !shapes) return null
-  const { view, fontSize: fs } = shapes
+  const { fontSize: fs } = shapes
+  const view = zoomedView(shapes.view, zoom)
+  const rectOf = () => svgRef.current!.getBoundingClientRect()
+  const pinchState = () => {
+    const [a, b] = [...pointers.current.values()]
+    return { d: Math.hypot(b.x - a.x, b.y - a.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }
+  }
+  const gestureDown = (e: React.PointerEvent) => {
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pointers.current.size === 2) {
+      // second finger: a pinch, never a drag of whatever the first finger touched
+      e.stopPropagation()
+      setDrag(null); setRoomDrag(null)
+      const { d, mx, my } = pinchState()
+      gesture.current = { kind: 'pinch', d0: Math.max(d, 1), k0: zoom?.k ?? 1, p0: toPlanPoint(view, rectOf(), mx, my) }
+    }
+  }
+  const startPan = (e: React.PointerEvent) => {
+    if (pointers.current.size === 1 && zoom && zoom.k > 1 && !gesture.current) gesture.current = { kind: 'pan', sx: e.clientX, sy: e.clientY, z0: zoom, moved: false }
+  }
+  const gestureMove = (e: React.PointerEvent): boolean => {
+    if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const g = gesture.current
+    if (g?.kind === 'pinch' && pointers.current.size >= 2) {
+      const { d, mx, my } = pinchState()
+      const k = g.k0 * (d / g.d0)
+      setZoom(k <= 1.001 ? null : zoomAt(shapes.view, rectOf(), k, g.p0, mx, my))
+      return true
+    }
+    if (g?.kind === 'pan') {
+      const r = rectOf(), vb = zoomedView(shapes.view, g.z0)
+      const sc = Math.min(r.width / vb.w, r.height / vb.h)
+      const dx = (e.clientX - g.sx) / sc, dy = (e.clientY - g.sy) / sc
+      if (Math.hypot(e.clientX - g.sx, e.clientY - g.sy) > 4) g.moved = true
+      if (g.moved) setZoom({ ...g.z0, cx: g.z0.cx - dx, cy: g.z0.cy - dy })
+      return g.moved
+    }
+    return false
+  }
+  const gestureUp = (e: React.PointerEvent) => {
+    pointers.current.delete(e.pointerId)
+    const g = gesture.current
+    if (!g) return
+    if (g.kind === 'pinch' && pointers.current.size < 2) { gesture.current = null; markDragged() }
+    if (g.kind === 'pan' && pointers.current.size === 0) { if (g.moved) markDragged(); gesture.current = null }
+  }
   const lw = Math.max(0.03, fs * 0.12)
 
   const toPlan = (e: React.PointerEvent | React.MouseEvent) => {
@@ -111,7 +184,7 @@ export function PlanView(props: Props) {
   const onRoomUp = async () => {
     if (!roomDrag || roomDrag.saving) return
     const { id, rect, start, problem, moved } = roomDrag
-    if (moved) justDragged.current = true
+    if (moved) markDragged()
     const same = Math.abs(rect.x0 - start.x0) < 1e-6 && Math.abs(rect.x1 - start.x1) < 1e-6 && Math.abs(rect.z0 - start.z0) < 1e-6 && Math.abs(rect.z1 - start.z1) < 1e-6
     if (!moved || same) { setRoomDrag(null); return }
     if (problem) { props.onMessage(`The room was not moved: ${problem}`); setRoomDrag(null); return }
@@ -168,18 +241,20 @@ export function PlanView(props: Props) {
   const tick = fs * 0.5
 
   return (
+    <>
     <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className={cn('h-full w-full touch-none select-none bg-white', mode !== 'select' && 'cursor-crosshair')}
-      role="img" aria-label={`2D floor plan of floor ${floor.index}`} onPointerMove={onMove} onPointerUp={onUp}
-      onClick={() => { if (justDragged.current) { justDragged.current = false; return } props.onSelectRoom(null); props.onSelectFurniture(null); props.onSelectOpening(null) }}>
+      role="img" aria-label={`2D floor plan of floor ${floor.index}`} onPointerDownCapture={gestureDown} onPointerDown={startPan}
+      onPointerMove={(e) => { if (!gestureMove(e)) onMove(e) }} onPointerUp={(e) => { gestureUp(e); onUp() }} onPointerCancel={(e) => { gestureUp(e); setDrag(null); setRoomDrag(null) }}
+      onClick={() => { if (justDragged()) return; props.onSelectRoom(null); props.onSelectFurniture(null); props.onSelectOpening(null) }}>
       <defs>
         <pattern id="plan-grid" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M 1 0 L 0 0 0 1" fill="none" stroke="#eef1f5" strokeWidth={lw * 0.4} /></pattern>
       </defs>
-      <rect x={view.x} y={view.y} width={view.w} height={view.h} fill="url(#plan-grid)" />
+      <rect x={shapes.view.x} y={shapes.view.y} width={shapes.view.w} height={shapes.view.h} fill="url(#plan-grid)" />
       <rect {...svgRect(shapes.footprint)} fill="#fff" />
 
       {shapes.rooms.map((r) => (
         <g key={r.id} onPointerDown={(e) => startRoomDrag(e, r.id, 'move')}
-          onClick={(e) => { if (mode !== 'select') return; e.stopPropagation(); if (justDragged.current) { justDragged.current = false; return } props.onSelectRoom(r.id === props.selectedRoomId ? null : r.id) }}
+          onClick={(e) => { if (mode !== 'select') return; e.stopPropagation(); if (justDragged()) return; props.onSelectRoom(r.id === props.selectedRoomId ? null : r.id) }}
           className={mode === 'select' ? (r.id === props.selectedRoomId && props.onChangeRoom ? 'cursor-move' : 'cursor-pointer') : ''}>
           <rect {...svgRect(r.rect)} fill={ROOM_FILL[r.type] ?? ROOM_FILL.other} />
           {r.id === props.selectedRoomId && <rect {...svgRect(r.rect)} fill="#f97316" fillOpacity={0.22} stroke="#ea580c" strokeWidth={lw * 1.5} />}
@@ -271,8 +346,14 @@ export function PlanView(props: Props) {
       {props.onChangeRoom && mode === 'select' && props.selectedRoomId && !roomDrag && floor.rooms.some((r) => r.id === props.selectedRoomId) && (
         <text x={view.x + fs * 0.6} y={view.y + fs * 2.6} fontSize={fs * 0.8} fill="#64748b" pointerEvents="none">Drag the room to move it · drag its edges or corners to resize</text>
       )}
-      <RoomEditOverlay floor={floor} selectedId={mode === 'select' && props.onChangeRoom ? props.selectedRoomId : null} drag={roomDrag} lw={lw} fs={fs} onGrip={startRoomDrag} />
+      <RoomEditOverlay big={coarse} zoomK={zoom?.k ?? 1} floor={floor} selectedId={mode === 'select' && props.onChangeRoom ? props.selectedRoomId : null} drag={roomDrag} lw={lw} fs={fs} onGrip={startRoomDrag} />
     </svg>
+    {zoom && zoom.k > 1 && (
+      <button type="button" onClick={() => setZoom(null)} className="absolute bottom-2 right-2 rounded-md bg-white/95 px-3 py-1.5 text-xs font-medium text-navy-900 shadow ring-1 ring-slate-300 hover:bg-white pointer-coarse:px-4 pointer-coarse:py-2.5">
+        Fit plan ({Math.round(zoom.k * 100)}%)
+      </button>
+    )}
+    </>
   )
 }
 
@@ -309,8 +390,8 @@ const GRIPS: Grip[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']
 const CURSOR: Record<Grip, string> = { move: 'move', n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize', ne: 'nesw-resize', sw: 'nesw-resize', nw: 'nwse-resize', se: 'nwse-resize' }
 
 /** Resize handles on the selected room, and the live outline (green = fits, red = does not) while dragging. */
-function RoomEditOverlay({ floor, selectedId, drag, lw, fs, onGrip }: {
-  floor: FloorModel; selectedId: string | null; lw: number; fs: number
+function RoomEditOverlay({ floor, selectedId, drag, lw, fs, onGrip, big = false, zoomK = 1 }: {
+  floor: FloorModel; selectedId: string | null; lw: number; fs: number; big?: boolean; zoomK?: number
   drag: { id: string; rect: Rect; problem: string | null; moved: boolean; saving?: boolean } | null
   onGrip: (e: React.PointerEvent, id: string, grip: Grip) => void
 }) {
@@ -319,7 +400,7 @@ function RoomEditOverlay({ floor, selectedId, drag, lw, fs, onGrip }: {
   const r = live ? live.rect : room ? { x0: room.x0, x1: room.x1, z0: room.z0, z1: room.z1 } : null
   if (!r) return null
   const id = live?.id ?? room!.id
-  const hs = Math.max(fs * 0.5, lw * 4)
+  const hs = (Math.max(fs * 0.5, lw * 4) * (big ? 2.4 : 1)) / zoomK // larger for fingers; same on-screen size at any zoom
   const at = (g: Grip): [number, number] => [g.includes('w') ? r.x0 : g.includes('e') ? r.x1 : (r.x0 + r.x1) / 2, g.includes('n') ? r.z0 : g.includes('s') ? r.z1 : (r.z0 + r.z1) / 2]
   const col = live ? (live.problem ? '#dc2626' : '#16a34a') : '#ea580c'
   return (
