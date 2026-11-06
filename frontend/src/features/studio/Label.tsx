@@ -39,9 +39,6 @@ function makeTexture(text: string, sub: string | undefined, active: boolean, dar
   return { tex, aspect: canvas.width / canvas.height }
 }
 
-// labels never take clicks: a click goes to whatever is behind them
-const noRaycast = () => null
-
 /**
  * Billboard label. `maxWidth` (world units) keeps the label inside its room so neighbouring labels never overlap;
  * returns nothing when the room is too small for a readable label.
@@ -55,7 +52,7 @@ export function Label({ text, sub, position, active = false, dark = false, size,
   if (fit < 0.5 && !active) return null
   const h = size * (active ? Math.max(fit, 0.6) : fit)
   return (
-    <sprite position={position} scale={[h * aspect, h, 1]} renderOrder={active ? 20 : 10} raycast={noRaycast}>
+    <sprite position={position} scale={[h * aspect, h, 1]} renderOrder={active ? 20 : 10}>
       <spriteMaterial map={tex} transparent depthTest={false} toneMapped={false} />
     </sprite>
   )
