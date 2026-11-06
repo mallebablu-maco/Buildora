@@ -86,3 +86,22 @@ describe('subtractRects', () => {
     expect(subtractRects({ x0: 0, x1: 1, z0: 0, z1: 1 }, [{ x0: 2, x1: 3, z0: 2, z1: 3 }])).toEqual([{ x0: 0, x1: 1, z0: 0, z1: 1 }])
   })
 })
+
+describe('when stairs cannot be drawn', () => {
+  it('rooms without positions: staircases are placed in the same corner on every floor, so they connect', () => {
+    const rooms = [1, 2].flatMap((fl) => [
+      room({ name: 'Bedroom', room_type: 'bedroom', length: fl === 1 ? 4 : 3, width: 3, floor_number: fl }),
+      room({ name: 'Staircase', room_type: 'staircase', length: 3, width: 2.5, floor_number: fl }),
+    ])
+    const m = buildModel(project({ floors: 2, rooms }))
+    expect(m.floors[0].stairs).toHaveLength(1)
+    expect(m.issues.some((i) => i.code === 'stairs-not-aligned')).toBe(false)
+  })
+  it('says so when the staircases are not above each other', () => {
+    const rooms = [room({ room_type: 'staircase', length: 3, width: 2.5, floor_number: 1, pos_x: 0, pos_y: 0 }), room({ room_type: 'staircase', length: 3, width: 2.5, floor_number: 2, pos_x: 6, pos_y: 5 })]
+    const m = buildModel(project({ floors: 2, rooms }))
+    expect(m.floors[0].stairs).toHaveLength(0)
+    expect(m.issues.find((i) => i.code === 'stairs-not-aligned')?.message).toMatch(/floor 1 and floor 2 are not above each other/)
+  })
+})
+

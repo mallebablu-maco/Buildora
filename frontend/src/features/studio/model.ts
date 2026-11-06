@@ -189,10 +189,12 @@ export function validateProject(p: Pick<ProjectDetail, 'length' | 'width' | 'hei
 }
 
 /** Shelf-pack rooms left-to-right inside the footprint. Returns top-left corners in building-local metres. */
-export function schematicLayout(rooms: Pick<Room, 'id' | 'length' | 'width'>[], L: number): Map<string, { x: number; z: number }> {
+export function schematicLayout(rooms: (Pick<Room, 'id' | 'length' | 'width'> & { room_type?: string })[], L: number): Map<string, { x: number; z: number }> {
   const out = new Map<string, { x: number; z: number }>()
   let x = 0, z = 0, rowD = 0
-  for (const r of rooms) {
+  // staircases first, so they land in the same corner on every floor and real stairs can connect them
+  const ordered = [...rooms.filter((r) => r.room_type === 'staircase'), ...rooms.filter((r) => r.room_type !== 'staircase')]
+  for (const r of ordered) {
     if (x > EPS && x + r.length > L + EPS) { x = 0; z += rowD; rowD = 0 }
     out.set(r.id, { x, z })
     x += r.length
@@ -637,9 +639,10 @@ function validateAccess(boxes: RoomBox[], openings: Opening[], openEdge: Set<str
 }
 
 /** Real stairs between staircase rooms that sit above each other, and the stairwell openings they need. */
-function addStairs(floors: FloorModel[], rise: number) {
+function addStairs(floors: FloorModel[], rise: number, issues: Issue[]) {
   for (let i = 0; i + 1 < floors.length; i++) {
     const lower = floors[i], upper = floors[i + 1]
+    const hasLow = lower.rooms.some((r) => r.type === 'staircase'), hasUp = upper.rooms.some((r) => r.type === 'staircase')
     for (const r of lower.rooms) {
       if (r.type !== 'staircase' || r.overflow) continue
       for (const u of upper.rooms) {
@@ -652,6 +655,9 @@ function addStairs(floors: FloorModel[], rise: number) {
         upper.holes.push(stairHole(s, upper.y))
         break
       }
+    }
+    if (hasLow && hasUp && !lower.stairs.length) {
+      issues.push({ severity: 'warning', code: 'stairs-not-aligned', floor: upper.index, message: `The staircases on floor ${lower.index} and floor ${upper.index} are not above each other, so no stairs can be drawn between them. Move one in the 2D plan or use "Regenerate layout".` })
     }
   }
 }
@@ -674,7 +680,7 @@ export function buildModel(p: ProjectDetail | null | undefined, opts: BuildOptio
     if (floor.schematic) anySchematic = true
     floors.push(floor)
   }
-  addStairs(floors, H + T)
+  addStairs(floors, H + T, issues)
   if (anySchematic) issues.push({ severity: 'info', code: 'schematic', message: 'Some rooms have no stored position: they are arranged in a schematic layout (not the original floor plan).' })
   if (!validRooms.length) issues.push({ severity: 'info', code: 'no-rooms', message: 'No rooms yet. Generate a layout from the building details or add rooms.' })
 
