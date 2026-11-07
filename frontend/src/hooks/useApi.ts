@@ -5,7 +5,7 @@ export interface AsyncState<T> {
   loading: boolean
   error: string | null
   reload: () => Promise<void>
-  setData: (d: T | undefined) => void
+  setData: (d: T | undefined | ((prev: T | undefined) => T | undefined)) => void
 }
 
 /** Minimal data-loading hook: runs `fn` on mount / when `deps` change, ignoring stale responses. */

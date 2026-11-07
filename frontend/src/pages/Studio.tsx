@@ -100,7 +100,8 @@ const roomInput = (r: ProjectDetail['rooms'][number]): RoomInput => ({
 function StudioBody({ projectId }: { projectId: string }) {
   const toast = useToast()
   const units = useUnits()
-  const { data: p, loading, error, reload } = useAsync(() => api.project(projectId), [projectId])
+  const { data: p, loading, error, reload, setData } = useAsync(() => api.project(projectId), [projectId])
+  const pendingRoomSaves = useRef(0)
   const [view, setView] = useState<StudioView>('exterior')
   const [floor, setFloor] = useState<'all' | number>('all')
   const [showLabels, setShowLabels] = useState(true)
@@ -228,17 +229,28 @@ function StudioBody({ projectId }: { projectId: string }) {
   const pushRoomStep = (id: string, label: string, before: RoomInput, after: RoomInput) => {
     H.push({ label, undo: async () => { await api.updateRoom(p.id, id, before); await reload() }, redo: async () => { await api.updateRoom(p.id, id, after); await reload() } })
   }
-  /** Room dragged / resized in the 2D plan: saved straight away (the server still checks it). */
+  /**
+   * Room dragged / resized in the 2D plan: shown in its new place at once, saved in the background
+   * (the server still checks it; a refused change reloads the saved plan).
+   */
   const changeRoom = async (id: string, rect: { pos_x: number; pos_y: number; length: number; width: number }) => {
     const r = p.rooms.find((x) => x.id === id)
     if (!r) return
-    try {
-      const before = roomInput(r), after = { ...roomInput(r), ...rect }
-      await api.updateRoom(p.id, id, after)
-      await reload()
-      pushRoomStep(id, `"${r.name}" moved / resized`, before, after)
-      toast.success(`"${r.name}" is now ${units.length(rect.length)} × ${units.length(rect.width)}.`)
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not move the room.') }
+    const before = roomInput(r), after = { ...roomInput(r), ...rect }
+    setData((d) => d && { ...d, rooms: d.rooms.map((x) => (x.id === id ? { ...x, ...rect } : x)) })
+    pendingRoomSaves.current++
+    void (async () => {
+      try {
+        const saved = await api.updateRoom(p.id, id, after)
+        // a later drag may still be saving: only take the server's copy once nothing newer is on its way
+        if (pendingRoomSaves.current === 1) setData((d) => d && { ...d, rooms: d.rooms.map((x) => (x.id === id ? { ...x, ...saved } : x)) })
+        pushRoomStep(id, `"${r.name}" moved / resized`, before, after)
+        toast.success(`"${r.name}" is now ${units.length(rect.length)} × ${units.length(rect.width)}.`)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not move the room.')
+        void reload()
+      } finally { pendingRoomSaves.current-- }
+    })()
   }
   const selectRoom = (id: string | null) => { setSelected(id); if (id && floor !== 'all') { const r = p.rooms.find((x) => x.id === id); if (r) setFloor(r.floor_number) } }
   const hasRooms = p.rooms.length > 0
