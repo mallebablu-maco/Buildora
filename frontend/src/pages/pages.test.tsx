@@ -246,7 +246,7 @@ describe('3D Building Studio', () => {
 
   it('selecting a room shows its details and lets them be edited', async () => {
     const user = await open()
-    const list = screen.getByText('Rooms (10)').closest('.rounded-xl') as HTMLElement
+    const list = screen.getByText('Rooms (10)').closest('.rounded-2xl') as HTMLElement
     await user.click(within(list).getByRole('button', { name: /Master Bedroom/ }))
     expect(await screen.findByText('Room information')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Save & update model/ })).toBeInTheDocument()
@@ -272,7 +272,7 @@ describe('3D Building Studio', () => {
   it('undo of a room edit sends the old values back to the server', async () => {
     const user = await open()
     a.updateRoom.mockResolvedValue(F.project.rooms[0] as never)
-    const list = screen.getByText('Rooms (10)').closest('.rounded-xl') as HTMLElement
+    const list = screen.getByText('Rooms (10)').closest('.rounded-2xl') as HTMLElement
     await user.click(within(list).getByRole('button', { name: /Master Bedroom/ }))
     const len = await screen.findByDisplayValue('5')
     await user.clear(len); await user.type(len, '4.5')

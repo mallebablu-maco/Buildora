@@ -1,3 +1,4 @@
+import '@fontsource-variable/space-grotesk/wght.css'
 import {
   BarChart3, Box, Calculator, ChevronsLeft, ChevronsRight, FileText, FolderOpen, LayoutDashboard, LogOut, Menu, PlusSquare, Settings, Tag, TrendingDown,
 } from 'lucide-react'
@@ -40,7 +41,7 @@ export function AppLayout() {
   const toggle = () => setCollapsed((c) => { try { localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1') } catch { /* private window: just don't remember it */ } return !c })
 
   const sidebar = (compact: boolean) => (
-    <nav aria-label="Main" className="flex h-full flex-col bg-navy-900 text-slate-300">
+    <nav aria-label="Main" className="flex h-full flex-col bg-navy-950 bg-[radial-gradient(circle_at_0%_0%,rgba(249,115,22,0.12),rgba(249,115,22,0)_45%)] text-slate-300">
       <div className={cn('flex h-16 shrink-0 items-center border-b border-white/10 px-4', compact && 'justify-center px-0')}>
         <Link to="/dashboard" aria-label="Buildora home"><Logo dark compact={compact} /></Link>
       </div>
@@ -48,8 +49,8 @@ export function AppLayout() {
         {NAV.map(({ label, icon: Icon, to, end }) => (
           <li key={to}>
             <NavLink to={to} end={end} title={compact ? label : undefined}
-              className={({ isActive }) => cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-white/10 hover:text-white',
-                isActive && 'bg-orange-500 text-white hover:bg-orange-500', compact && 'justify-center px-0')}>
+              className={({ isActive }) => cn('flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-white/[0.07] hover:text-white',
+                isActive && 'bg-[linear-gradient(90deg,rgba(249,115,22,0.24),rgba(249,115,22,0.07))] font-semibold text-white ring-1 ring-inset ring-orange-500/40 hover:bg-[linear-gradient(90deg,rgba(249,115,22,0.24),rgba(249,115,22,0.07))] [&>svg]:text-orange-400', compact && 'justify-center px-0')}>
               <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
               {!compact && <span className="truncate">{label}</span>}
             </NavLink>
@@ -58,7 +59,7 @@ export function AppLayout() {
       </ul>
       <div className="border-t border-white/10 p-3">
         <button type="button" title={compact ? 'Log out' : undefined} onClick={() => setConfirmLogout(true)}
-          className={cn('flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-white/10 hover:text-white', compact && 'justify-center px-0')}>
+          className={cn('flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-white/[0.07] hover:text-white', compact && 'justify-center px-0')}>
           <LogOut className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />{compact ? <span className="sr-only">Log out</span> : 'Log out'}
         </button>
       </div>
@@ -75,7 +76,7 @@ export function AppLayout() {
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 sm:px-6">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></Button>
             <Button variant="ghost" size="icon" className="hidden lg:inline-flex" aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} onClick={toggle}>
@@ -86,7 +87,7 @@ export function AppLayout() {
           <div className="flex items-center gap-3">
             <Link to="/projects/new"><Button variant="accent" size="sm"><PlusSquare className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">New Project</span></Button></Link>
             <Link to="/settings" className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-slate-100" title="Account settings">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy-900 text-sm font-semibold text-white" aria-hidden="true">{name[0]?.toUpperCase() ?? '?'}</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-navy-900 to-navy-600 text-sm font-semibold text-white" aria-hidden="true">{name[0]?.toUpperCase() ?? '?'}</span>
               <span className="hidden max-w-32 truncate text-sm font-medium text-slate-700 md:inline">{name}</span>
             </Link>
           </div>
