@@ -85,7 +85,6 @@ export function AppLayout() {
             <span className="hidden text-sm italic text-slate-500 sm:inline">Plan Smarter. Build Better.</span>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/projects/new"><Button variant="accent" size="sm"><PlusSquare className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">New Project</span></Button></Link>
             <Link to="/settings" className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-slate-100" title="Account settings">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-navy-900 to-navy-600 text-sm font-semibold text-white" aria-hidden="true">{name[0]?.toUpperCase() ?? '?'}</span>
               <span className="hidden max-w-32 truncate text-sm font-medium text-slate-700 md:inline">{name}</span>
