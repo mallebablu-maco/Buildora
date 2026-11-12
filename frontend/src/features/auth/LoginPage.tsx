@@ -38,7 +38,6 @@ export default function LoginPage() {
   return (
     <AuthShell title="Log in" subtitle="Continue with your saved projects and estimates.">
       <GoogleButton />
-      <Link to="/login/code" className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">Email me a sign-in link</Link>
       <OrDivider />
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {(error ?? redirect.error) && <Alert tone="error">{error ?? redirect.error}</Alert>}

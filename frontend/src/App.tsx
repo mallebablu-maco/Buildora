@@ -2,7 +2,6 @@ import { lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import ForgotPasswordPage from '@/features/auth/ForgotPasswordPage'
-import LoginCodePage from '@/features/auth/LoginCodePage'
 import LoginPage from '@/features/auth/LoginPage'
 import SetPasswordPage from '@/features/auth/SetPasswordPage'
 import ResetPasswordPage from '@/features/auth/ResetPasswordPage'
@@ -29,7 +28,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/login/code" element={<LoginCodePage />} />
+      <Route path="/login/code" element={<Navigate to="/login" replace />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />

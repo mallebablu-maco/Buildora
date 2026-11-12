@@ -13,8 +13,6 @@ export function authValue(overrides: Partial<AuthContextValue> = {}): AuthContex
     signIn: vi.fn().mockResolvedValue(undefined),
     signUp: vi.fn().mockResolvedValue(undefined),
     signInWithGoogle: vi.fn().mockResolvedValue(undefined),
-    sendLoginCode: vi.fn().mockResolvedValue(undefined),
-    verifyLoginCode: vi.fn().mockResolvedValue(undefined),
     signOut: vi.fn().mockResolvedValue(undefined),
     requestPasswordReset: vi.fn().mockResolvedValue(undefined),
     updatePassword: vi.fn().mockResolvedValue(undefined),
